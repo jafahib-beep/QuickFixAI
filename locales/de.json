@@ -17,7 +17,8 @@
     "skip": "Überspringen",
     "search": "Suchen",
     "share": "Teilen",
-    "report": "Melden"
+    "report": "Melden",
+    "unknown": "Unbekannt"
   },
   "auth": {
     "welcomeBack": "Willkommen zurück",

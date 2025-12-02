@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, StyleSheet, Pressable, Image, FlatList, Dimensions } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -29,9 +29,30 @@ export default function ProfileScreen() {
   const { getVideosByAuthor, getSavedVideos } = useVideos();
 
   const [activeTab, setActiveTab] = useState<"uploads" | "saved">("uploads");
+  const [userVideos, setUserVideos] = useState<Video[]>([]);
+  const [savedVideos, setSavedVideos] = useState<Video[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const userVideos = user ? getVideosByAuthor(user.id) : [];
-  const savedVideos = getSavedVideos();
+  useEffect(() => {
+    loadVideos();
+  }, [user?.id]);
+
+  const loadVideos = async () => {
+    setIsLoading(true);
+    try {
+      if (user?.id) {
+        const uploads = await getVideosByAuthor(user.id);
+        setUserVideos(uploads ?? []);
+      }
+      const saved = await getSavedVideos();
+      setSavedVideos(saved ?? []);
+    } catch (error) {
+      console.log("Error loading videos:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const displayVideos = activeTab === "uploads" ? userVideos : savedVideos;
 
   const handleVideoPress = (video: Video) => {
@@ -39,7 +60,17 @@ export default function ProfileScreen() {
   };
 
   const renderVideoGrid = () => {
-    if (displayVideos.length === 0) {
+    if (isLoading) {
+      return (
+        <View style={styles.emptyGrid}>
+          <ThemedText type="body" style={{ color: theme.textSecondary }}>
+            {t("common.loading")}
+          </ThemedText>
+        </View>
+      );
+    }
+
+    if (!displayVideos || displayVideos.length === 0) {
       return (
         <View style={styles.emptyGrid}>
           <ThemedText type="body" style={{ color: theme.textSecondary }}>

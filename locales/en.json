@@ -17,7 +17,8 @@
     "skip": "Skip",
     "search": "Search",
     "share": "Share",
-    "report": "Report"
+    "report": "Report",
+    "unknown": "Unknown"
   },
   "auth": {
     "welcomeBack": "Welcome back",

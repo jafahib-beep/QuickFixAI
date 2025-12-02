@@ -17,7 +17,8 @@
     "skip": "تخطي",
     "search": "بحث",
     "share": "مشاركة",
-    "report": "إبلاغ"
+    "report": "إبلاغ",
+    "unknown": "مجهول"
   },
   "auth": {
     "welcomeBack": "مرحباً بعودتك",

@@ -17,7 +17,8 @@
     "skip": "Hoppa över",
     "search": "Sök",
     "share": "Dela",
-    "report": "Rapportera"
+    "report": "Rapportera",
+    "unknown": "Okänd"
   },
   "auth": {
     "welcomeBack": "Välkommen tillbaka",

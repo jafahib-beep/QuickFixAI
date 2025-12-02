@@ -30,9 +30,10 @@ export default function ToolboxScreen() {
   const loadSavedVideos = async () => {
     try {
       const videos = await getSavedVideos();
-      setSavedVideos(videos);
+      setSavedVideos(videos ?? []);
     } catch (error) {
       console.error("Failed to load saved videos:", error);
+      setSavedVideos([]);
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);

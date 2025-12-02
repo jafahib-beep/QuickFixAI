@@ -17,7 +17,8 @@
     "skip": "Passer",
     "search": "Rechercher",
     "share": "Partager",
-    "report": "Signaler"
+    "report": "Signaler",
+    "unknown": "Inconnu"
   },
   "auth": {
     "welcomeBack": "Bon retour",

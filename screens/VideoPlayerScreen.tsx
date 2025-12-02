@@ -45,8 +45,8 @@ export default function VideoPlayerScreen() {
   const [commentText, setCommentText] = useState("");
   const [isLoadingComments, setIsLoadingComments] = useState(false);
 
-  const isSaved = savedVideoIds.includes(video.id);
-  const isLiked = likedVideoIds.includes(video.id);
+  const isSaved = (savedVideoIds ?? []).includes(video?.id ?? "");
+  const isLiked = (likedVideoIds ?? []).includes(video?.id ?? "");
 
   useEffect(() => {
     loadComments();
@@ -143,16 +143,16 @@ export default function VideoPlayerScreen() {
                 <Pressable style={styles.authorRow}>
                   <View style={styles.authorAvatar}>
                     <ThemedText type="small" style={styles.authorInitial}>
-                      {video.authorName.charAt(0).toUpperCase()}
+                      {(video.authorName ?? "U").charAt(0).toUpperCase()}
                     </ThemedText>
                   </View>
                   <ThemedText type="body" style={styles.authorName}>
-                    {video.authorName}
+                    {video.authorName ?? t("common.unknown")}
                   </ThemedText>
                 </Pressable>
 
                 <View style={styles.tagsRow}>
-                  {video.tags.slice(0, 4).map((tag, index) => (
+                  {(video.tags ?? []).slice(0, 4).map((tag, index) => (
                     <View key={index} style={styles.tag}>
                       <ThemedText type="caption" style={styles.tagText}>
                         {tag}
@@ -179,7 +179,7 @@ export default function VideoPlayerScreen() {
                     color={isLiked ? "#FF3B30" : "#FFFFFF"}
                   />
                   <ThemedText type="caption" style={styles.actionText}>
-                    {video.likes + (isLiked ? 1 : 0)}
+                    {(video.likes ?? 0) + (isLiked ? 1 : 0)}
                   </ThemedText>
                 </Pressable>
 
