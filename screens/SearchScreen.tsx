@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import {
   View,
   StyleSheet,
@@ -7,6 +7,7 @@ import {
   Pressable,
   ScrollView,
   Image,
+  ActivityIndicator,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
@@ -22,8 +23,8 @@ import { Spacing, BorderRadius, Colors } from "@/constants/theme";
 import { useTheme } from "@/hooks/useTheme";
 import { useVideos } from "@/contexts/VideosContext";
 import { RootStackParamList } from "@/navigation/RootNavigator";
-import { Video } from "@/utils/storage";
-import { sampleVideos, categories } from "@/utils/sampleData";
+import { Video } from "@/utils/api";
+import { categories } from "@/utils/sampleData";
 
 type SearchScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -33,29 +34,56 @@ export default function SearchScreen() {
   const insets = useSafeAreaInsets();
   const tabBarHeight = useBottomTabBarHeight();
   const navigation = useNavigation<SearchScreenNavigationProp>();
-  const { videos, savedVideoIds, likedVideoIds, toggleSave, toggleLike, searchVideos } = useVideos();
+  const { videos, semanticSearch, toggleSave, toggleLike } = useVideos();
 
   const [query, setQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [searchResults, setSearchResults] = useState<Video[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
 
-  const allVideos = videos.length > 0 ? videos : sampleVideos;
+  useEffect(() => {
+    const searchTimer = setTimeout(async () => {
+      if (query.trim() || selectedCategory !== "all") {
+        setIsSearching(true);
+        try {
+          const results = await semanticSearch(query, selectedCategory !== "all" ? selectedCategory : undefined);
+          setSearchResults(results);
+        } catch (error) {
+          console.error("Search failed:", error);
+          setSearchResults([]);
+        } finally {
+          setIsSearching(false);
+        }
+      } else {
+        setSearchResults(videos);
+      }
+    }, 300);
 
-  const filteredVideos = query || selectedCategory !== "all"
-    ? searchVideos(query, selectedCategory).length > 0
-      ? searchVideos(query, selectedCategory)
-      : allVideos.filter((v) => {
-          const matchesQuery = !query ||
-            v.title.toLowerCase().includes(query.toLowerCase()) ||
-            v.description?.toLowerCase().includes(query.toLowerCase()) ||
-            v.tags.some((tag) => tag.toLowerCase().includes(query.toLowerCase()));
-          const matchesCategory = selectedCategory === "all" || v.category === selectedCategory;
-          return matchesQuery && matchesCategory;
-        })
-    : allVideos;
+    return () => clearTimeout(searchTimer);
+  }, [query, selectedCategory, videos, semanticSearch]);
+
+  const videoToLegacy = (video: Video) => ({
+    id: video.id,
+    uri: video.videoUrl || "",
+    thumbnailUri: video.thumbnailUrl || "",
+    title: video.title,
+    description: video.description || "",
+    category: video.category,
+    tags: video.tags,
+    authorId: video.authorId,
+    authorName: video.authorName,
+    authorAvatar: video.authorAvatar,
+    duration: video.duration,
+    likes: video.likesCount,
+    commentsEnabled: video.commentsEnabled,
+    createdAt: video.createdAt,
+  });
 
   const handleVideoPress = useCallback((video: Video) => {
-    navigation.navigate("VideoPlayer", { video });
+    navigation.navigate("VideoPlayer", { video: videoToLegacy(video) });
   }, [navigation]);
+
+  const displayVideos = query.trim() || selectedCategory !== "all" ? searchResults : videos;
 
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
@@ -87,7 +115,9 @@ export default function SearchScreen() {
             returnKeyType="search"
             autoCorrect={false}
           />
-          {query.length > 0 ? (
+          {isSearching ? (
+            <ActivityIndicator size="small" color={theme.textSecondary} />
+          ) : query.length > 0 ? (
             <Pressable onPress={() => setQuery("")} hitSlop={8}>
               <Feather name="x" size={18} color={theme.textSecondary} />
             </Pressable>
@@ -132,22 +162,22 @@ export default function SearchScreen() {
       </View>
 
       <FlatList
-        data={filteredVideos}
+        data={displayVideos}
         keyExtractor={(item) => item.id}
         contentContainerStyle={[
           styles.listContent,
           { paddingBottom: tabBarHeight + Spacing.xl },
         ]}
-        ListEmptyComponent={renderEmptyState}
+        ListEmptyComponent={isSearching ? null : renderEmptyState}
         renderItem={({ item }) => (
           <Pressable
             onPress={() => handleVideoPress(item)}
             style={({ pressed }) => [{ opacity: pressed ? 0.9 : 1 }]}
           >
             <VideoCard
-              video={item}
-              isSaved={savedVideoIds.includes(item.id)}
-              isLiked={likedVideoIds.includes(item.id)}
+              video={videoToLegacy(item)}
+              isSaved={item.isSaved}
+              isLiked={item.isLiked}
               onSave={() => toggleSave(item.id)}
               onLike={() => toggleLike(item.id)}
             />

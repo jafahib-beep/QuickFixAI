@@ -59,9 +59,9 @@ export default function LoginScreen() {
     
     setIsLoading(true);
     try {
-      const success = await login(email, password);
-      if (!success) {
-        Alert.alert(t("common.error"), t("auth.invalidCredentials"));
+      const result = await login(email, password);
+      if (!result.success) {
+        Alert.alert(t("common.error"), result.error || t("auth.invalidCredentials"));
       }
     } catch {
       Alert.alert(t("common.error"), t("errors.somethingWentWrong"));

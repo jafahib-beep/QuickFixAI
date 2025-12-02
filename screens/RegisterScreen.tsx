@@ -67,9 +67,9 @@ export default function RegisterScreen() {
     
     setIsLoading(true);
     try {
-      const success = await register(email, password, displayName);
-      if (!success) {
-        Alert.alert(t("common.error"), t("errors.somethingWentWrong"));
+      const result = await register(email, password, displayName);
+      if (!result.success) {
+        Alert.alert(t("common.error"), result.error || t("errors.somethingWentWrong"));
       }
     } catch {
       Alert.alert(t("common.error"), t("errors.somethingWentWrong"));

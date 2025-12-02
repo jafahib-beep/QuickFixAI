@@ -17,8 +17,7 @@ import { Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/useTheme";
 import { useVideos } from "@/contexts/VideosContext";
 import { RootStackParamList } from "@/navigation/RootNavigator";
-import { Video } from "@/utils/storage";
-import { sampleVideos } from "@/utils/sampleData";
+import { Video } from "@/utils/api";
 
 type HomeScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -26,19 +25,28 @@ export default function HomeScreen() {
   const { t } = useTranslation();
   const { theme } = useTheme();
   const navigation = useNavigation<HomeScreenNavigationProp>();
-  const { videos, isLoading, refreshVideos, savedVideoIds, likedVideoIds, toggleSave, toggleLike } = useVideos();
-
-  const allVideos = videos.length > 0 ? videos : sampleVideos;
-
-  const recommendedVideos = allVideos.slice(0, 5);
-  const newVideos = [...allVideos].sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-  ).slice(0, 5);
-  const popularVideos = [...allVideos].sort((a, b) => b.likes - a.likes).slice(0, 5);
+  const { feed, isLoading, refreshFeed, toggleSave, toggleLike } = useVideos();
 
   const handleVideoPress = useCallback((video: Video) => {
-    navigation.navigate("VideoPlayer", { video });
+    navigation.navigate("VideoPlayer", { video: videoToLegacy(video) });
   }, [navigation]);
+
+  const videoToLegacy = (video: Video) => ({
+    id: video.id,
+    uri: video.videoUrl || "",
+    thumbnailUri: video.thumbnailUrl || "",
+    title: video.title,
+    description: video.description || "",
+    category: video.category,
+    tags: video.tags,
+    authorId: video.authorId,
+    authorName: video.authorName,
+    authorAvatar: video.authorAvatar,
+    duration: video.duration,
+    likes: video.likesCount,
+    commentsEnabled: video.commentsEnabled,
+    createdAt: video.createdAt,
+  });
 
   const renderSection = (title: string, data: Video[]) => (
     <View style={styles.section}>
@@ -60,15 +68,22 @@ export default function HomeScreen() {
             ]}
           >
             <VideoCard
-              video={item}
-              isSaved={savedVideoIds.includes(item.id)}
-              isLiked={likedVideoIds.includes(item.id)}
+              video={videoToLegacy(item)}
+              isSaved={item.isSaved}
+              isLiked={item.isLiked}
               onSave={() => toggleSave(item.id)}
               onLike={() => toggleLike(item.id)}
               horizontal
             />
           </Pressable>
         )}
+        ListEmptyComponent={
+          <View style={styles.emptySection}>
+            <ThemedText type="body" style={{ opacity: 0.5 }}>
+              {t("common.noVideos")}
+            </ThemedText>
+          </View>
+        }
       />
     </View>
   );
@@ -78,15 +93,15 @@ export default function HomeScreen() {
       refreshControl={
         <RefreshControl
           refreshing={isLoading}
-          onRefresh={refreshVideos}
+          onRefresh={refreshFeed}
           tintColor={theme.text}
         />
       }
       contentContainerStyle={styles.content}
     >
-      {renderSection(t("home.recommended"), recommendedVideos)}
-      {renderSection(t("home.new"), newVideos)}
-      {renderSection(t("home.popular"), popularVideos)}
+      {renderSection(t("home.recommended"), feed.recommended)}
+      {renderSection(t("home.new"), feed.new)}
+      {renderSection(t("home.popular"), feed.popular)}
     </ScreenScrollView>
   );
 }
@@ -109,5 +124,9 @@ const styles = StyleSheet.create({
   },
   cardWrapper: {
     width: 260,
+  },
+  emptySection: {
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing["2xl"],
   },
 });

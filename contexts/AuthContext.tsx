@@ -1,14 +1,20 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { storage, User } from "@/utils/storage";
+import { api, User } from "@/utils/api";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+const LOCAL_USER_KEY = "quickfix_local_user";
+const LOCAL_USERS_KEY = "quickfix_local_users";
 
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<boolean>;
-  register: (email: string, password: string, displayName: string) => Promise<boolean>;
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  register: (email: string, password: string, displayName: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
-  updateProfile: (updates: Partial<User>) => Promise<void>;
+  updateProfile: (updates: Partial<User>) => Promise<{ success: boolean; error?: string }>;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -23,78 +29,152 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loadUser = async () => {
     try {
-      const savedUser = await storage.getUser();
-      setUser(savedUser);
+      const token = await AsyncStorage.getItem("authToken");
+      if (token) {
+        try {
+          const userData = await api.getMe();
+          setUser(userData);
+        } catch {
+          const localUserJson = await AsyncStorage.getItem(LOCAL_USER_KEY);
+          if (localUserJson) {
+            setUser(JSON.parse(localUserJson));
+          }
+        }
+      } else {
+        const localUserJson = await AsyncStorage.getItem(LOCAL_USER_KEY);
+        if (localUserJson) {
+          setUser(JSON.parse(localUserJson));
+        }
+      }
     } catch (error) {
-      console.error("Failed to load user:", error);
+      console.log("No valid session found");
+      await api.logout();
     } finally {
       setIsLoading(false);
     }
   };
 
-  const login = async (email: string, _password: string): Promise<boolean> => {
+  const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {
-      const savedUser = await storage.getUser();
-      if (savedUser && savedUser.email === email) {
-        setUser(savedUser);
-        return true;
+      const result = await api.login(email, password);
+      setUser(result.user);
+      return { success: true };
+    } catch (error: any) {
+      try {
+        const usersJson = await AsyncStorage.getItem(LOCAL_USERS_KEY);
+        const users = usersJson ? JSON.parse(usersJson) : {};
+        const storedUser = users[email.toLowerCase()];
+        if (storedUser && storedUser.password === password) {
+          const userData: User = storedUser.user;
+          setUser(userData);
+          await AsyncStorage.setItem(LOCAL_USER_KEY, JSON.stringify(userData));
+          await AsyncStorage.setItem("authToken", `local_${Date.now()}`);
+          return { success: true };
+        }
+        return { success: false, error: "Invalid email or password" };
+      } catch {
+        return { success: false, error: "Login failed - please try again" };
       }
-      
-      const newUser: User = {
-        id: Date.now().toString(36) + Math.random().toString(36).substr(2),
-        email,
-        displayName: email.split("@")[0],
-        expertise: [],
-        followers: 0,
-        following: 0,
-        createdAt: new Date().toISOString(),
-      };
-      await storage.setUser(newUser);
-      setUser(newUser);
-      return true;
-    } catch (error) {
-      console.error("Login failed:", error);
-      return false;
     }
   };
 
-  const register = async (email: string, _password: string, displayName: string): Promise<boolean> => {
+  const register = async (email: string, password: string, displayName: string): Promise<{ success: boolean; error?: string }> => {
     try {
-      const newUser: User = {
-        id: Date.now().toString(36) + Math.random().toString(36).substr(2),
-        email,
-        displayName,
-        expertise: [],
-        followers: 0,
-        following: 0,
-        createdAt: new Date().toISOString(),
-      };
-      await storage.setUser(newUser);
-      setUser(newUser);
-      return true;
-    } catch (error) {
-      console.error("Registration failed:", error);
-      return false;
+      const result = await api.register(email, password, displayName);
+      setUser(result.user);
+      return { success: true };
+    } catch (error: any) {
+      try {
+        const usersJson = await AsyncStorage.getItem(LOCAL_USERS_KEY);
+        const users = usersJson ? JSON.parse(usersJson) : {};
+        if (users[email.toLowerCase()]) {
+          return { success: false, error: "Email already registered" };
+        }
+        const newUser: User = {
+          id: `local_${Date.now()}`,
+          email: email.toLowerCase(),
+          displayName,
+          avatarUrl: undefined,
+          bio: undefined,
+          followersCount: 0,
+          followingCount: 0,
+        };
+        users[email.toLowerCase()] = { user: newUser, password };
+        await AsyncStorage.setItem(LOCAL_USERS_KEY, JSON.stringify(users));
+        await AsyncStorage.setItem(LOCAL_USER_KEY, JSON.stringify(newUser));
+        await AsyncStorage.setItem("authToken", `local_${Date.now()}`);
+        setUser(newUser);
+        return { success: true };
+      } catch {
+        return { success: false, error: "Registration failed - please try again" };
+      }
     }
   };
 
   const logout = async (): Promise<void> => {
     try {
-      await storage.clearUser();
-      setUser(null);
-    } catch (error) {
-      console.error("Logout failed:", error);
+      await api.logout();
+    } catch {
+      await AsyncStorage.removeItem("authToken");
+      await AsyncStorage.removeItem(LOCAL_USER_KEY);
+    }
+    setUser(null);
+  };
+
+  const updateProfile = async (updates: Partial<User>): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const updatedUser = await api.updateProfile(updates);
+      setUser(updatedUser);
+      return { success: true };
+    } catch (error: any) {
+      if (user) {
+        const updatedUser = { ...user, ...updates };
+        setUser(updatedUser);
+        await AsyncStorage.setItem(LOCAL_USER_KEY, JSON.stringify(updatedUser));
+        const usersJson = await AsyncStorage.getItem(LOCAL_USERS_KEY);
+        if (usersJson && user.email) {
+          const users = JSON.parse(usersJson);
+          if (users[user.email]) {
+            users[user.email].user = updatedUser;
+            await AsyncStorage.setItem(LOCAL_USERS_KEY, JSON.stringify(users));
+          }
+        }
+        return { success: true };
+      }
+      return { success: false, error: "Update failed" };
     }
   };
 
-  const updateProfile = async (updates: Partial<User>): Promise<void> => {
+  const changePassword = async (currentPassword: string, newPassword: string): Promise<{ success: boolean; error?: string }> => {
     try {
-      const updatedUser = await storage.updateUser(updates);
-      if (updatedUser) {
-        setUser(updatedUser);
+      await api.changePassword(currentPassword, newPassword);
+      return { success: true };
+    } catch (error: any) {
+      if (user && user.email) {
+        const usersJson = await AsyncStorage.getItem(LOCAL_USERS_KEY);
+        if (usersJson) {
+          const users = JSON.parse(usersJson);
+          if (users[user.email] && users[user.email].password === currentPassword) {
+            users[user.email].password = newPassword;
+            await AsyncStorage.setItem(LOCAL_USERS_KEY, JSON.stringify(users));
+            return { success: true };
+          }
+        }
+        return { success: false, error: "Current password is incorrect" };
       }
+      return { success: false, error: "Password change failed" };
+    }
+  };
+
+  const refreshUser = async (): Promise<void> => {
+    try {
+      const userData = await api.getMe();
+      setUser(userData);
     } catch (error) {
-      console.error("Failed to update profile:", error);
+      const localUserJson = await AsyncStorage.getItem(LOCAL_USER_KEY);
+      if (localUserJson) {
+        setUser(JSON.parse(localUserJson));
+      }
     }
   };
 
@@ -108,6 +188,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         register,
         logout,
         updateProfile,
+        changePassword,
+        refreshUser,
       }}
     >
       {children}

@@ -6,6 +6,7 @@ import {
   FlatList,
   ViewToken,
   Image,
+  Pressable,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
@@ -123,6 +124,13 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
         { paddingTop: insets.top + Spacing["3xl"], paddingBottom: insets.bottom + Spacing["2xl"] },
       ]}
     >
+      <View style={styles.skipContainer}>
+        <Pressable onPress={onComplete} hitSlop={12} accessibilityLabel="Skip onboarding">
+          <ThemedText type="small" style={{ color: theme.textSecondary }}>
+            {t("common.skip")}
+          </ThemedText>
+        </Pressable>
+      </View>
       <FlatList
         ref={flatListRef}
         data={slides}
@@ -137,7 +145,7 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
       />
       {renderPaginationDots()}
       <View style={styles.buttonContainer}>
-        <Button onPress={handleNext} style={styles.button}>
+        <Button onPress={handleNext} style={styles.button} accessibilityLabel={isLastSlide ? "Get Started" : "Next"}>
           {isLastSlide ? t("onboarding.getStarted") : t("common.next")}
         </Button>
       </View>
@@ -148,6 +156,11 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  skipContainer: {
+    alignItems: "flex-end",
+    paddingHorizontal: Spacing["2xl"],
+    marginBottom: Spacing.md,
   },
   slide: {
     width,

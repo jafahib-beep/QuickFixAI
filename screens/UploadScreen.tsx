@@ -26,7 +26,7 @@ export default function UploadScreen() {
   const { t } = useTranslation();
   const { theme, isDark } = useTheme();
   const navigation = useNavigation();
-  const { addVideo } = useVideos();
+  const { addVideo, suggestTags, generateDescription } = useVideos();
 
   const [videoUri, setVideoUri] = useState<string | null>(null);
   const [title, setTitle] = useState("");
@@ -37,6 +37,8 @@ export default function UploadScreen() {
   const [allowComments, setAllowComments] = useState(true);
   const [isPublishing, setIsPublishing] = useState(false);
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
+  const [isGeneratingTags, setIsGeneratingTags] = useState(false);
+  const [isGeneratingDesc, setIsGeneratingDesc] = useState(false);
 
   React.useLayoutEffect(() => {
     navigation.setOptions({
@@ -128,6 +130,43 @@ export default function UploadScreen() {
     setTags(tags.filter((tag) => tag !== tagToRemove));
   };
 
+  const handleSuggestTags = async () => {
+    if (!title.trim()) {
+      Alert.alert(t("common.error"), t("upload.titleRequired"));
+      return;
+    }
+    setIsGeneratingTags(true);
+    try {
+      const suggested = await suggestTags(title, description, selectedCategory);
+      if (suggested.length > 0) {
+        const newTags = [...new Set([...tags, ...suggested])].slice(0, 8);
+        setTags(newTags);
+      }
+    } catch {
+      Alert.alert(t("common.error"), "Failed to generate tags");
+    } finally {
+      setIsGeneratingTags(false);
+    }
+  };
+
+  const handleGenerateDescription = async () => {
+    if (!title.trim()) {
+      Alert.alert(t("common.error"), t("upload.titleRequired"));
+      return;
+    }
+    setIsGeneratingDesc(true);
+    try {
+      const generated = await generateDescription(title, selectedCategory, tags);
+      if (generated) {
+        setDescription(generated);
+      }
+    } catch {
+      Alert.alert(t("common.error"), "Failed to generate description");
+    } finally {
+      setIsGeneratingDesc(false);
+    }
+  };
+
   const handlePublish = async () => {
     if (!title.trim()) {
       Alert.alert(t("common.error"), t("upload.titleRequired"));
@@ -142,11 +181,11 @@ export default function UploadScreen() {
 
     try {
       await addVideo({
-        uri: videoUri || "",
         title: title.trim(),
         description: description.trim() || undefined,
         category: selectedCategory,
         tags,
+        videoUrl: videoUri || undefined,
         duration: 45,
         commentsEnabled: allowComments,
       });
@@ -228,9 +267,27 @@ export default function UploadScreen() {
       </View>
 
       <View style={styles.section}>
-        <ThemedText type="small" style={styles.label}>
-          {t("upload.descriptionPlaceholder")}
-        </ThemedText>
+        <View style={styles.labelRow}>
+          <ThemedText type="small" style={styles.label}>
+            {t("upload.descriptionPlaceholder")}
+          </ThemedText>
+          <Pressable
+            onPress={handleGenerateDescription}
+            disabled={isGeneratingDesc || !title.trim()}
+            style={[styles.aiButton, { opacity: isGeneratingDesc || !title.trim() ? 0.5 : 1 }]}
+          >
+            {isGeneratingDesc ? (
+              <ActivityIndicator size="small" color={theme.link} />
+            ) : (
+              <>
+                <Feather name="zap" size={14} color={theme.link} />
+                <ThemedText type="caption" style={{ color: theme.link, marginLeft: 4 }}>
+                  AI Generate
+                </ThemedText>
+              </>
+            )}
+          </Pressable>
+        </View>
         <TextInput
           style={[inputStyle, styles.textArea]}
           value={description}
@@ -293,9 +350,27 @@ export default function UploadScreen() {
       </View>
 
       <View style={styles.section}>
-        <ThemedText type="small" style={styles.label}>
-          {t("upload.tags")}
-        </ThemedText>
+        <View style={styles.labelRow}>
+          <ThemedText type="small" style={styles.label}>
+            {t("upload.tags")}
+          </ThemedText>
+          <Pressable
+            onPress={handleSuggestTags}
+            disabled={isGeneratingTags || !title.trim()}
+            style={[styles.aiButton, { opacity: isGeneratingTags || !title.trim() ? 0.5 : 1 }]}
+          >
+            {isGeneratingTags ? (
+              <ActivityIndicator size="small" color={theme.link} />
+            ) : (
+              <>
+                <Feather name="zap" size={14} color={theme.link} />
+                <ThemedText type="caption" style={{ color: theme.link, marginLeft: 4 }}>
+                  AI Suggest
+                </ThemedText>
+              </>
+            )}
+          </Pressable>
+        </View>
         <View style={styles.tagInputRow}>
           <TextInput
             style={[inputStyle, styles.tagInput]}
@@ -353,7 +428,18 @@ const styles = StyleSheet.create({
   },
   label: {
     fontWeight: "600",
+  },
+  labelRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: Spacing.sm,
+  },
+  aiButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs,
   },
   input: {
     height: Spacing.inputHeight,
