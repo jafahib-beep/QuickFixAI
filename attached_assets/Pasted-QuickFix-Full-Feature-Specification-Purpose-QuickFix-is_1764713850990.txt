@@ -1,0 +1,397 @@
+QuickFix – Full Feature Specification
+
+Purpose
+QuickFix is a clean, minimal, fast mobile app for short 30–60 second community videos showing how to fix everyday problems (home, car, electronics, tools, cleaning, etc.). Users can search, watch, save, and upload quick troubleshooting videos. The UI is simple, professional, and user-friendly.
+
+Core Features
+1. User Registration & Login
+
+Email + password registration
+
+Social login (Google & Apple)
+
+Required fields:
+
+Display name
+
+Email
+
+Password
+
+Secure token/session system (JWT or similar)
+
+“Forgot password” and password reset flow
+
+Redirect to onboarding after sign-up
+
+Login UI Copy
+
+Title: “Welcome back”
+
+Buttons: “Log in”, “Continue with Google”, “Continue with Apple”
+
+Link: “Forgot password?”
+
+2. Multilingual Support (Important)
+
+The app MUST support multiple languages.
+
+Supported Languages
+
+English (default)
+
+Swedish
+
+Arabic (RTL layout)
+
+German
+
+French
+
+Russian
+
+Language System Requirements
+
+Language selector in:
+
+Settings
+
+First-time onboarding
+
+All UI text must come from translation files:
+
+/locales/en.json
+
+/locales/sv.json
+
+/locales/ar.json
+
+/locales/de.json
+
+/locales/fr.json
+
+/locales/ru.json
+
+Arabic automatically activates Right-To-Left layout
+
+App should auto-detect device language on first run
+
+User selection overrides and is saved in profile/local storage
+
+Hot switching: no restart required
+
+Acceptance Criteria
+
+Switching language updates all UI instantly
+
+Entire UI (auth, onboarding, upload, player, settings, toolbox) changes language
+
+RTL layout works properly for Arabic
+
+3. Onboarding (3 slides)
+
+When the user signs up for the first time, show a clean, minimal, swipeable intro.
+
+Slides
+
+“Get fast and clear fixes in 30–60 second videos.”
+
+“Save useful guides to your personal Toolbox.”
+
+“Upload your own solutions and help the community.”
+
+Button: “Get started”
+
+4. Profile System
+
+Every user has a clean public profile page.
+
+Profile Contains
+
+Avatar image (upload + crop)
+
+Display name
+
+Short bio (max 150 chars)
+
+Expertise categories (Home, Car, Electronics, Tools, etc.)
+
+Followers / Following count
+
+Tabs:
+
+Uploads
+
+Saved (Toolbox)
+
+Edit Profile Options
+
+Change avatar
+
+Change display name
+
+Change bio
+
+Change expertise categories
+
+Change language
+
+Change password
+
+Delete account
+
+5. Video Upload Flow
+
+Users upload short videos showing how to fix something.
+
+Upload Includes
+
+Choose video file OR record in-app
+
+Maximum length: 60 seconds
+
+Fields:
+
+Title (max 60 chars)
+
+Description (optional, max 300 chars)
+
+Category (required)
+
+Tags (auto-suggested + manual)
+
+Allow comments toggle
+
+Automatic Processing
+
+Auto-compress video
+
+Auto-generate thumbnail
+
+Auto-extract duration
+
+Transcoding to multiple qualities
+
+OpenAI Integration (Important)
+
+Auto-suggest tags from title + description
+
+Optional auto-summary for description
+
+Safety moderation before publishing
+
+Upload UI Copy
+
+Title placeholder: “Short clear title (e.g. Fix leaking tap in 45s)”
+
+Button: “Publish”
+
+6. Home Feed
+
+The main browsing area.
+
+Sections
+
+Recommended
+
+New
+
+Popular
+
+Each video card displays:
+
+Thumbnail
+
+Title
+
+Creator avatar + name
+
+Short tags
+
+Duration
+
+7. Video Player View
+
+A full-screen video player like TikTok/Reels but more serious.
+
+Shows
+
+Video
+
+Title
+
+Author + avatar
+
+Tags
+
+Description
+
+Like button
+
+Save to Toolbox button
+
+Share button
+
+Report button
+
+Comments (if enabled)
+
+Behavior
+
+Autoplay with mute
+
+Tap to unmute
+
+Swipe down or back to exit
+
+8. Search System
+Basic Search
+
+Search bar at top of home screen
+
+Matches: title, tags, description
+
+Advanced Search (OpenAI Integration)
+
+Typing gives autosuggested queries
+
+Semantic search if no exact match
+
+Fuzzy matching (“lääckande kran” still finds “leaking tap repair”)
+
+Search Requirements
+
+Return accurate, ranked results
+
+Display thumbnail + title + duration
+
+Filter by category
+
+Filter by language (optional)
+
+9. Toolbox (Saved Videos)
+
+Users can save videos to watch later.
+
+Features
+
+Save/unsave
+
+Saved list stored under profile
+
+Optional folders (MVP can skip folders)
+
+Persistent storage across sessions
+
+10. Basic Interactions
+
+Like videos
+
+Save videos
+
+Share videos
+
+Simple comments (text-only)
+
+Report inappropriate content
+
+11. Settings Screen
+
+Change language
+
+Manage account
+
+Change password
+
+Notification toggles
+
+Privacy + blocked users
+
+Logout
+
+Technical Requirements
+Backend
+
+Node.js / Python
+
+PostgreSQL
+
+S3-style storage for videos
+
+CDN for streaming
+
+ffmpeg for transcoding
+
+JWT authentication
+
+OpenAI Integration
+
+Tag suggestions
+
+Autosuggest search
+
+Semantic search embeddings
+
+Moderation for uploads & comments
+
+API Endpoints
+
+POST /auth/register
+
+POST /auth/login
+
+POST /auth/reset
+
+GET /profile
+
+POST /profile/update
+
+GET /feed
+
+GET /video/:id
+
+POST /upload
+
+POST /upload/complete
+
+POST /video/:id/like
+
+POST /video/:id/save
+
+GET /search?q=…
+
+POST /ai/tags
+
+POST /ai/autosuggest
+
+Acceptance Criteria (MVP)
+
+User can register, login, and edit profile
+
+User can switch language → app updates instantly
+
+User can upload a video and see it in feed
+
+User receives AI tag suggestions
+
+Search returns correct results
+
+Video player works smoothly
+
+User can like & save videos
+
+Home feed shows recommended, new, popular
+
+UI Style Requirements
+
+Clean
+
+White background
+
+Dark text
+
+Modern, simple, minimal
+
+No noisy animations
+
+Consistent spacing
