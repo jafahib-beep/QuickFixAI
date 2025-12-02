@@ -1,19 +1,20 @@
 import React from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { useTranslation } from "react-i18next";
 
-import HomeScreen from "@/screens/HomeScreen";
-import { HeaderTitle } from "@/components/HeaderTitle";
+import ToolboxScreen from "@/screens/ToolboxScreen";
 import { useTheme } from "@/hooks/useTheme";
 import { getCommonScreenOptions } from "./screenOptions";
 
-export type HomeStackParamList = {
-  Home: undefined;
+export type ToolboxStackParamList = {
+  Toolbox: undefined;
 };
 
-const Stack = createNativeStackNavigator<HomeStackParamList>();
+const Stack = createNativeStackNavigator<ToolboxStackParamList>();
 
-export default function HomeStackNavigator() {
+export default function ToolboxStackNavigator() {
   const { theme, isDark } = useTheme();
+  const { t } = useTranslation();
 
   return (
     <Stack.Navigator
@@ -22,10 +23,10 @@ export default function HomeStackNavigator() {
       }}
     >
       <Stack.Screen
-        name="Home"
-        component={HomeScreen}
+        name="Toolbox"
+        component={ToolboxScreen}
         options={{
-          headerTitle: () => <HeaderTitle title="QuickFix" />,
+          title: t("toolbox.title"),
         }}
       />
     </Stack.Navigator>

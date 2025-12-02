@@ -1,33 +1,74 @@
-import React from "react";
-import { StyleSheet } from "react-native";
+import React, { useEffect, useState } from "react";
+import { StyleSheet, View, ActivityIndicator } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
+import { I18nextProvider } from "react-i18next";
 
-import MainTabNavigator from "@/navigation/MainTabNavigator";
+import RootNavigator from "@/navigation/RootNavigator";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { VideosProvider } from "@/contexts/VideosContext";
+import { useTheme } from "@/hooks/useTheme";
+import i18n, { initializeI18n } from "@/utils/i18n";
+
+function AppContent() {
+  const { theme } = useTheme();
+  const [isI18nReady, setIsI18nReady] = useState(false);
+
+  useEffect(() => {
+    const init = async () => {
+      await initializeI18n();
+      setIsI18nReady(true);
+    };
+    init();
+  }, []);
+
+  if (!isI18nReady) {
+    return (
+      <View style={[styles.loading, { backgroundColor: theme.backgroundRoot }]}>
+        <ActivityIndicator size="large" color={theme.link} />
+      </View>
+    );
+  }
+
+  return (
+    <I18nextProvider i18n={i18n}>
+      <AuthProvider>
+        <VideosProvider>
+          <NavigationContainer>
+            <RootNavigator />
+          </NavigationContainer>
+          <StatusBar style="auto" />
+        </VideosProvider>
+      </AuthProvider>
+    </I18nextProvider>
+  );
+}
 
 export default function App() {
   return (
-  <ErrorBoundary>
-    <SafeAreaProvider>
+    <ErrorBoundary>
+      <SafeAreaProvider>
         <GestureHandlerRootView style={styles.root}>
           <KeyboardProvider>
-            <NavigationContainer>
-              <MainTabNavigator />
-            </NavigationContainer>
-            <StatusBar style="auto" />
+            <AppContent />
           </KeyboardProvider>
         </GestureHandlerRootView>
       </SafeAreaProvider>
-  </ErrorBoundary>
+    </ErrorBoundary>
   );
 }
 
 const styles = StyleSheet.create({
   root: {
     flex: 1,
+  },
+  loading: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });

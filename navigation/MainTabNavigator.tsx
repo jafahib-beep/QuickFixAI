@@ -2,17 +2,50 @@ import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Feather } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
-import { Platform, StyleSheet } from "react-native";
-import HomeStackNavigator from "@/navigation/HomeStackNavigator";
-import ProfileStackNavigator from "@/navigation/ProfileStackNavigator";
+import { Platform, StyleSheet, Pressable, View } from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+
+import HomeStackNavigator from "./HomeStackNavigator";
+import SearchStackNavigator from "./SearchStackNavigator";
+import ToolboxStackNavigator from "./ToolboxStackNavigator";
+import ProfileStackNavigator from "./ProfileStackNavigator";
 import { useTheme } from "@/hooks/useTheme";
+import { RootStackParamList } from "./RootNavigator";
+import { Spacing, BorderRadius } from "@/constants/theme";
 
 export type MainTabParamList = {
   HomeTab: undefined;
+  SearchTab: undefined;
+  UploadTab: undefined;
+  ToolboxTab: undefined;
   ProfileTab: undefined;
 };
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
+
+function UploadPlaceholder() {
+  return null;
+}
+
+function UploadButton() {
+  const { theme } = useTheme();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+
+  return (
+    <View style={styles.uploadButtonContainer}>
+      <Pressable
+        onPress={() => navigation.navigate("Upload")}
+        style={({ pressed }) => [
+          styles.uploadButton,
+          { backgroundColor: theme.text, opacity: pressed ? 0.8 : 1 },
+        ]}
+      >
+        <Feather name="plus" size={24} color={theme.backgroundRoot} />
+      </Pressable>
+    </View>
+  );
+}
 
 export default function MainTabNavigator() {
   const { theme, isDark } = useTheme();
@@ -54,6 +87,39 @@ export default function MainTabNavigator() {
         }}
       />
       <Tab.Screen
+        name="SearchTab"
+        component={SearchStackNavigator}
+        options={{
+          title: "Search",
+          tabBarIcon: ({ color, size }) => (
+            <Feather name="search" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="UploadTab"
+        component={UploadPlaceholder}
+        options={{
+          title: "",
+          tabBarIcon: () => <UploadButton />,
+        }}
+        listeners={{
+          tabPress: (e) => {
+            e.preventDefault();
+          },
+        }}
+      />
+      <Tab.Screen
+        name="ToolboxTab"
+        component={ToolboxStackNavigator}
+        options={{
+          title: "Toolbox",
+          tabBarIcon: ({ color, size }) => (
+            <Feather name="bookmark" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
         name="ProfileTab"
         component={ProfileStackNavigator}
         options={{
@@ -66,3 +132,22 @@ export default function MainTabNavigator() {
     </Tab.Navigator>
   );
 }
+
+const styles = StyleSheet.create({
+  uploadButtonContainer: {
+    position: "absolute",
+    bottom: Spacing.sm,
+  },
+  uploadButton: {
+    width: 48,
+    height: 48,
+    borderRadius: BorderRadius.full,
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+});

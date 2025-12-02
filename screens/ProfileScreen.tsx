@@ -1,194 +1,297 @@
-import { useState } from "react";
-import { StyleSheet, View, TextInput } from "react-native";
-import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import React, { useState } from "react";
+import { View, StyleSheet, Pressable, Image, FlatList, Dimensions } from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useTranslation } from "react-i18next";
+import { Feather } from "@expo/vector-icons";
 
-import { ScreenKeyboardAwareScrollView } from "@/components/ScreenKeyboardAwareScrollView";
 import { ThemedText } from "@/components/ThemedText";
-import { Button } from "@/components/Button";
+import { ScreenScrollView } from "@/components/ScreenScrollView";
+import { Spacing, BorderRadius } from "@/constants/theme";
 import { useTheme } from "@/hooks/useTheme";
-import { Spacing, BorderRadius, Typography } from "@/constants/theme";
-import Spacer from "@/components/Spacer";
-import type { ProfileStackParamList } from "@/navigation/ProfileStackNavigator";
+import { useAuth } from "@/contexts/AuthContext";
+import { useVideos } from "@/contexts/VideosContext";
+import { RootStackParamList } from "@/navigation/RootNavigator";
+import { Video } from "@/utils/storage";
 
-type ProfileScreenProps = {
-  navigation: NativeStackNavigationProp<ProfileStackParamList, "Profile">;
-};
+type ProfileScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
-export default function ProfileScreen({ navigation }: ProfileScreenProps) {
-  const { theme, isDark } = useTheme();
+const { width } = Dimensions.get("window");
+const GRID_SPACING = Spacing.sm;
+const GRID_COLUMNS = 2;
+const CARD_WIDTH = (width - Spacing.xl * 2 - GRID_SPACING * (GRID_COLUMNS - 1)) / GRID_COLUMNS;
 
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+export default function ProfileScreen() {
+  const { t } = useTranslation();
+  const { theme } = useTheme();
+  const navigation = useNavigation<ProfileScreenNavigationProp>();
+  const { user } = useAuth();
+  const { getVideosByAuthor, getSavedVideos } = useVideos();
 
-  const handleSubmit = () => {
-    console.log("Form submitted:", { name, email, password });
+  const [activeTab, setActiveTab] = useState<"uploads" | "saved">("uploads");
+
+  const userVideos = user ? getVideosByAuthor(user.id) : [];
+  const savedVideos = getSavedVideos();
+  const displayVideos = activeTab === "uploads" ? userVideos : savedVideos;
+
+  const handleVideoPress = (video: Video) => {
+    navigation.navigate("VideoPlayer", { video });
   };
 
-  const inputStyle = [
-    styles.input,
-    {
-      backgroundColor: theme.backgroundDefault,
-      color: theme.text,
-    },
-  ];
+  const renderVideoGrid = () => {
+    if (displayVideos.length === 0) {
+      return (
+        <View style={styles.emptyGrid}>
+          <ThemedText type="body" style={{ color: theme.textSecondary }}>
+            {activeTab === "uploads" ? t("profile.noUploads") : t("toolbox.empty")}
+          </ThemedText>
+        </View>
+      );
+    }
+
+    return (
+      <View style={styles.grid}>
+        {displayVideos.map((video) => (
+          <Pressable
+            key={video.id}
+            onPress={() => handleVideoPress(video)}
+            style={({ pressed }) => [
+              styles.gridItem,
+              { opacity: pressed ? 0.8 : 1 },
+            ]}
+          >
+            <View style={[styles.gridThumbnail, { backgroundColor: theme.backgroundSecondary }]}>
+              <Feather name="play-circle" size={24} color={theme.textSecondary} />
+            </View>
+            <ThemedText type="caption" numberOfLines={1} style={styles.gridTitle}>
+              {video.title}
+            </ThemedText>
+          </Pressable>
+        ))}
+      </View>
+    );
+  };
 
   return (
-    <ScreenKeyboardAwareScrollView>
-      <View style={styles.section}>
-        <ThemedText type="h1">Heading 1</ThemedText>
-        <ThemedText type="small" style={styles.meta}>
-          32px • Bold
+    <ScreenScrollView contentContainerStyle={styles.content}>
+      <View style={styles.profileHeader}>
+        <Pressable
+          onPress={() => navigation.navigate("EditProfile")}
+          style={({ pressed }) => [
+            styles.avatarContainer,
+            { opacity: pressed ? 0.8 : 1 },
+          ]}
+        >
+          {user?.avatar ? (
+            <Image source={{ uri: user.avatar }} style={styles.avatar} />
+          ) : (
+            <View style={[styles.avatar, { backgroundColor: theme.backgroundSecondary }]}>
+              <ThemedText type="h1">
+                {user?.displayName?.charAt(0).toUpperCase() || "?"}
+              </ThemedText>
+            </View>
+          )}
+          <View style={[styles.editBadge, { backgroundColor: theme.link }]}>
+            <Feather name="edit-2" size={12} color="#FFFFFF" />
+          </View>
+        </Pressable>
+
+        <ThemedText type="h2" style={styles.displayName}>
+          {user?.displayName || "User"}
         </ThemedText>
+
+        {user?.bio ? (
+          <ThemedText type="body" style={[styles.bio, { color: theme.textSecondary }]}>
+            {user.bio}
+          </ThemedText>
+        ) : null}
+
+        {user?.expertise && user.expertise.length > 0 ? (
+          <View style={styles.expertiseContainer}>
+            {user.expertise.map((item, index) => (
+              <View
+                key={index}
+                style={[styles.expertiseTag, { backgroundColor: theme.backgroundSecondary }]}
+              >
+                <ThemedText type="caption">{item}</ThemedText>
+              </View>
+            ))}
+          </View>
+        ) : null}
+
+        <View style={styles.statsRow}>
+          <View style={styles.stat}>
+            <ThemedText type="h4">{user?.followers || 0}</ThemedText>
+            <ThemedText type="small" style={{ color: theme.textSecondary }}>
+              {t("profile.followers")}
+            </ThemedText>
+          </View>
+          <View style={[styles.statDivider, { backgroundColor: theme.border }]} />
+          <View style={styles.stat}>
+            <ThemedText type="h4">{user?.following || 0}</ThemedText>
+            <ThemedText type="small" style={{ color: theme.textSecondary }}>
+              {t("profile.following")}
+            </ThemedText>
+          </View>
+        </View>
+
+        <Pressable
+          onPress={() => navigation.navigate("EditProfile")}
+          style={({ pressed }) => [
+            styles.editButton,
+            {
+              backgroundColor: theme.backgroundDefault,
+              borderColor: theme.border,
+              opacity: pressed ? 0.8 : 1,
+            },
+          ]}
+        >
+          <ThemedText type="body" style={{ fontWeight: "600" }}>
+            {t("profile.editProfile")}
+          </ThemedText>
+        </Pressable>
       </View>
 
-      <View style={styles.section}>
-        <ThemedText type="h2">Heading 2</ThemedText>
-        <ThemedText type="small" style={styles.meta}>
-          28px • Bold
-        </ThemedText>
+      <View style={styles.tabsContainer}>
+        <Pressable
+          onPress={() => setActiveTab("uploads")}
+          style={[
+            styles.tab,
+            activeTab === "uploads" && { borderBottomColor: theme.text, borderBottomWidth: 2 },
+          ]}
+        >
+          <ThemedText
+            type="body"
+            style={{
+              fontWeight: activeTab === "uploads" ? "600" : "400",
+              color: activeTab === "uploads" ? theme.text : theme.textSecondary,
+            }}
+          >
+            {t("profile.uploads")}
+          </ThemedText>
+        </Pressable>
+        <Pressable
+          onPress={() => setActiveTab("saved")}
+          style={[
+            styles.tab,
+            activeTab === "saved" && { borderBottomColor: theme.text, borderBottomWidth: 2 },
+          ]}
+        >
+          <ThemedText
+            type="body"
+            style={{
+              fontWeight: activeTab === "saved" ? "600" : "400",
+              color: activeTab === "saved" ? theme.text : theme.textSecondary,
+            }}
+          >
+            {t("profile.saved")}
+          </ThemedText>
+        </Pressable>
       </View>
 
-      <View style={styles.section}>
-        <ThemedText type="h3">Heading 3</ThemedText>
-        <ThemedText type="small" style={styles.meta}>
-          24px • Semi-Bold
-        </ThemedText>
-      </View>
-
-      <View style={styles.section}>
-        <ThemedText type="h4">Heading 4</ThemedText>
-        <ThemedText type="small" style={styles.meta}>
-          20px • Semi-Bold
-        </ThemedText>
-      </View>
-
-      <View style={styles.section}>
-        <ThemedText type="body">
-          Body text - This is the default text style for paragraphs and general
-          content.
-        </ThemedText>
-        <ThemedText type="small" style={styles.meta}>
-          16px • Regular
-        </ThemedText>
-      </View>
-
-      <View style={styles.section}>
-        <ThemedText type="small">
-          Small text - Used for captions, labels, and secondary information.
-        </ThemedText>
-        <ThemedText type="small" style={styles.meta}>
-          14px • Regular
-        </ThemedText>
-      </View>
-
-      <View style={styles.section}>
-        <ThemedText type="link">Link text - Interactive elements</ThemedText>
-        <ThemedText type="small" style={styles.meta}>
-          16px • Regular • Colored
-        </ThemedText>
-      </View>
-
-      <Spacer height={Spacing["4xl"]} />
-
-      <View style={styles.fieldContainer}>
-        <ThemedText type="small" style={styles.label}>
-          Name
-        </ThemedText>
-        <TextInput
-          style={inputStyle}
-          value={name}
-          onChangeText={setName}
-          placeholder="Enter your name"
-          placeholderTextColor={isDark ? "#9BA1A6" : "#687076"}
-          autoCapitalize="words"
-          returnKeyType="next"
-        />
-      </View>
-
-      <Spacer height={Spacing.lg} />
-
-      <View style={styles.fieldContainer}>
-        <ThemedText type="small" style={styles.label}>
-          Email
-        </ThemedText>
-        <TextInput
-          style={inputStyle}
-          value={email}
-          onChangeText={setEmail}
-          placeholder="your.email@example.com"
-          placeholderTextColor={isDark ? "#9BA1A6" : "#687076"}
-          keyboardType="email-address"
-          autoCapitalize="none"
-          returnKeyType="next"
-        />
-      </View>
-
-      <Spacer height={Spacing.lg} />
-
-      <View style={styles.fieldContainer}>
-        <ThemedText type="small" style={styles.label}>
-          Password
-        </ThemedText>
-        <TextInput
-          style={inputStyle}
-          value={password}
-          onChangeText={setPassword}
-          placeholder="Enter a password"
-          placeholderTextColor={isDark ? "#9BA1A6" : "#687076"}
-          secureTextEntry
-          autoCapitalize="none"
-          returnKeyType="next"
-        />
-      </View>
-
-      <Spacer height={Spacing.lg} />
-
-      <Button onPress={handleSubmit}>Submit Form</Button>
-
-      <Spacer height={Spacing["2xl"]} />
-
-      <ThemedText type="h3" style={styles.sectionTitle}>
-        Testing
-      </ThemedText>
-      <Spacer height={Spacing.md} />
-      <Button
-        onPress={() => navigation.navigate("Crash")}
-        style={styles.crashButton}
-      >
-        Crash App
-      </Button>
-    </ScreenKeyboardAwareScrollView>
+      {renderVideoGrid()}
+    </ScreenScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  section: {
-    marginBottom: Spacing["3xl"],
+  content: {
+    paddingBottom: Spacing["5xl"],
   },
-  meta: {
-    opacity: 0.5,
-    marginTop: Spacing.sm,
+  profileHeader: {
+    alignItems: "center",
+    paddingVertical: Spacing.xl,
   },
-  fieldContainer: {
+  avatarContainer: {
+    position: "relative",
+    marginBottom: Spacing.lg,
+  },
+  avatar: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  editBadge: {
+    position: "absolute",
+    bottom: 0,
+    right: 0,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  displayName: {
+    marginBottom: Spacing.xs,
+  },
+  bio: {
+    textAlign: "center",
+    maxWidth: 280,
+    marginBottom: Spacing.lg,
+  },
+  expertiseContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "center",
+    gap: Spacing.xs,
+    marginBottom: Spacing.lg,
+  },
+  expertiseTag: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs,
+    borderRadius: BorderRadius.full,
+  },
+  statsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: Spacing.xl,
+  },
+  stat: {
+    alignItems: "center",
+    paddingHorizontal: Spacing["2xl"],
+  },
+  statDivider: {
+    width: 1,
+    height: 32,
+  },
+  editButton: {
+    paddingHorizontal: Spacing["3xl"],
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.sm,
+    borderWidth: 1,
+  },
+  tabsContainer: {
+    flexDirection: "row",
+    marginBottom: Spacing.xl,
+  },
+  tab: {
+    flex: 1,
+    alignItems: "center",
+    paddingVertical: Spacing.md,
+  },
+  grid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: GRID_SPACING,
+  },
+  gridItem: {
+    width: CARD_WIDTH,
+  },
+  gridThumbnail: {
     width: "100%",
+    aspectRatio: 16 / 9,
+    borderRadius: BorderRadius.sm,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: Spacing.xs,
   },
-  label: {
-    marginBottom: Spacing.sm,
-    fontWeight: "600",
-    opacity: 0.8,
+  gridTitle: {
+    paddingHorizontal: Spacing.xs,
   },
-  input: {
-    height: Spacing.inputHeight,
-    borderWidth: 0,
-    borderRadius: BorderRadius.md,
-    paddingHorizontal: Spacing.lg,
-    fontSize: Typography.body.fontSize,
-  },
-  sectionTitle: {
-    marginTop: Spacing.xl,
-  },
-  crashButton: {
-    backgroundColor: "#FF3B30",
+  emptyGrid: {
+    alignItems: "center",
+    paddingVertical: Spacing["4xl"],
   },
 });

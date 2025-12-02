@@ -7,6 +7,7 @@ import {
   ScrollView,
   Text,
   Modal,
+  Image,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { ThemedView } from "@/components/ThemedView";
@@ -58,12 +59,18 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
       ) : null}
 
       <View style={styles.content}>
-        <ThemedText type="h1" style={styles.title}>
-          Something went wrong
+        <Image
+          source={require("@/assets/images/icon.png")}
+          style={styles.icon}
+          resizeMode="contain"
+        />
+        
+        <ThemedText type="h2" style={styles.title}>
+          Oops! QuickFix hit a snag
         </ThemedText>
 
-        <ThemedText type="body" style={styles.message}>
-          Please reload the app to continue.
+        <ThemedText type="body" style={[styles.message, { color: theme.textSecondary }]}>
+          Something unexpected happened. Let's get you back on track.
         </ThemedText>
 
         <Pressable
@@ -71,7 +78,7 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
           style={({ pressed }) => [
             styles.button,
             {
-              backgroundColor: theme.link,
+              backgroundColor: theme.text,
               opacity: pressed ? 0.9 : 1,
               transform: [{ scale: pressed ? 0.98 : 1 }],
             },
@@ -79,9 +86,9 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
         >
           <ThemedText
             type="body"
-            style={[styles.buttonText, { color: theme.buttonText }]}
+            style={[styles.buttonText, { color: theme.backgroundRoot }]}
           >
-            Try Again
+            Restart QuickFix
           </ThemedText>
         </Pressable>
       </View>
@@ -96,7 +103,7 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
           <View style={styles.modalOverlay}>
             <ThemedView style={styles.modalContainer}>
               <View style={styles.modalHeader}>
-                <ThemedText type="h2" style={styles.modalTitle}>
+                <ThemedText type="h3" style={styles.modalTitle}>
                   Error Details
                 </ThemedText>
                 <Pressable
@@ -157,16 +164,18 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: Spacing.lg,
     width: "100%",
-    maxWidth: 600,
+    maxWidth: 320,
+  },
+  icon: {
+    width: 80,
+    height: 80,
+    marginBottom: Spacing.lg,
   },
   title: {
     textAlign: "center",
-    lineHeight: 40,
   },
   message: {
     textAlign: "center",
-    opacity: 0.7,
-    lineHeight: 24,
   },
   topButton: {
     position: "absolute",
@@ -182,9 +191,9 @@ const styles = StyleSheet.create({
   },
   button: {
     paddingVertical: Spacing.lg,
-    borderRadius: BorderRadius.md,
-    paddingHorizontal: Spacing["2xl"],
-    minWidth: 200,
+    borderRadius: BorderRadius.sm,
+    paddingHorizontal: Spacing["3xl"],
+    marginTop: Spacing.lg,
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
@@ -240,7 +249,6 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 12,
-    lineHeight: 18,
     width: "100%",
   },
 });
