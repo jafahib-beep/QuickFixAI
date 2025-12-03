@@ -8,6 +8,7 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
 import HomeStackNavigator from "./HomeStackNavigator";
 import SearchStackNavigator from "./SearchStackNavigator";
+import CommunityStackNavigator from "./CommunityStackNavigator";
 import ToolboxStackNavigator from "./ToolboxStackNavigator";
 import ProfileStackNavigator from "./ProfileStackNavigator";
 import { useTheme } from "@/hooks/useTheme";
@@ -18,6 +19,7 @@ export type MainTabParamList = {
   HomeTab: undefined;
   SearchTab: undefined;
   UploadTab: undefined;
+  CommunityTab: undefined;
   ToolboxTab: undefined;
   ProfileTab: undefined;
 };
@@ -107,6 +109,16 @@ export default function MainTabNavigator() {
           tabPress: (e) => {
             e.preventDefault();
           },
+        }}
+      />
+      <Tab.Screen
+        name="CommunityTab"
+        component={CommunityStackNavigator}
+        options={{
+          title: "Community",
+          tabBarIcon: ({ color, size }) => (
+            <Feather name="users" size={size} color={color} />
+          ),
         }}
       />
       <Tab.Screen

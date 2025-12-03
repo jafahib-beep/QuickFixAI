@@ -189,5 +189,40 @@
     "title": "Oops! QuickFix hit a snag",
     "message": "Something unexpected happened. Let's get you back on track.",
     "button": "Restart QuickFix"
+  },
+  "community": {
+    "title": "Community",
+    "askCommunity": "Ask the Community",
+    "createPost": "Post a Problem",
+    "createPostHint": "Describe your issue and get help from the community",
+    "postTitle": "Title",
+    "titlePlaceholder": "What's the problem? (e.g., Faucet won't stop dripping)",
+    "titleRequired": "Title is required",
+    "titleTooShort": "Title must be at least 10 characters",
+    "postDescription": "Description",
+    "descriptionPlaceholder": "Describe your problem in detail. Include what you've already tried...",
+    "descriptionRequired": "Description is required",
+    "descriptionTooShort": "Description must be at least 20 characters",
+    "category": "Category",
+    "categoryRequired": "Please select a category",
+    "imageUrl": "Image URL",
+    "imageUrlPlaceholder": "https://example.com/image.jpg",
+    "submitPost": "Submit Post",
+    "createPostError": "Failed to create post. Please try again.",
+    "noPosts": "No posts yet",
+    "noPostsHint": "Be the first to ask a question!",
+    "comments": "Comments",
+    "noComments": "No comments yet. Be the first to help!",
+    "writeComment": "Write a helpful comment...",
+    "commentError": "Failed to post comment",
+    "solution": "Solution",
+    "markSolution": "Mark as solution",
+    "markSolutionError": "Failed to mark as solution",
+    "postNotFound": "Post not found",
+    "status": {
+      "open": "Open",
+      "answered": "Answered",
+      "solved": "Solved"
+    }
   }
 }

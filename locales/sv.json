@@ -189,5 +189,40 @@
     "title": "Hoppsan! QuickFix stötte på ett problem",
     "message": "Något oväntat hände. Låt oss få dig tillbaka på rätt spår.",
     "button": "Starta om QuickFix"
+  },
+  "community": {
+    "title": "Community",
+    "askCommunity": "Fråga communityn",
+    "createPost": "Posta ett problem",
+    "createPostHint": "Beskriv ditt problem och få hjälp från communityn",
+    "postTitle": "Titel",
+    "titlePlaceholder": "Vad är problemet? (t.ex. Kranen slutar inte droppa)",
+    "titleRequired": "Titel krävs",
+    "titleTooShort": "Titeln måste vara minst 10 tecken",
+    "postDescription": "Beskrivning",
+    "descriptionPlaceholder": "Beskriv ditt problem i detalj. Inkludera vad du redan provat...",
+    "descriptionRequired": "Beskrivning krävs",
+    "descriptionTooShort": "Beskrivningen måste vara minst 20 tecken",
+    "category": "Kategori",
+    "categoryRequired": "Välj en kategori",
+    "imageUrl": "Bild-URL",
+    "imageUrlPlaceholder": "https://exempel.se/bild.jpg",
+    "submitPost": "Posta",
+    "createPostError": "Kunde inte skapa inlägg. Försök igen.",
+    "noPosts": "Inga inlägg än",
+    "noPostsHint": "Bli den första att ställa en fråga!",
+    "comments": "Kommentarer",
+    "noComments": "Inga kommentarer än. Bli den första att hjälpa!",
+    "writeComment": "Skriv en hjälpsam kommentar...",
+    "commentError": "Kunde inte posta kommentar",
+    "solution": "Lösning",
+    "markSolution": "Markera som lösning",
+    "markSolutionError": "Kunde inte markera som lösning",
+    "postNotFound": "Inlägg hittades inte",
+    "status": {
+      "open": "Öppen",
+      "answered": "Besvarad",
+      "solved": "Löst"
+    }
   }
 }

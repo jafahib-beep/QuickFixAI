@@ -14,6 +14,8 @@ import LanguagePickerScreen from "@/screens/LanguagePickerScreen";
 import CategoryFeedScreen from "@/screens/CategoryFeedScreen";
 import TagFeedScreen from "@/screens/TagFeedScreen";
 import CategoriesScreen from "@/screens/CategoriesScreen";
+import CommunityPostDetailScreen from "@/screens/CommunityPostDetailScreen";
+import CreatePostScreen from "@/screens/CreatePostScreen";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/hooks/useTheme";
 import { getCommonScreenOptions } from "./screenOptions";
@@ -33,6 +35,8 @@ export type RootStackParamList = {
   CategoryFeed: { categoryKey: string; categoryLabel: string };
   TagFeed: { tag: string };
   Categories: undefined;
+  CommunityPostDetail: { postId: string };
+  CreatePost: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -152,6 +156,25 @@ export default function RootNavigator() {
             name="Categories"
             component={CategoriesScreen}
             options={{
+              ...getCommonScreenOptions({ theme, isDark, transparent: false }),
+              headerShown: true,
+              title: "",
+            }}
+          />
+          <Stack.Screen
+            name="CommunityPostDetail"
+            component={CommunityPostDetailScreen}
+            options={{
+              ...getCommonScreenOptions({ theme, isDark, transparent: false }),
+              headerShown: true,
+              title: "",
+            }}
+          />
+          <Stack.Screen
+            name="CreatePost"
+            component={CreatePostScreen}
+            options={{
+              presentation: "modal",
               ...getCommonScreenOptions({ theme, isDark, transparent: false }),
               headerShown: true,
               title: "",

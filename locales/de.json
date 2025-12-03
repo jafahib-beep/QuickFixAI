@@ -189,5 +189,40 @@
     "title": "Hoppla! QuickFix hatte ein Problem",
     "message": "Etwas Unerwartetes ist passiert. Lassen Sie uns Sie wieder auf Kurs bringen.",
     "button": "QuickFix neu starten"
+  },
+  "community": {
+    "title": "Community",
+    "askCommunity": "Frag die Community",
+    "createPost": "Problem posten",
+    "createPostHint": "Beschreiben Sie Ihr Problem und erhalten Sie Hilfe von der Community",
+    "postTitle": "Titel",
+    "titlePlaceholder": "Was ist das Problem? (z.B. Wasserhahn tropft ständig)",
+    "titleRequired": "Titel ist erforderlich",
+    "titleTooShort": "Der Titel muss mindestens 10 Zeichen haben",
+    "postDescription": "Beschreibung",
+    "descriptionPlaceholder": "Beschreiben Sie Ihr Problem im Detail. Was haben Sie bereits versucht...",
+    "descriptionRequired": "Beschreibung ist erforderlich",
+    "descriptionTooShort": "Die Beschreibung muss mindestens 20 Zeichen haben",
+    "category": "Kategorie",
+    "categoryRequired": "Bitte wählen Sie eine Kategorie",
+    "imageUrl": "Bild-URL",
+    "imageUrlPlaceholder": "https://beispiel.de/bild.jpg",
+    "submitPost": "Posten",
+    "createPostError": "Beitrag konnte nicht erstellt werden. Bitte erneut versuchen.",
+    "noPosts": "Noch keine Beiträge",
+    "noPostsHint": "Seien Sie der Erste, der eine Frage stellt!",
+    "comments": "Kommentare",
+    "noComments": "Noch keine Kommentare. Seien Sie der Erste, der hilft!",
+    "writeComment": "Schreiben Sie einen hilfreichen Kommentar...",
+    "commentError": "Kommentar konnte nicht gepostet werden",
+    "solution": "Lösung",
+    "markSolution": "Als Lösung markieren",
+    "markSolutionError": "Konnte nicht als Lösung markieren",
+    "postNotFound": "Beitrag nicht gefunden",
+    "status": {
+      "open": "Offen",
+      "answered": "Beantwortet",
+      "solved": "Gelöst"
+    }
   }
 }

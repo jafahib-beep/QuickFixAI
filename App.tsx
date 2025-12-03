@@ -11,6 +11,7 @@ import RootNavigator from "@/navigation/RootNavigator";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { VideosProvider } from "@/contexts/VideosContext";
+import { CommunityProvider } from "@/contexts/CommunityContext";
 import { useTheme } from "@/hooks/useTheme";
 import i18n, { initializeI18n } from "@/utils/i18n";
 
@@ -38,10 +39,12 @@ function AppContent() {
     <I18nextProvider i18n={i18n}>
       <AuthProvider>
         <VideosProvider>
-          <NavigationContainer>
-            <RootNavigator />
-          </NavigationContainer>
-          <StatusBar style="auto" />
+          <CommunityProvider>
+            <NavigationContainer>
+              <RootNavigator />
+            </NavigationContainer>
+            <StatusBar style="auto" />
+          </CommunityProvider>
         </VideosProvider>
       </AuthProvider>
     </I18nextProvider>

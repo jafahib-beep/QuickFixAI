@@ -189,5 +189,40 @@
     "title": "عذراً! واجه QuickFix مشكلة",
     "message": "حدث شيء غير متوقع. دعنا نعيدك إلى المسار الصحيح.",
     "button": "إعادة تشغيل QuickFix"
+  },
+  "community": {
+    "title": "المجتمع",
+    "askCommunity": "اسأل المجتمع",
+    "createPost": "انشر مشكلة",
+    "createPostHint": "صف مشكلتك واحصل على مساعدة من المجتمع",
+    "postTitle": "العنوان",
+    "titlePlaceholder": "ما هي المشكلة؟ (مثال: الصنبور لا يتوقف عن التقطير)",
+    "titleRequired": "العنوان مطلوب",
+    "titleTooShort": "يجب أن يكون العنوان 10 أحرف على الأقل",
+    "postDescription": "الوصف",
+    "descriptionPlaceholder": "صف مشكلتك بالتفصيل. اذكر ما جربته...",
+    "descriptionRequired": "الوصف مطلوب",
+    "descriptionTooShort": "يجب أن يكون الوصف 20 حرفًا على الأقل",
+    "category": "الفئة",
+    "categoryRequired": "الرجاء اختيار فئة",
+    "imageUrl": "رابط الصورة",
+    "imageUrlPlaceholder": "https://example.com/image.jpg",
+    "submitPost": "نشر",
+    "createPostError": "فشل في إنشاء المنشور. حاول مرة أخرى.",
+    "noPosts": "لا توجد منشورات بعد",
+    "noPostsHint": "كن أول من يطرح سؤالاً!",
+    "comments": "التعليقات",
+    "noComments": "لا توجد تعليقات بعد. كن أول من يساعد!",
+    "writeComment": "اكتب تعليقًا مفيدًا...",
+    "commentError": "فشل في نشر التعليق",
+    "solution": "الحل",
+    "markSolution": "وضع علامة كحل",
+    "markSolutionError": "فشل في وضع العلامة كحل",
+    "postNotFound": "المنشور غير موجود",
+    "status": {
+      "open": "مفتوح",
+      "answered": "تمت الإجابة",
+      "solved": "تم الحل"
+    }
   }
 }

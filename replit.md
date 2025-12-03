@@ -14,7 +14,7 @@ QuickFix is a mobile-first video troubleshooting app for 30-60 second fix-it vid
 ```
 /screens          - All app screens (Home, Search, Upload, Toolbox, Profile, etc.)
 /components       - Reusable UI components
-/contexts         - React contexts (AuthContext, VideosContext, LanguageContext)
+/contexts         - React contexts (AuthContext, VideosContext, CommunityContext, LanguageContext)
 /navigation       - React Navigation setup
 /constants        - Theme, colors, spacing
 /hooks            - Custom hooks
@@ -42,6 +42,7 @@ QuickFix is a mobile-first video troubleshooting app for 30-60 second fix-it vid
 8. **AI Features** - Tag suggestions, description generation, and visual step-by-step guides with AI-generated images
 9. **Category System** - 10 fixed categories with filtering, tappable chips on VideoCard/VideoPlayerScreen
 10. **AI Visual Guides** - Generate step-by-step troubleshooting guides with AI-created images from search queries
+11. **Community** - Post problems, share images, comment, and help each other solve fix-it issues
 
 ## Category System
 - **Fixed Categories**: Kitchen, Bathroom, Cleaning, Laundry, Electronics, Car & Motor, Tools & DIY, Plumbing, Emergency, Other
@@ -82,6 +83,11 @@ Backend requires DATABASE_URL environment variable.
 - POST /api/ai/suggest-tags - AI tag suggestions
 - POST /api/ai/generate-description - AI description generation
 - POST /api/ai/generate-guide - Generate visual step-by-step guide with AI images
+- GET /api/community/posts - Get community posts
+- POST /api/community/posts - Create new community post
+- GET /api/community/posts/:id/comments - Get post comments
+- POST /api/community/posts/:id/comments - Add comment to post
+- PUT /api/community/posts/:id/solution - Mark comment as solution
 
 ## Database Schema
 - users - User accounts with profile info
@@ -93,6 +99,8 @@ Backend requires DATABASE_URL environment variable.
 - follows - User follow relationships
 - notifications - User notifications
 - video_reports - Content reporting
+- community_posts - Community help posts with title, description, category, status (open/answered/solved)
+- community_comments - Comments on community posts with solution marking
 
 ## Environment Variables
 - DATABASE_URL - PostgreSQL connection string
@@ -124,6 +132,14 @@ Backend requires DATABASE_URL environment variable.
 - **Video Package Update**: Replaced deprecated expo-av with modern expo-video for video playback
 - **VideoCard Touch Fix**: Made entire VideoCard tappable via onPress prop (screens pass onPress to VideoCard, not wrap in Pressable)
 - **Error Handling**: Changed console.error to console.log for expected API fallbacks to prevent red overlays in Expo Go
+- **Community Feature**: Added complete Community tab for users to post problems and help each other
+  - CommunityScreen with post feed, status indicators (open/answered/solved), and create post button
+  - CommunityPostDetailScreen with full post view, comments section, and comment input
+  - CreatePostScreen modal with title, description, category selection, optional image URL
+  - CommunityContext with sample data fallback pattern like VideosContext
+  - Backend API routes for posts, comments, and solution marking
+  - Full i18n support with 30+ new translation keys across all 6 languages
+  - 6-tab bottom navigation: Home, Search, Upload (FAB), Community, Toolbox, Profile
 
 ## Design Guidelines
 - Modern dark theme with blue accent (#0A84FF) - respects system color scheme
@@ -131,6 +147,6 @@ Backend requires DATABASE_URL environment variable.
 - Feather icons from @expo/vector-icons
 - Dark backgrounds (#0D0D0D root, #1A1A1A cards, #252525 secondary)
 - Polished UI with refined shadows, modern card designs, and pill-shaped chips
-- 5-tab bottom navigation with center FAB for upload
+- 6-tab bottom navigation with center FAB for upload (Home, Search, Upload, Community, Toolbox, Profile)
 - Safe area insets handled by helper components
 - See design_guidelines.md for complete style guide

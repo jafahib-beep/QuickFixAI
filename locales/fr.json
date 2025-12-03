@@ -189,5 +189,40 @@
     "title": "Oups ! QuickFix a rencontré un problème",
     "message": "Quelque chose d'inattendu s'est produit. Remettons-vous sur la bonne voie.",
     "button": "Redémarrer QuickFix"
+  },
+  "community": {
+    "title": "Communauté",
+    "askCommunity": "Demandez à la communauté",
+    "createPost": "Poster un problème",
+    "createPostHint": "Décrivez votre problème et obtenez de l'aide de la communauté",
+    "postTitle": "Titre",
+    "titlePlaceholder": "Quel est le problème ? (ex. Le robinet ne cesse de couler)",
+    "titleRequired": "Le titre est requis",
+    "titleTooShort": "Le titre doit comporter au moins 10 caractères",
+    "postDescription": "Description",
+    "descriptionPlaceholder": "Décrivez votre problème en détail. Incluez ce que vous avez déjà essayé...",
+    "descriptionRequired": "La description est requise",
+    "descriptionTooShort": "La description doit comporter au moins 20 caractères",
+    "category": "Catégorie",
+    "categoryRequired": "Veuillez sélectionner une catégorie",
+    "imageUrl": "URL de l'image",
+    "imageUrlPlaceholder": "https://exemple.fr/image.jpg",
+    "submitPost": "Publier",
+    "createPostError": "Échec de la création du post. Veuillez réessayer.",
+    "noPosts": "Pas encore de posts",
+    "noPostsHint": "Soyez le premier à poser une question !",
+    "comments": "Commentaires",
+    "noComments": "Pas encore de commentaires. Soyez le premier à aider !",
+    "writeComment": "Écrivez un commentaire utile...",
+    "commentError": "Échec de la publication du commentaire",
+    "solution": "Solution",
+    "markSolution": "Marquer comme solution",
+    "markSolutionError": "Impossible de marquer comme solution",
+    "postNotFound": "Post introuvable",
+    "status": {
+      "open": "Ouvert",
+      "answered": "Répondu",
+      "solved": "Résolu"
+    }
   }
 }
