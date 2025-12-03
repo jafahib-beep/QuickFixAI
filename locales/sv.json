@@ -141,16 +141,17 @@
   },
   "categories": {
     "all": "Alla",
-    "home": "Hem",
-    "car": "Bil",
-    "electronics": "Elektronik",
-    "tools": "Verktyg",
+    "kitchen": "Kök",
+    "bathroom": "Badrum",
     "cleaning": "Städning",
-    "garden": "Trädgård",
+    "laundry": "Tvätt",
+    "electronics": "Elektronik",
+    "car": "Bil & Motor",
+    "tools": "Verktyg & DIY",
     "plumbing": "VVS",
-    "electrical": "El",
-    "appliances": "Vitvaror",
-    "other": "Övrigt"
+    "emergency": "Snabbfixar",
+    "other": "Övrigt",
+    "browseAll": "Bläddra bland alla kategorier"
   },
   "errors": {
     "networkError": "Nätverksfel. Kontrollera din anslutning.",

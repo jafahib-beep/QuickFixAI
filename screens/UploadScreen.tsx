@@ -20,7 +20,7 @@ import { Button } from "@/components/Button";
 import { Spacing, BorderRadius, Colors } from "@/constants/theme";
 import { useTheme } from "@/hooks/useTheme";
 import { useVideos } from "@/contexts/VideosContext";
-import { categories } from "@/utils/sampleData";
+import { CATEGORIES } from "@/constants/categories";
 
 export default function UploadScreen() {
   const { t } = useTranslation();
@@ -327,7 +327,7 @@ export default function UploadScreen() {
         </Pressable>
         {showCategoryPicker ? (
           <View style={[styles.categoryList, { backgroundColor: theme.backgroundDefault }]}>
-            {categories.filter((c) => c.key !== "all").map((category) => (
+            {CATEGORIES.map((category) => (
               <Pressable
                 key={category.key}
                 onPress={() => {
@@ -339,7 +339,10 @@ export default function UploadScreen() {
                   selectedCategory === category.key && { backgroundColor: theme.backgroundSecondary },
                 ]}
               >
-                <ThemedText type="body">{t(category.labelKey)}</ThemedText>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: Spacing.md }}>
+                  <Feather name={category.icon} size={18} color={category.color} />
+                  <ThemedText type="body">{t(category.labelKey)}</ThemedText>
+                </View>
                 {selectedCategory === category.key ? (
                   <Feather name="check" size={18} color={theme.link} />
                 ) : null}

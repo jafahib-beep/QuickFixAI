@@ -141,16 +141,17 @@
   },
   "categories": {
     "all": "Alle",
-    "home": "Zuhause",
-    "car": "Auto",
-    "electronics": "Elektronik",
-    "tools": "Werkzeuge",
+    "kitchen": "Küche",
+    "bathroom": "Badezimmer",
     "cleaning": "Reinigung",
-    "garden": "Garten",
+    "laundry": "Wäsche",
+    "electronics": "Elektronik",
+    "car": "Auto & Motor",
+    "tools": "Werkzeuge & DIY",
     "plumbing": "Sanitär",
-    "electrical": "Elektrik",
-    "appliances": "Haushaltsgeräte",
-    "other": "Sonstiges"
+    "emergency": "Schnelle Hilfe",
+    "other": "Sonstiges",
+    "browseAll": "Alle Kategorien durchsuchen"
   },
   "errors": {
     "networkError": "Netzwerkfehler. Bitte überprüfen Sie Ihre Verbindung.",

@@ -141,16 +141,17 @@
   },
   "categories": {
     "all": "الكل",
-    "home": "المنزل",
-    "car": "السيارة",
-    "electronics": "الإلكترونيات",
-    "tools": "الأدوات",
+    "kitchen": "المطبخ",
+    "bathroom": "الحمام",
     "cleaning": "التنظيف",
-    "garden": "الحديقة",
+    "laundry": "الغسيل",
+    "electronics": "الإلكترونيات",
+    "car": "السيارة والمحركات",
+    "tools": "الأدوات واصنعها بنفسك",
     "plumbing": "السباكة",
-    "electrical": "الكهرباء",
-    "appliances": "الأجهزة",
-    "other": "أخرى"
+    "emergency": "إصلاحات سريعة",
+    "other": "أخرى",
+    "browseAll": "تصفح جميع الفئات"
   },
   "errors": {
     "networkError": "خطأ في الشبكة. يرجى التحقق من اتصالك.",

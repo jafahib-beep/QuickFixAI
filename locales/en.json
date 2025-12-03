@@ -141,16 +141,17 @@
   },
   "categories": {
     "all": "All",
-    "home": "Home",
-    "car": "Car",
-    "electronics": "Electronics",
-    "tools": "Tools",
+    "kitchen": "Kitchen",
+    "bathroom": "Bathroom",
     "cleaning": "Cleaning",
-    "garden": "Garden",
+    "laundry": "Laundry",
+    "electronics": "Electronics",
+    "car": "Car & Motor",
+    "tools": "Tools & DIY",
     "plumbing": "Plumbing",
-    "electrical": "Electrical",
-    "appliances": "Appliances",
-    "other": "Other"
+    "emergency": "Quick Fixes",
+    "other": "Other",
+    "browseAll": "Browse All Categories"
   },
   "errors": {
     "networkError": "Network error. Please check your connection.",

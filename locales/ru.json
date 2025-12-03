@@ -141,16 +141,17 @@
   },
   "categories": {
     "all": "Все",
-    "home": "Дом",
-    "car": "Авто",
-    "electronics": "Электроника",
-    "tools": "Инструменты",
+    "kitchen": "Кухня",
+    "bathroom": "Ванная",
     "cleaning": "Уборка",
-    "garden": "Сад",
+    "laundry": "Стирка",
+    "electronics": "Электроника",
+    "car": "Авто и мото",
+    "tools": "Инструменты и DIY",
     "plumbing": "Сантехника",
-    "electrical": "Электрика",
-    "appliances": "Бытовая техника",
-    "other": "Прочее"
+    "emergency": "Быстрые решения",
+    "other": "Прочее",
+    "browseAll": "Все категории"
   },
   "errors": {
     "networkError": "Ошибка сети. Проверьте подключение.",
