@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useState, useMemo } from "react";
 import {
   View,
   StyleSheet,
@@ -12,6 +12,7 @@ import { useTranslation } from "react-i18next";
 
 import { ThemedText } from "@/components/ThemedText";
 import { VideoCard } from "@/components/VideoCard";
+import { CategoryFilter } from "@/components/CategoryFilter";
 import { ScreenScrollView } from "@/components/ScreenScrollView";
 import { Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/useTheme";
@@ -26,6 +27,24 @@ export default function HomeScreen() {
   const { theme } = useTheme();
   const navigation = useNavigation<HomeScreenNavigationProp>();
   const { feed, isLoading, refreshFeed, toggleSave, toggleLike } = useVideos();
+  const [selectedCategory, setSelectedCategory] = useState("all");
+
+  const filterByCategory = useCallback(
+    (videos: Video[]) => {
+      if (selectedCategory === "all") return videos;
+      return videos.filter((v) => v.category === selectedCategory);
+    },
+    [selectedCategory]
+  );
+
+  const filteredFeed = useMemo(
+    () => ({
+      recommended: filterByCategory(feed.recommended),
+      new: filterByCategory(feed.new),
+      popular: filterByCategory(feed.popular),
+    }),
+    [feed, filterByCategory]
+  );
 
   const handleVideoPress = useCallback((video: Video) => {
     navigation.navigate("VideoPlayer", { video: videoToLegacy(video) });
@@ -88,6 +107,11 @@ export default function HomeScreen() {
     </View>
   );
 
+  const hasFilteredContent =
+    filteredFeed.recommended.length > 0 ||
+    filteredFeed.new.length > 0 ||
+    filteredFeed.popular.length > 0;
+
   return (
     <ScreenScrollView
       refreshControl={
@@ -99,9 +123,32 @@ export default function HomeScreen() {
       }
       contentContainerStyle={styles.content}
     >
-      {renderSection(t("home.recommended"), feed.recommended)}
-      {renderSection(t("home.new"), feed.new)}
-      {renderSection(t("home.popular"), feed.popular)}
+      <View style={styles.filterContainer}>
+        <CategoryFilter
+          selectedCategory={selectedCategory}
+          onSelectCategory={setSelectedCategory}
+        />
+      </View>
+
+      {hasFilteredContent ? (
+        <>
+          {filteredFeed.recommended.length > 0
+            ? renderSection(t("home.recommended"), filteredFeed.recommended)
+            : null}
+          {filteredFeed.new.length > 0
+            ? renderSection(t("home.new"), filteredFeed.new)
+            : null}
+          {filteredFeed.popular.length > 0
+            ? renderSection(t("home.popular"), filteredFeed.popular)
+            : null}
+        </>
+      ) : (
+        <View style={styles.emptyState}>
+          <ThemedText type="body" style={{ color: theme.textSecondary }}>
+            {t("search.noResults")}
+          </ThemedText>
+        </View>
+      )}
     </ScreenScrollView>
   );
 }
@@ -110,6 +157,9 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: 0,
     paddingBottom: Spacing["5xl"],
+  },
+  filterContainer: {
+    marginBottom: Spacing.xl,
   },
   section: {
     marginBottom: Spacing["2xl"],
@@ -128,5 +178,11 @@ const styles = StyleSheet.create({
   emptySection: {
     paddingHorizontal: Spacing.xl,
     paddingVertical: Spacing["2xl"],
+  },
+  emptyState: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: Spacing["5xl"],
   },
 });

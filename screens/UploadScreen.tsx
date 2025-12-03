@@ -261,7 +261,7 @@ export default function UploadScreen() {
           placeholderTextColor={isDark ? Colors.dark.placeholder : Colors.light.placeholder}
           maxLength={60}
         />
-        <ThemedText type="caption" style={[styles.charCount, { color: theme.textSecondary }]}>
+        <ThemedText type="small" style={[styles.charCount, { color: theme.textSecondary }]}>
           {title.length}/60
         </ThemedText>
       </View>
@@ -281,7 +281,7 @@ export default function UploadScreen() {
             ) : (
               <>
                 <Feather name="zap" size={14} color={theme.link} />
-                <ThemedText type="caption" style={{ color: theme.link, marginLeft: 4 }}>
+                <ThemedText type="small" style={{ color: theme.link, marginLeft: 4 }}>
                   AI Generate
                 </ThemedText>
               </>
@@ -298,7 +298,7 @@ export default function UploadScreen() {
           numberOfLines={4}
           maxLength={300}
         />
-        <ThemedText type="caption" style={[styles.charCount, { color: theme.textSecondary }]}>
+        <ThemedText type="small" style={[styles.charCount, { color: theme.textSecondary }]}>
           {description.length}/300
         </ThemedText>
       </View>
@@ -367,7 +367,7 @@ export default function UploadScreen() {
             ) : (
               <>
                 <Feather name="zap" size={14} color={theme.link} />
-                <ThemedText type="caption" style={{ color: theme.link, marginLeft: 4 }}>
+                <ThemedText type="small" style={{ color: theme.link, marginLeft: 4 }}>
                   AI Suggest
                 </ThemedText>
               </>

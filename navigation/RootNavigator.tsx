@@ -10,6 +10,9 @@ import UploadScreen from "@/screens/UploadScreen";
 import SettingsScreen from "@/screens/SettingsScreen";
 import EditProfileScreen from "@/screens/EditProfileScreen";
 import LanguagePickerScreen from "@/screens/LanguagePickerScreen";
+import CategoryFeedScreen from "@/screens/CategoryFeedScreen";
+import TagFeedScreen from "@/screens/TagFeedScreen";
+import CategoriesScreen from "@/screens/CategoriesScreen";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/hooks/useTheme";
 import { getCommonScreenOptions } from "./screenOptions";
@@ -24,6 +27,9 @@ export type RootStackParamList = {
   Settings: undefined;
   EditProfile: undefined;
   LanguagePicker: undefined;
+  CategoryFeed: { categoryKey: string; categoryLabel: string };
+  TagFeed: { tag: string };
+  Categories: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -109,6 +115,31 @@ export default function RootNavigator() {
             component={LanguagePickerScreen}
             options={{
               presentation: "modal",
+              ...getCommonScreenOptions({ theme, isDark, transparent: false }),
+              headerShown: true,
+              title: "",
+            }}
+          />
+          <Stack.Screen
+            name="CategoryFeed"
+            component={CategoryFeedScreen}
+            options={{
+              ...getCommonScreenOptions({ theme, isDark, transparent: false }),
+              headerShown: true,
+            }}
+          />
+          <Stack.Screen
+            name="TagFeed"
+            component={TagFeedScreen}
+            options={{
+              ...getCommonScreenOptions({ theme, isDark, transparent: false }),
+              headerShown: true,
+            }}
+          />
+          <Stack.Screen
+            name="Categories"
+            component={CategoriesScreen}
+            options={{
               ...getCommonScreenOptions({ theme, isDark, transparent: false }),
               headerShown: true,
               title: "",

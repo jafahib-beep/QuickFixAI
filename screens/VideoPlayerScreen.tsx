@@ -21,22 +21,27 @@ import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
 import { useVideos } from "@/contexts/VideosContext";
 import { RootStackParamList } from "@/navigation/RootNavigator";
-import { Comment } from "@/utils/storage";
+import { Comment, Video } from "@/utils/api";
+import { getCategoryByKey } from "@/constants/categories";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
 const { width, height } = Dimensions.get("window");
 
 type VideoPlayerRouteProp = RouteProp<RootStackParamList, "VideoPlayer">;
 
+type VideoPlayerNavigationProp = NativeStackNavigationProp<RootStackParamList>;
+
 export default function VideoPlayerScreen() {
   const { t } = useTranslation();
   const { theme, isDark } = useTheme();
   const insets = useSafeAreaInsets();
-  const navigation = useNavigation();
+  const navigation = useNavigation<VideoPlayerNavigationProp>();
   const route = useRoute<VideoPlayerRouteProp>();
   const { user } = useAuth();
-  const { savedVideoIds, likedVideoIds, toggleSave, toggleLike, getComments, addComment } = useVideos();
+  const { videos, toggleSave, toggleLike, getComments, addComment } = useVideos();
 
-  const { video } = route.params;
+  const { video: routeVideo } = route.params;
+  const video = videos.find(v => v.id === routeVideo.id) || routeVideo as unknown as Video;
 
   const [isMuted, setIsMuted] = useState(true);
   const [showUI, setShowUI] = useState(true);
@@ -45,8 +50,22 @@ export default function VideoPlayerScreen() {
   const [commentText, setCommentText] = useState("");
   const [isLoadingComments, setIsLoadingComments] = useState(false);
 
-  const isSaved = (savedVideoIds ?? []).includes(video?.id ?? "");
-  const isLiked = (likedVideoIds ?? []).includes(video?.id ?? "");
+  const isSaved = video.isSaved ?? false;
+  const isLiked = video.isLiked ?? false;
+  const category = getCategoryByKey(video.category);
+
+  const handleCategoryPress = () => {
+    if (category) {
+      navigation.navigate("CategoryFeed", {
+        categoryKey: category.key,
+        categoryLabel: t(category.labelKey),
+      });
+    }
+  };
+
+  const handleTagPress = (tag: string) => {
+    navigation.navigate("TagFeed", { tag });
+  };
 
   useEffect(() => {
     loadComments();
@@ -152,12 +171,33 @@ export default function VideoPlayerScreen() {
                 </Pressable>
 
                 <View style={styles.tagsRow}>
-                  {(video.tags ?? []).slice(0, 4).map((tag, index) => (
-                    <View key={index} style={styles.tag}>
-                      <ThemedText type="caption" style={styles.tagText}>
-                        {tag}
+                  {category ? (
+                    <Pressable
+                      onPress={handleCategoryPress}
+                      style={({ pressed }) => [
+                        styles.categoryTag,
+                        { opacity: pressed ? 0.7 : 1 },
+                      ]}
+                    >
+                      <Feather name={category.icon} size={14} color="#FFFFFF" />
+                      <ThemedText type="small" style={styles.tagText}>
+                        {t(category.labelKey)}
                       </ThemedText>
-                    </View>
+                    </Pressable>
+                  ) : null}
+                  {(video.tags ?? []).slice(0, 3).map((tag, index) => (
+                    <Pressable
+                      key={index}
+                      onPress={() => handleTagPress(tag)}
+                      style={({ pressed }) => [
+                        styles.tag,
+                        { opacity: pressed ? 0.7 : 1 },
+                      ]}
+                    >
+                      <ThemedText type="small" style={styles.tagText}>
+                        #{tag}
+                      </ThemedText>
+                    </Pressable>
                   ))}
                 </View>
 
@@ -178,8 +218,8 @@ export default function VideoPlayerScreen() {
                     size={26}
                     color={isLiked ? "#FF3B30" : "#FFFFFF"}
                   />
-                  <ThemedText type="caption" style={styles.actionText}>
-                    {(video.likes ?? 0) + (isLiked ? 1 : 0)}
+                  <ThemedText type="small" style={styles.actionText}>
+                    {video.likesCount ?? (video as any).likes ?? 0}
                   </ThemedText>
                 </Pressable>
 
@@ -192,7 +232,7 @@ export default function VideoPlayerScreen() {
                     size={26}
                     color={isSaved ? theme.link : "#FFFFFF"}
                   />
-                  <ThemedText type="caption" style={styles.actionText}>
+                  <ThemedText type="small" style={styles.actionText}>
                     {isSaved ? t("toolbox.saved") : t("common.save")}
                   </ThemedText>
                 </Pressable>
@@ -202,7 +242,7 @@ export default function VideoPlayerScreen() {
                   style={({ pressed }) => [styles.actionButton, { opacity: pressed ? 0.6 : 1 }]}
                 >
                   <Feather name="share" size={26} color="#FFFFFF" />
-                  <ThemedText type="caption" style={styles.actionText}>
+                  <ThemedText type="small" style={styles.actionText}>
                     {t("common.share")}
                   </ThemedText>
                 </Pressable>
@@ -213,7 +253,7 @@ export default function VideoPlayerScreen() {
                     style={({ pressed }) => [styles.actionButton, { opacity: pressed ? 0.6 : 1 }]}
                   >
                     <Feather name="message-circle" size={26} color="#FFFFFF" />
-                    <ThemedText type="caption" style={styles.actionText}>
+                    <ThemedText type="small" style={styles.actionText}>
                       {comments.length}
                     </ThemedText>
                   </Pressable>
@@ -246,15 +286,15 @@ export default function VideoPlayerScreen() {
             renderItem={({ item }) => (
               <View style={styles.commentItem}>
                 <View style={[styles.commentAvatar, { backgroundColor: theme.backgroundSecondary }]}>
-                  <ThemedText type="caption" style={{ fontWeight: "600" }}>
-                    {item.userName.charAt(0).toUpperCase()}
+                  <ThemedText type="small" style={{ fontWeight: "600" }}>
+                    {(item.authorName ?? "U").charAt(0).toUpperCase()}
                   </ThemedText>
                 </View>
                 <View style={styles.commentContent}>
                   <ThemedText type="small" style={{ fontWeight: "600" }}>
-                    {item.userName}
+                    {item.authorName ?? "User"}
                   </ThemedText>
-                  <ThemedText type="body">{item.text}</ThemedText>
+                  <ThemedText type="body">{item.content}</ThemedText>
                 </View>
               </View>
             )}
@@ -374,6 +414,15 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     gap: Spacing.xs,
     marginBottom: Spacing.sm,
+  },
+  categoryTag: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.xs,
+    backgroundColor: "rgba(255,255,255,0.3)",
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs,
+    borderRadius: BorderRadius.md,
   },
   tag: {
     backgroundColor: "rgba(255,255,255,0.2)",

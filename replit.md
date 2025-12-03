@@ -40,6 +40,14 @@ QuickFix is a mobile-first video troubleshooting app for 30-60 second fix-it vid
 6. **Toolbox** - Save and organize favorite videos
 7. **Multi-language** - 6 languages with RTL support for Arabic
 8. **AI Features** - Tag suggestions and description generation (requires API)
+9. **Category System** - 10 fixed categories with filtering, tappable chips on VideoCard/VideoPlayerScreen
+
+## Category System
+- **Fixed Categories**: Kitchen, Bathroom, Cleaning, Laundry, Electronics, Car & Motor, Tools & DIY, Plumbing, Emergency, Other
+- **Category Filter**: Horizontal scrollable chips on Home screen for filtering videos
+- **Tappable Navigation**: Category chips and hashtag tags on VideoCard and VideoPlayerScreen navigate to filtered views
+- **Category Routes**: CategoryFeed (filter by category), TagFeed (filter by tag)
+- **Config File**: constants/categories.ts with i18n label keys and Feather icons
 
 ## Running the App
 

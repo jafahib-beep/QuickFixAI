@@ -1,11 +1,18 @@
 import React from "react";
 import { View, StyleSheet, Image, Pressable } from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useTranslation } from "react-i18next";
 import { Feather } from "@expo/vector-icons";
 
 import { ThemedText } from "./ThemedText";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { useTheme } from "@/hooks/useTheme";
 import { Video } from "@/utils/storage";
+import { RootStackParamList } from "@/navigation/RootNavigator";
+import { getCategoryByKey } from "@/constants/categories";
+
+type VideoCardNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 interface VideoCardProps {
   video: Video;
@@ -32,9 +39,25 @@ export function VideoCard({
   onPress,
   horizontal = false,
 }: VideoCardProps) {
+  const { t } = useTranslation();
   const { theme } = useTheme();
+  const navigation = useNavigation<VideoCardNavigationProp>();
 
   const cardStyle = horizontal ? styles.cardHorizontal : styles.card;
+  const category = getCategoryByKey(video.category);
+
+  const handleCategoryPress = () => {
+    if (category) {
+      navigation.navigate("CategoryFeed", {
+        categoryKey: category.key,
+        categoryLabel: t(category.labelKey),
+      });
+    }
+  };
+
+  const handleTagPress = (tag: string) => {
+    navigation.navigate("TagFeed", { tag });
+  };
 
   return (
     <View style={[cardStyle, { backgroundColor: theme.backgroundDefault }]}>
@@ -49,7 +72,7 @@ export function VideoCard({
           <Feather name="play-circle" size={40} color={theme.textSecondary} />
         </View>
         <View style={[styles.duration, { backgroundColor: theme.overlay }]}>
-          <ThemedText type="caption" style={styles.durationText}>
+          <ThemedText type="small" style={styles.durationText}>
             {formatDuration(video.duration)}
           </ThemedText>
         </View>
@@ -62,25 +85,43 @@ export function VideoCard({
 
         <View style={styles.authorRow}>
           <View style={[styles.avatar, { backgroundColor: theme.backgroundSecondary }]}>
-            <ThemedText type="caption" style={{ fontWeight: "600" }}>
-              {video.authorName.charAt(0).toUpperCase()}
+            <ThemedText type="small" style={{ fontWeight: "600" }}>
+              {video.authorName?.charAt(0).toUpperCase() || "U"}
             </ThemedText>
           </View>
           <ThemedText type="small" style={{ color: theme.textSecondary }}>
-            {video.authorName}
+            {video.authorName || "Unknown"}
           </ThemedText>
         </View>
 
         <View style={styles.tagsRow}>
-          {video.tags.slice(0, 3).map((tag, index) => (
-            <View
-              key={index}
-              style={[styles.tag, { backgroundColor: theme.backgroundSecondary }]}
+          {category ? (
+            <Pressable
+              onPress={handleCategoryPress}
+              style={({ pressed }) => [
+                styles.categoryTag,
+                { backgroundColor: `${category.color}20`, opacity: pressed ? 0.7 : 1 },
+              ]}
             >
-              <ThemedText type="caption" style={{ color: theme.textSecondary }}>
-                {tag}
+              <Feather name={category.icon} size={12} color={category.color} />
+              <ThemedText type="small" style={{ color: category.color }}>
+                {t(category.labelKey)}
               </ThemedText>
-            </View>
+            </Pressable>
+          ) : null}
+          {(video.tags ?? []).slice(0, 2).map((tag, index) => (
+            <Pressable
+              key={index}
+              onPress={() => handleTagPress(tag)}
+              style={({ pressed }) => [
+                styles.tag,
+                { backgroundColor: theme.backgroundSecondary, opacity: pressed ? 0.7 : 1 },
+              ]}
+            >
+              <ThemedText type="small" style={{ color: theme.textSecondary }}>
+                #{tag}
+              </ThemedText>
+            </Pressable>
           ))}
         </View>
 
@@ -99,8 +140,8 @@ export function VideoCard({
               color={isLiked ? "#FF3B30" : theme.textSecondary}
               style={isLiked ? { opacity: 1 } : { opacity: 0.6 }}
             />
-            <ThemedText type="caption" style={{ color: theme.textSecondary, marginLeft: 4 }}>
-              {video.likes}
+            <ThemedText type="small" style={{ color: theme.textSecondary, marginLeft: 4 }}>
+              {video.likes ?? 0}
             </ThemedText>
           </Pressable>
 
@@ -181,6 +222,14 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     gap: Spacing.xs,
     marginBottom: Spacing.sm,
+  },
+  categoryTag: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.xs,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.xs,
+    borderRadius: BorderRadius.md,
   },
   tag: {
     paddingHorizontal: Spacing.sm,
