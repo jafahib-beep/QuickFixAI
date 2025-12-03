@@ -19,7 +19,7 @@ import { ScreenKeyboardAwareScrollView } from "@/components/ScreenKeyboardAwareS
 import { Spacing, BorderRadius, Colors } from "@/constants/theme";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
-import { categories } from "@/utils/sampleData";
+import { CATEGORIES, Category } from "@/constants/categories";
 
 export default function EditProfileScreen() {
   const { t } = useTranslation();
@@ -175,7 +175,7 @@ export default function EditProfileScreen() {
           Select up to 5 categories
         </ThemedText>
         <View style={styles.expertiseGrid}>
-          {categories.filter((c) => c.key !== "all").map((category) => (
+          {CATEGORIES.map((category: Category) => (
             <Pressable
               key={category.key}
               onPress={() => toggleExpertise(category.key)}

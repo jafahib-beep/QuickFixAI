@@ -24,7 +24,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { useVideos } from "@/contexts/VideosContext";
 import { RootStackParamList } from "@/navigation/RootNavigator";
 import { Video } from "@/utils/api";
-import { categories } from "@/utils/sampleData";
+import { CATEGORIES_WITH_ALL, Category } from "@/constants/categories";
 
 type SearchScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -62,7 +62,11 @@ export default function SearchScreen() {
     return () => clearTimeout(searchTimer);
   }, [query, selectedCategory, videos, semanticSearch]);
 
-  const videoToLegacy = (video: Video) => ({
+  const handleVideoPress = useCallback((video: Video) => {
+    navigation.navigate("VideoPlayer", { video });
+  }, [navigation]);
+
+  const videoToCardFormat = (video: Video) => ({
     id: video.id,
     uri: video.videoUrl || "",
     thumbnailUri: video.thumbnailUrl || "",
@@ -78,10 +82,6 @@ export default function SearchScreen() {
     commentsEnabled: video.commentsEnabled,
     createdAt: video.createdAt,
   });
-
-  const handleVideoPress = useCallback((video: Video) => {
-    navigation.navigate("VideoPlayer", { video: videoToLegacy(video) });
-  }, [navigation]);
 
   const displayVideos = query.trim() || selectedCategory !== "all" ? searchResults : videos;
 
@@ -130,7 +130,7 @@ export default function SearchScreen() {
           contentContainerStyle={styles.categoriesContainer}
           style={styles.categoriesScroll}
         >
-          {categories.map((category) => (
+          {CATEGORIES_WITH_ALL.map((category: Category) => (
             <Pressable
               key={category.key}
               onPress={() => setSelectedCategory(category.key)}
@@ -175,7 +175,7 @@ export default function SearchScreen() {
             style={({ pressed }) => [{ opacity: pressed ? 0.9 : 1 }]}
           >
             <VideoCard
-              video={videoToLegacy(item)}
+              video={videoToCardFormat(item)}
               isSaved={item.isSaved}
               isLiked={item.isLiked}
               onSave={() => toggleSave(item.id)}
