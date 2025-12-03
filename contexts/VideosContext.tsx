@@ -51,27 +51,38 @@ export function VideosProvider({ children }: { children: ReactNode }) {
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
   const [localComments, setLocalComments] = useState<Record<string, Comment[]>>({});
 
-  const loadSavedState = useCallback(async () => {
+  const loadSavedState = useCallback(async (): Promise<{
+    savedIds: Set<string>;
+    likedIds: Set<string>;
+    comments: Record<string, Comment[]>;
+  }> => {
     try {
       const [savedJson, likedJson, commentsJson] = await Promise.all([
         AsyncStorage.getItem(SAVED_VIDEOS_KEY),
         AsyncStorage.getItem(LIKED_VIDEOS_KEY),
         AsyncStorage.getItem(COMMENTS_KEY),
       ]);
-      if (savedJson) setSavedIds(new Set(JSON.parse(savedJson)));
-      if (likedJson) setLikedIds(new Set(JSON.parse(likedJson)));
-      if (commentsJson) setLocalComments(JSON.parse(commentsJson));
+      const loadedSavedIds = savedJson ? new Set<string>(JSON.parse(savedJson)) : new Set<string>();
+      const loadedLikedIds = likedJson ? new Set<string>(JSON.parse(likedJson)) : new Set<string>();
+      const loadedComments = commentsJson ? JSON.parse(commentsJson) : {};
+      
+      setSavedIds(loadedSavedIds);
+      setLikedIds(loadedLikedIds);
+      setLocalComments(loadedComments);
+      
+      return { savedIds: loadedSavedIds, likedIds: loadedLikedIds, comments: loadedComments };
     } catch (error) {
       console.error("Failed to load saved state:", error);
+      return { savedIds: new Set(), likedIds: new Set(), comments: {} };
     }
   }, []);
 
-  const loadSampleData = useCallback(() => {
+  const loadSampleData = useCallback((persistedLikedIds: Set<string>, persistedSavedIds: Set<string>) => {
     const validVideos = filterValidVideos(sampleVideos);
     const allVideos = validVideos.map(v => ({
       ...v,
-      isLiked: likedIds.has(v.id),
-      isSaved: savedIds.has(v.id),
+      isLiked: persistedLikedIds.has(v.id),
+      isSaved: persistedSavedIds.has(v.id),
     }));
     
     setVideos(allVideos);
@@ -85,10 +96,10 @@ export function VideosProvider({ children }: { children: ReactNode }) {
       new: recent.slice(0, 8),
       popular: sorted.slice(0, 8),
     });
-  }, [likedIds, savedIds]);
+  }, []);
 
   const loadData = useCallback(async () => {
-    await loadSavedState();
+    const { savedIds: persistedSavedIds, likedIds: persistedLikedIds } = await loadSavedState();
     
     try {
       const [feedData, allVideos] = await Promise.all([
@@ -99,11 +110,11 @@ export function VideosProvider({ children }: { children: ReactNode }) {
         setFeed(feedData);
         setVideos(allVideos);
       } else {
-        loadSampleData();
+        loadSampleData(persistedLikedIds, persistedSavedIds);
       }
     } catch (error) {
       console.error("API unavailable, using sample data:", error);
-      loadSampleData();
+      loadSampleData(persistedLikedIds, persistedSavedIds);
     } finally {
       setIsLoading(false);
     }
