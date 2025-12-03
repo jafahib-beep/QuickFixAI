@@ -114,6 +114,9 @@ export default function ToolboxScreen() {
         <Pressable 
           onPress={() => toggleGuideExpand(guide.id || '')}
           style={({ pressed }) => [styles.guideHeader, { opacity: pressed ? 0.8 : 1 }]}
+          accessibilityLabel={`${guide.query} guide, ${guide.steps.length} steps`}
+          accessibilityRole="button"
+          testID="guide-card-header"
         >
           <View style={styles.guideHeaderLeft}>
             <View style={[styles.aiIconContainer, { backgroundColor: theme.link }]}>
@@ -187,6 +190,9 @@ export default function ToolboxScreen() {
                 styles.deleteButton,
                 { backgroundColor: theme.backgroundTertiary, opacity: pressed ? 0.8 : 1 }
               ]}
+              accessibilityLabel="Remove Guide"
+              accessibilityRole="button"
+              testID="delete-guide-button"
             >
               <Feather name="trash-2" size={16} color={theme.error} />
               <ThemedText type="small" style={{ color: theme.error, marginLeft: Spacing.sm }}>
