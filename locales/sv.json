@@ -68,12 +68,20 @@
     "noResults": "Inga resultat hittades",
     "noResultsHint": "Prova andra sökord eller bläddra i kategorier",
     "allCategories": "Alla",
-    "recentSearches": "Senaste sökningar"
+    "recentSearches": "Senaste sökningar",
+    "whatToFix": "Vad vill du fixa idag?",
+    "describeProblem": "Beskriv ditt problem, t.ex. 'kökskranen droppar'.",
+    "problemPlaceholder": "Skriv ditt problem här...",
+    "findSolution": "Hitta lösning",
+    "recommendedVideo": "Rekommenderad QuickFix",
+    "otherVideos": "Andra hjälpsamma videor",
+    "noVideosFound": "Inga videor ännu för detta problem",
+    "aiGuideAvailable": "Här är en AI-guide som hjälper dig"
   },
   "aiGuide": {
-    "title": "AI-guide",
+    "title": "AI snabbguide",
     "askAI": "Fråga AI",
-    "generating": "Genererar guide...",
+    "generating": "Hittar din lösning...",
     "generatingImages": "Skapar visuell guide...",
     "stepByStep": "Steg-för-steg-guide",
     "showImages": "Visa bildguide",

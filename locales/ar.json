@@ -68,10 +68,18 @@
     "noResults": "لم يتم العثور على نتائج",
     "noResultsHint": "جرب كلمات مختلفة أو تصفح الفئات",
     "allCategories": "الكل",
-    "recentSearches": "عمليات البحث الأخيرة"
+    "recentSearches": "عمليات البحث الأخيرة",
+    "whatToFix": "ماذا تريد إصلاحه اليوم؟",
+    "describeProblem": "اوصف مشكلتك، مثلاً 'صنبور المطبخ يقطر'.",
+    "problemPlaceholder": "اكتب مشكلتك هنا...",
+    "findSolution": "ابحث عن حل",
+    "recommendedVideo": "QuickFix الموصى به",
+    "otherVideos": "فيديوهات مفيدة أخرى",
+    "noVideosFound": "لا توجد فيديوهات لهذه المشكلة بعد",
+    "aiGuideAvailable": "إليك دليل ذكاء اصطناعي لمساعدتك"
   },
   "aiGuide": {
-    "title": "دليل الذكاء الاصطناعي",
+    "title": "دليل AI السريع",
     "askAI": "اسأل AI",
     "generating": "جارٍ إنشاء الدليل...",
     "generatingImages": "جارٍ إنشاء الدليل المرئي...",

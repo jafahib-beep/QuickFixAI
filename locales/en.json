@@ -68,12 +68,20 @@
     "noResults": "No results found",
     "noResultsHint": "Try different keywords or browse categories",
     "allCategories": "All",
-    "recentSearches": "Recent searches"
+    "recentSearches": "Recent searches",
+    "whatToFix": "What do you want to fix today?",
+    "describeProblem": "Describe your problem, e.g. 'kitchen faucet is dripping'.",
+    "problemPlaceholder": "Type your problem here...",
+    "findSolution": "Find Solution",
+    "recommendedVideo": "Recommended QuickFix",
+    "otherVideos": "Other Helpful Videos",
+    "noVideosFound": "No videos yet for this problem",
+    "aiGuideAvailable": "Here's an AI guide to help you"
   },
   "aiGuide": {
-    "title": "AI Guide",
+    "title": "AI Quick Guide",
     "askAI": "Ask AI",
-    "generating": "Generating guide...",
+    "generating": "Finding your solution...",
     "generatingImages": "Creating visual guide...",
     "stepByStep": "Step-by-Step Guide",
     "showImages": "Show Image Guide",

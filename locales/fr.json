@@ -68,10 +68,18 @@
     "noResults": "Aucun résultat trouvé",
     "noResultsHint": "Essayez d'autres mots-clés ou parcourez les catégories",
     "allCategories": "Toutes",
-    "recentSearches": "Recherches récentes"
+    "recentSearches": "Recherches récentes",
+    "whatToFix": "Que voulez-vous réparer aujourd'hui ?",
+    "describeProblem": "Décrivez votre problème, par ex. 'le robinet de cuisine goutte'.",
+    "problemPlaceholder": "Tapez votre problème ici...",
+    "findSolution": "Trouver une solution",
+    "recommendedVideo": "QuickFix recommandé",
+    "otherVideos": "Autres vidéos utiles",
+    "noVideosFound": "Pas encore de vidéos pour ce problème",
+    "aiGuideAvailable": "Voici un guide IA pour vous aider"
   },
   "aiGuide": {
-    "title": "Guide IA",
+    "title": "Guide IA rapide",
     "askAI": "Demander à l'IA",
     "generating": "Génération du guide...",
     "generatingImages": "Création du guide visuel...",
