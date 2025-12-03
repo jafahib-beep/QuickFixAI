@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   StyleSheet,
@@ -8,12 +8,15 @@ import {
   FlatList,
   Share,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { useTranslation } from "react-i18next";
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import { useVideoPlayer, VideoView } from "expo-video";
+import { useEvent } from "expo";
 
 import { ThemedText } from "@/components/ThemedText";
 import { Spacing, BorderRadius, Colors } from "@/constants/theme";
@@ -21,7 +24,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
 import { useVideos } from "@/contexts/VideosContext";
 import { RootStackParamList } from "@/navigation/RootNavigator";
-import { Comment, Video } from "@/utils/api";
+import { Comment, Video as VideoType } from "@/utils/api";
 import { getCategoryByKey } from "@/constants/categories";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
@@ -41,9 +44,17 @@ export default function VideoPlayerScreen() {
   const { videos, toggleSave, toggleLike, getComments, addComment } = useVideos();
 
   const { video: routeVideo } = route.params;
-  const video = videos.find(v => v.id === routeVideo.id) || routeVideo as unknown as Video;
+  const video = videos.find(v => v.id === routeVideo.id) || routeVideo as unknown as VideoType;
 
-  const [isMuted, setIsMuted] = useState(true);
+  const player = useVideoPlayer(video.videoUrl, player => {
+    player.loop = true;
+    player.play();
+  });
+
+  const { isPlaying } = useEvent(player, 'playingChange', { isPlaying: player.playing });
+
+  const [isMuted, setIsMuted] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [showUI, setShowUI] = useState(true);
   const [showComments, setShowComments] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
@@ -53,6 +64,13 @@ export default function VideoPlayerScreen() {
   const isSaved = video.isSaved ?? false;
   const isLiked = video.isLiked ?? false;
   const category = getCategoryByKey(video.category);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleCategoryPress = () => {
     if (category) {
@@ -85,7 +103,7 @@ export default function VideoPlayerScreen() {
         title: video.title,
       });
     } catch (error) {
-      console.error("Error sharing:", error);
+      console.log("Error sharing:", error);
     }
   };
 
@@ -111,21 +129,48 @@ export default function VideoPlayerScreen() {
   };
 
   const toggleUI = () => setShowUI(!showUI);
-  const toggleMute = () => setIsMuted(!isMuted);
+  
+  const toggleMute = () => {
+    player.muted = !isMuted;
+    setIsMuted(!isMuted);
+  };
+
+  const togglePlayPause = () => {
+    if (isPlaying) {
+      player.pause();
+    } else {
+      player.play();
+    }
+  };
+
+  const handleVideoPress = () => {
+    toggleUI();
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: "#000000" }]}>
-      <Pressable onPress={toggleUI} style={styles.videoContainer}>
-        <View style={styles.videoPlaceholder}>
-          <Feather name="play-circle" size={80} color="rgba(255,255,255,0.5)" />
-        </View>
+      <Pressable onPress={handleVideoPress} style={styles.videoContainer}>
+        <VideoView
+          style={styles.video}
+          player={player}
+          contentFit="contain"
+          nativeControls={false}
+        />
 
-        {isMuted && showUI ? (
-          <Pressable onPress={toggleMute} style={styles.muteIndicator}>
-            <Feather name="volume-x" size={20} color="#FFFFFF" />
-            <ThemedText type="small" style={styles.muteText}>
-              {t("player.unmute")}
+        {isLoading ? (
+          <View style={styles.loadingOverlay}>
+            <ActivityIndicator size="large" color="#FFFFFF" />
+            <ThemedText type="small" style={styles.loadingText}>
+              {t("common.loading")}
             </ThemedText>
+          </View>
+        ) : null}
+
+        {!isPlaying && !isLoading && showUI ? (
+          <Pressable onPress={togglePlayPause} style={styles.playPauseOverlay}>
+            <View style={styles.playPauseButton}>
+              <Feather name="play" size={40} color="#FFFFFF" style={{ marginLeft: 4 }} />
+            </View>
           </Pressable>
         ) : null}
       </Pressable>
@@ -140,13 +185,22 @@ export default function VideoPlayerScreen() {
             >
               <Feather name="chevron-down" size={28} color="#FFFFFF" />
             </Pressable>
-            <Pressable
-              onPress={handleReport}
-              style={({ pressed }) => [styles.topButton, { opacity: pressed ? 0.6 : 1 }]}
-              hitSlop={12}
-            >
-              <Feather name="flag" size={22} color="#FFFFFF" />
-            </Pressable>
+            <View style={styles.topRightButtons}>
+              <Pressable
+                onPress={toggleMute}
+                style={({ pressed }) => [styles.topButton, { opacity: pressed ? 0.6 : 1 }]}
+                hitSlop={12}
+              >
+                <Feather name={isMuted ? "volume-x" : "volume-2"} size={22} color="#FFFFFF" />
+              </Pressable>
+              <Pressable
+                onPress={handleReport}
+                style={({ pressed }) => [styles.topButton, { opacity: pressed ? 0.6 : 1 }]}
+                hitSlop={12}
+              >
+                <Feather name="flag" size={22} color="#FFFFFF" />
+              </Pressable>
+            </View>
           </View>
 
           <LinearGradient
@@ -332,25 +386,32 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  videoPlaceholder: {
+  video: {
     width: "100%",
     height: "100%",
+  },
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#1A1A1A",
+    backgroundColor: "rgba(0,0,0,0.5)",
   },
-  muteIndicator: {
-    position: "absolute",
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "rgba(0,0,0,0.6)",
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.full,
-  },
-  muteText: {
+  loadingText: {
     color: "#FFFFFF",
-    marginLeft: Spacing.sm,
+    marginTop: Spacing.md,
+  },
+  playPauseOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  playPauseButton: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    justifyContent: "center",
+    alignItems: "center",
   },
   topBar: {
     position: "absolute",
@@ -361,6 +422,10 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: Spacing.lg,
     zIndex: 10,
+  },
+  topRightButtons: {
+    flexDirection: "row",
+    gap: Spacing.sm,
   },
   topButton: {
     width: 44,

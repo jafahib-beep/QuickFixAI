@@ -15,7 +15,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { VideoCard } from "@/components/VideoCard";
 import { CategoryFilter } from "@/components/CategoryFilter";
 import { ScreenScrollView } from "@/components/ScreenScrollView";
-import { Spacing } from "@/constants/theme";
+import { Spacing, BorderRadius } from "@/constants/theme";
 import { useTheme } from "@/hooks/useTheme";
 import { useVideos } from "@/contexts/VideosContext";
 import { RootStackParamList } from "@/navigation/RootNavigator";
@@ -85,22 +85,17 @@ export default function HomeScreen() {
         keyExtractor={(item) => `${title}-${item.id}`}
         contentContainerStyle={styles.horizontalList}
         renderItem={({ item }) => (
-          <Pressable
-            onPress={() => handleVideoPress(item)}
-            style={({ pressed }) => [
-              styles.cardWrapper,
-              { opacity: pressed ? 0.95 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] },
-            ]}
-          >
+          <View style={styles.cardWrapper}>
             <VideoCard
               video={videoToLegacy(item)}
               isSaved={item.isSaved}
               isLiked={item.isLiked}
               onSave={() => toggleSave(item.id)}
               onLike={() => toggleLike(item.id)}
+              onPress={() => handleVideoPress(item)}
               horizontal
             />
-          </Pressable>
+          </View>
         )}
         ListEmptyComponent={
           <View style={styles.emptySection}>
@@ -193,6 +188,8 @@ const styles = StyleSheet.create({
   },
   cardWrapper: {
     width: 280,
+    borderRadius: BorderRadius.md,
+    overflow: "hidden",
   },
   emptySection: {
     paddingHorizontal: Spacing.xl,

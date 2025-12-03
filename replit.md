@@ -97,6 +97,11 @@ Backend requires DATABASE_URL environment variable.
 - SESSION_SECRET - JWT secret key
 - OPENAI_API_KEY - For AI features (optional)
 
+## Recent Changes (Dec 2024)
+- **Video Package Update**: Replaced deprecated expo-av with modern expo-video for video playback
+- **VideoCard Touch Fix**: Made entire VideoCard tappable via onPress prop (screens pass onPress to VideoCard, not wrap in Pressable)
+- **Error Handling**: Changed console.error to console.log for expected API fallbacks to prevent red overlays in Expo Go
+
 ## Design Guidelines
 - Modern dark theme with blue accent (#0A84FF) - respects system color scheme
 - iOS 26 Liquid Glass UI inspired styling

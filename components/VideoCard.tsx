@@ -46,7 +46,8 @@ export function VideoCard({
 
   const category = getCategoryByKey(video.category);
 
-  const handleCategoryPress = () => {
+  const handleCategoryPress = (e: any) => {
+    e.stopPropagation();
     if (category) {
       navigation.navigate("CategoryFeed", {
         categoryKey: category.key,
@@ -55,8 +56,19 @@ export function VideoCard({
     }
   };
 
-  const handleTagPress = (tag: string) => {
+  const handleTagPress = (tag: string, e: any) => {
+    e.stopPropagation();
     navigation.navigate("TagFeed", { tag });
+  };
+
+  const handleLikePress = (e: any) => {
+    e.stopPropagation();
+    onLike?.();
+  };
+
+  const handleSavePress = (e: any) => {
+    e.stopPropagation();
+    onSave?.();
   };
 
   const cardStyles = [
@@ -66,14 +78,14 @@ export function VideoCard({
   ];
 
   return (
-    <View style={cardStyles}>
-      <Pressable
-        onPress={onPress}
-        style={({ pressed }) => [
-          styles.thumbnailContainer,
-          { opacity: pressed ? 0.95 : 1 },
-        ]}
-      >
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [
+        ...cardStyles,
+        { opacity: pressed ? 0.95 : 1, transform: [{ scale: pressed ? 0.99 : 1 }] },
+      ]}
+    >
+      <View style={styles.thumbnailContainer}>
         <View style={[styles.thumbnail, { backgroundColor: theme.backgroundSecondary }]}>
           <LinearGradient
             colors={isDark 
@@ -96,7 +108,7 @@ export function VideoCard({
             {formatDuration(video.duration)}
           </ThemedText>
         </View>
-      </Pressable>
+      </View>
 
       <View style={styles.content}>
         <ThemedText type="h4" numberOfLines={2} style={styles.title}>
@@ -135,7 +147,7 @@ export function VideoCard({
           {(video.tags ?? []).slice(0, 2).map((tag, index) => (
             <Pressable
               key={index}
-              onPress={() => handleTagPress(tag)}
+              onPress={(e) => handleTagPress(tag, e)}
               style={({ pressed }) => [
                 styles.tag,
                 { 
@@ -153,7 +165,7 @@ export function VideoCard({
 
         <View style={styles.actionsRow}>
           <Pressable
-            onPress={onLike}
+            onPress={handleLikePress}
             style={({ pressed }) => [
               styles.actionButton,
               { opacity: pressed ? 0.6 : 1 },
@@ -178,7 +190,7 @@ export function VideoCard({
           </Pressable>
 
           <Pressable
-            onPress={onSave}
+            onPress={handleSavePress}
             style={({ pressed }) => [
               styles.actionButton,
               { opacity: pressed ? 0.6 : 1 },
@@ -194,7 +206,7 @@ export function VideoCard({
           </Pressable>
         </View>
       </View>
-    </View>
+    </Pressable>
   );
 }
 
@@ -209,6 +221,9 @@ const styles = StyleSheet.create({
   thumbnailContainer: {
     position: "relative",
     aspectRatio: 16 / 9,
+    borderTopLeftRadius: BorderRadius.md,
+    borderTopRightRadius: BorderRadius.md,
+    overflow: "hidden",
   },
   thumbnail: {
     width: "100%",

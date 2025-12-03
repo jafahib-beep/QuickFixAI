@@ -141,20 +141,14 @@ export default function ToolboxScreen() {
         </View>
       }
       renderItem={({ item }) => (
-        <Pressable
+        <VideoCard
+          video={videoToLegacy(item)}
+          isSaved={item.isSaved}
+          isLiked={item.isLiked}
+          onSave={() => handleToggleSave(item.id)}
+          onLike={() => toggleLike(item.id)}
           onPress={() => handleVideoPress(item)}
-          style={({ pressed }) => [
-            { opacity: pressed ? 0.95 : 1, transform: [{ scale: pressed ? 0.99 : 1 }] },
-          ]}
-        >
-          <VideoCard
-            video={videoToLegacy(item)}
-            isSaved={item.isSaved}
-            isLiked={item.isLiked}
-            onSave={() => handleToggleSave(item.id)}
-            onLike={() => toggleLike(item.id)}
-          />
-        </Pressable>
+        />
       )}
       ItemSeparatorComponent={() => <View style={{ height: Spacing.lg }} />}
     />

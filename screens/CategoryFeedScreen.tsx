@@ -122,20 +122,14 @@ export default function CategoryFeedScreen() {
       }
       ListHeaderComponent={filteredVideos.length > 0 ? renderHeader : null}
       renderItem={({ item }) => (
-        <Pressable
+        <VideoCard
+          video={videoToCardFormat(item)}
+          isSaved={item.isSaved}
+          isLiked={item.isLiked}
+          onSave={() => toggleSave(item.id)}
+          onLike={() => toggleLike(item.id)}
           onPress={() => handleVideoPress(item)}
-          style={({ pressed }) => [
-            { opacity: pressed ? 0.95 : 1, transform: [{ scale: pressed ? 0.99 : 1 }] },
-          ]}
-        >
-          <VideoCard
-            video={videoToCardFormat(item)}
-            isSaved={item.isSaved}
-            isLiked={item.isLiked}
-            onSave={() => toggleSave(item.id)}
-            onLike={() => toggleLike(item.id)}
-          />
-        </Pressable>
+        />
       )}
       ItemSeparatorComponent={() => <View style={{ height: Spacing.lg }} />}
       ListEmptyComponent={renderEmptyState}
