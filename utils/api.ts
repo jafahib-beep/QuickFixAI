@@ -326,6 +326,58 @@ class ApiClient {
       requireAuth: true,
     });
   }
+
+  async getCommunityPosts(params?: { category?: string; status?: string }) {
+    const query = new URLSearchParams();
+    if (params?.category && params.category !== 'all') query.set("category", params.category);
+    if (params?.status && params.status !== 'all') query.set("status", params.status);
+    
+    const queryString = query.toString();
+    return this.request<CommunityPost[]>(`/community${queryString ? `?${queryString}` : ""}`, {
+      requireAuth: true,
+    });
+  }
+
+  async getCommunityPost(id: string) {
+    return this.request<CommunityPost>(`/community/${id}`, { requireAuth: true });
+  }
+
+  async createCommunityPost(data: CreatePostData) {
+    return this.request<CommunityPost>("/community", {
+      method: "POST",
+      body: data,
+      requireAuth: true,
+    });
+  }
+
+  async updatePostStatus(postId: string, status: 'open' | 'answered' | 'solved') {
+    return this.request<{ success: boolean }>(`/community/${postId}/status`, {
+      method: "PUT",
+      body: { status },
+      requireAuth: true,
+    });
+  }
+
+  async getPostComments(postId: string) {
+    return this.request<CommunityComment[]>(`/community/${postId}/comments`, {
+      requireAuth: true,
+    });
+  }
+
+  async addPostComment(postId: string, content: string, linkedVideoId?: string) {
+    return this.request<CommunityComment>(`/community/${postId}/comments`, {
+      method: "POST",
+      body: { content, linkedVideoId },
+      requireAuth: true,
+    });
+  }
+
+  async markCommentAsSolution(postId: string, commentId: string) {
+    return this.request<{ success: boolean }>(`/community/${postId}/comments/${commentId}/solution`, {
+      method: "PUT",
+      requireAuth: true,
+    });
+  }
 }
 
 export interface User {
@@ -428,6 +480,41 @@ export interface AIGuide {
   images: GuideImage[];
   language: string;
   createdAt?: string;
+}
+
+export interface CommunityPost {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  imageUrl?: string;
+  status: 'open' | 'answered' | 'solved';
+  commentsCount: number;
+  authorId: string;
+  authorName: string;
+  authorAvatar?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreatePostData {
+  title: string;
+  description: string;
+  category: string;
+  imageUrl?: string;
+}
+
+export interface CommunityComment {
+  id: string;
+  content: string;
+  isSolution: boolean;
+  authorId: string;
+  authorName: string;
+  authorAvatar?: string;
+  linkedVideoId?: string;
+  linkedVideoTitle?: string;
+  linkedVideoThumbnail?: string;
+  createdAt: string;
 }
 
 export const api = new ApiClient();
