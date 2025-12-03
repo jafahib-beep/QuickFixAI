@@ -70,6 +70,25 @@
     "allCategories": "All",
     "recentSearches": "Recent searches"
   },
+  "aiGuide": {
+    "title": "AI Guide",
+    "askAI": "Ask AI",
+    "generating": "Generating guide...",
+    "generatingImages": "Creating visual guide...",
+    "stepByStep": "Step-by-Step Guide",
+    "showImages": "Show Image Guide",
+    "hideImages": "Hide Images",
+    "saveGuide": "Save to Toolbox",
+    "savedGuide": "Saved!",
+    "imageGuideNotAvailable": "Image guide not available right now",
+    "noGuide": "Could not generate guide",
+    "tryAgain": "Try Again",
+    "savedGuides": "Saved Guides",
+    "deleteGuide": "Remove Guide",
+    "step": "Step",
+    "emptyGuides": "No saved guides yet",
+    "emptyGuidesHint": "Ask AI for troubleshooting guides and save them here"
+  },
   "upload": {
     "title": "Upload",
     "selectVideo": "Select video",

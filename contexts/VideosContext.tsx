@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
-import { api, Video, Comment, CreateVideoData } from "@/utils/api";
+import { api, Video, Comment, CreateVideoData, AIGuide } from "@/utils/api";
 import { useAuth } from "./AuthContext";
 import { sampleVideos } from "@/utils/sampleData";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -14,6 +14,7 @@ interface VideosContextType {
   videos: Video[];
   feed: FeedData;
   isLoading: boolean;
+  savedGuides: AIGuide[];
   refreshVideos: () => Promise<void>;
   refreshFeed: () => Promise<void>;
   addVideo: (video: CreateVideoData) => Promise<Video | null>;
@@ -29,6 +30,10 @@ interface VideosContextType {
   reportVideo: (videoId: string, reason: string, description?: string) => Promise<boolean>;
   suggestTags: (title: string, description?: string, category?: string) => Promise<string[]>;
   generateDescription: (title: string, category?: string, tags?: string[]) => Promise<string>;
+  generateGuide: (query: string, language?: string, includeImages?: boolean) => Promise<AIGuide | null>;
+  saveGuide: (guide: AIGuide) => Promise<boolean>;
+  deleteGuide: (guideId: string) => Promise<boolean>;
+  loadSavedGuides: () => Promise<AIGuide[]>;
 }
 
 const VideosContext = createContext<VideosContextType | undefined>(undefined);
@@ -37,6 +42,7 @@ const SAVED_VIDEOS_KEY = "quickfix_saved_videos";
 const LIKED_VIDEOS_KEY = "quickfix_liked_videos";
 const USER_VIDEOS_KEY = "quickfix_user_videos";
 const COMMENTS_KEY = "quickfix_comments";
+const SAVED_GUIDES_KEY = "quickfix_saved_guides";
 
 const filterValidVideos = (videos: Video[]): Video[] => {
   return videos.filter(v => v.videoUrl && v.videoUrl.trim() !== "");
@@ -50,6 +56,7 @@ export function VideosProvider({ children }: { children: ReactNode }) {
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
   const [localComments, setLocalComments] = useState<Record<string, Comment[]>>({});
+  const [savedGuides, setSavedGuides] = useState<AIGuide[]>([]);
 
   const loadSavedState = useCallback(async (): Promise<{
     savedIds: Set<string>;
@@ -361,12 +368,78 @@ export function VideosProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const generateGuide = async (query: string, language: string = 'en', includeImages: boolean = true): Promise<AIGuide | null> => {
+    try {
+      const result = await api.generateGuide(query, language, includeImages);
+      return result;
+    } catch (error) {
+      console.log("[VideosContext] Generate guide failed:", error);
+      return {
+        query,
+        steps: [
+          { stepNumber: 1, text: `Search for "${query}" tutorials online` },
+          { stepNumber: 2, text: 'Watch video guides from verified experts' },
+          { stepNumber: 3, text: 'Follow safety precautions for your specific situation' },
+          { stepNumber: 4, text: 'If unsure, consult a professional' }
+        ],
+        images: [],
+        language
+      };
+    }
+  };
+
+  const saveGuide = async (guide: AIGuide): Promise<boolean> => {
+    try {
+      const guideWithId: AIGuide = {
+        ...guide,
+        id: guide.id || `guide_${Date.now()}`,
+        createdAt: guide.createdAt || new Date().toISOString()
+      };
+      const newGuides = [guideWithId, ...savedGuides.filter(g => g.id !== guideWithId.id)];
+      setSavedGuides(newGuides);
+      await AsyncStorage.setItem(SAVED_GUIDES_KEY, JSON.stringify(newGuides));
+      return true;
+    } catch (error) {
+      console.log("[VideosContext] Failed to save guide:", error);
+      return false;
+    }
+  };
+
+  const deleteGuide = async (guideId: string): Promise<boolean> => {
+    try {
+      const newGuides = savedGuides.filter(g => g.id !== guideId);
+      setSavedGuides(newGuides);
+      await AsyncStorage.setItem(SAVED_GUIDES_KEY, JSON.stringify(newGuides));
+      return true;
+    } catch (error) {
+      console.log("[VideosContext] Failed to delete guide:", error);
+      return false;
+    }
+  };
+
+  const loadSavedGuides = async (): Promise<AIGuide[]> => {
+    try {
+      const guidesJson = await AsyncStorage.getItem(SAVED_GUIDES_KEY);
+      const guides = guidesJson ? JSON.parse(guidesJson) : [];
+      setSavedGuides(guides);
+      return guides;
+    } catch (error) {
+      console.log("[VideosContext] Failed to load saved guides:", error);
+      return [];
+    }
+  };
+
+  useEffect(() => {
+    loadSavedGuides();
+  }, []);
+
   return (
     <VideosContext.Provider
       value={{
         videos,
         feed,
         isLoading,
+        savedGuides,
         refreshVideos,
         refreshFeed,
         addVideo,
@@ -382,6 +455,10 @@ export function VideosProvider({ children }: { children: ReactNode }) {
         reportVideo,
         suggestTags,
         generateDescription,
+        generateGuide,
+        saveGuide,
+        deleteGuide,
+        loadSavedGuides,
       }}
     >
       {children}

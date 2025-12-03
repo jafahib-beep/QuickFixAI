@@ -70,6 +70,25 @@
     "allCategories": "Toutes",
     "recentSearches": "Recherches récentes"
   },
+  "aiGuide": {
+    "title": "Guide IA",
+    "askAI": "Demander à l'IA",
+    "generating": "Génération du guide...",
+    "generatingImages": "Création du guide visuel...",
+    "stepByStep": "Guide étape par étape",
+    "showImages": "Afficher le guide image",
+    "hideImages": "Masquer les images",
+    "saveGuide": "Enregistrer dans la boîte à outils",
+    "savedGuide": "Enregistré !",
+    "imageGuideNotAvailable": "Guide image non disponible actuellement",
+    "noGuide": "Impossible de générer le guide",
+    "tryAgain": "Réessayer",
+    "savedGuides": "Guides enregistrés",
+    "deleteGuide": "Supprimer le guide",
+    "step": "Étape",
+    "emptyGuides": "Pas encore de guides enregistrés",
+    "emptyGuidesHint": "Demandez à l'IA des guides de dépannage et enregistrez-les ici"
+  },
   "upload": {
     "title": "Télécharger",
     "selectVideo": "Sélectionner une vidéo",

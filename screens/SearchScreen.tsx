@@ -23,23 +23,31 @@ import { Spacing, BorderRadius, Colors } from "@/constants/theme";
 import { useTheme } from "@/hooks/useTheme";
 import { useVideos } from "@/contexts/VideosContext";
 import { RootStackParamList } from "@/navigation/RootNavigator";
-import { Video } from "@/utils/api";
+import { Video, AIGuide } from "@/utils/api";
 import { CATEGORIES_WITH_ALL, Category } from "@/constants/categories";
 
 type SearchScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export default function SearchScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { theme, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const tabBarHeight = useBottomTabBarHeight();
   const navigation = useNavigation<SearchScreenNavigationProp>();
-  const { videos, semanticSearch, toggleSave, toggleLike } = useVideos();
+  const { videos, semanticSearch, toggleSave, toggleLike, generateGuide, saveGuide } = useVideos();
+  const language = i18n.language;
 
   const [query, setQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchResults, setSearchResults] = useState<Video[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  
+  const [aiGuide, setAiGuide] = useState<AIGuide | null>(null);
+  const [isGeneratingGuide, setIsGeneratingGuide] = useState(false);
+  const [isGeneratingImages, setIsGeneratingImages] = useState(false);
+  const [showImages, setShowImages] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+  const [showAiGuide, setShowAiGuide] = useState(false);
 
   useEffect(() => {
     const searchTimer = setTimeout(async () => {
@@ -49,7 +57,7 @@ export default function SearchScreen() {
           const results = await semanticSearch(query, selectedCategory !== "all" ? selectedCategory : undefined);
           setSearchResults(results);
         } catch (error) {
-          console.error("Search failed:", error);
+          console.log("Search failed:", error);
           setSearchResults([]);
         } finally {
           setIsSearching(false);
@@ -73,6 +81,39 @@ export default function SearchScreen() {
     });
   }, [navigation, displayVideos]);
 
+  const handleAskAI = async () => {
+    if (!query.trim()) return;
+    
+    setShowAiGuide(true);
+    setIsGeneratingGuide(true);
+    setIsGeneratingImages(false);
+    setAiGuide(null);
+    setIsSaved(false);
+    setShowImages(false);
+    
+    try {
+      const guide = await generateGuide(query, language, true);
+      if (guide) {
+        setAiGuide(guide);
+        if (guide.images && guide.images.length > 0) {
+          setShowImages(true);
+        }
+      }
+    } catch (error) {
+      console.log("Generate guide failed:", error);
+    } finally {
+      setIsGeneratingGuide(false);
+    }
+  };
+
+  const handleSaveGuide = async () => {
+    if (!aiGuide) return;
+    const success = await saveGuide(aiGuide);
+    if (success) {
+      setIsSaved(true);
+    }
+  };
+
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
       <View style={[styles.emptyIconContainer, { backgroundColor: theme.backgroundSecondary }]}>
@@ -85,6 +126,193 @@ export default function SearchScreen() {
         {t("search.noResultsHint")}
       </ThemedText>
     </View>
+  );
+
+  const renderAIGuideCard = () => {
+    if (!showAiGuide) return null;
+
+    return (
+      <View style={[styles.aiGuideCard, { backgroundColor: theme.backgroundSecondary }]}>
+        <View style={styles.aiGuideHeader}>
+          <View style={styles.aiGuideHeaderLeft}>
+            <View style={[styles.aiIconContainer, { backgroundColor: theme.link }]}>
+              <Feather name="cpu" size={18} color="#FFFFFF" />
+            </View>
+            <ThemedText type="h4" style={{ color: theme.text }}>
+              {t("aiGuide.title")}
+            </ThemedText>
+          </View>
+          <Pressable
+            onPress={() => {
+              setShowAiGuide(false);
+              setAiGuide(null);
+            }}
+            hitSlop={8}
+            style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
+          >
+            <Feather name="x" size={20} color={theme.textSecondary} />
+          </Pressable>
+        </View>
+
+        {aiGuide?.query && (
+          <View style={[styles.queryContainer, { backgroundColor: theme.backgroundTertiary }]}>
+            <ThemedText type="small" style={{ color: theme.textSecondary }}>
+              {aiGuide.query}
+            </ThemedText>
+          </View>
+        )}
+
+        {isGeneratingGuide ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={theme.link} />
+            <ThemedText type="body" style={[styles.loadingText, { color: theme.textSecondary }]}>
+              {isGeneratingImages ? t("aiGuide.generatingImages") : t("aiGuide.generating")}
+            </ThemedText>
+          </View>
+        ) : aiGuide ? (
+          <>
+            <View style={styles.stepsSection}>
+              <ThemedText type="body" style={[styles.sectionTitle, { color: theme.text, fontWeight: "600" }]}>
+                {t("aiGuide.stepByStep")}
+              </ThemedText>
+              {aiGuide.steps.map((step, index) => (
+                <View key={index} style={styles.stepItem}>
+                  <View style={[styles.stepNumber, { backgroundColor: theme.link }]}>
+                    <ThemedText type="small" style={{ color: "#FFFFFF", fontWeight: "600" }}>
+                      {step.stepNumber}
+                    </ThemedText>
+                  </View>
+                  <ThemedText type="body" style={[styles.stepText, { color: theme.text }]}>
+                    {step.text}
+                  </ThemedText>
+                </View>
+              ))}
+            </View>
+
+            {aiGuide.images && aiGuide.images.length > 0 ? (
+              <View style={styles.imagesSection}>
+                <Pressable
+                  onPress={() => setShowImages(!showImages)}
+                  style={({ pressed }) => [
+                    styles.toggleImagesButton,
+                    { backgroundColor: theme.backgroundTertiary, opacity: pressed ? 0.8 : 1 }
+                  ]}
+                >
+                  <Feather 
+                    name={showImages ? "chevron-up" : "image"} 
+                    size={18} 
+                    color={theme.link} 
+                  />
+                  <ThemedText type="small" style={{ color: theme.link, marginLeft: Spacing.sm }}>
+                    {showImages ? t("aiGuide.hideImages") : t("aiGuide.showImages")}
+                  </ThemedText>
+                </Pressable>
+
+                {showImages && (
+                  <ScrollView 
+                    horizontal 
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.imagesScroll}
+                    style={styles.imagesScrollContainer}
+                  >
+                    {aiGuide.images.map((img, index) => (
+                      <View key={index} style={styles.imageItem}>
+                        <Image 
+                          source={{ uri: img.url }} 
+                          style={styles.guideImage}
+                          resizeMode="cover"
+                        />
+                        <ThemedText 
+                          type="small" 
+                          style={[styles.imageCaption, { color: theme.textSecondary }]}
+                          numberOfLines={2}
+                        >
+                          {img.caption}
+                        </ThemedText>
+                      </View>
+                    ))}
+                  </ScrollView>
+                )}
+              </View>
+            ) : (
+              <View style={[styles.noImagesNote, { backgroundColor: theme.backgroundTertiary }]}>
+                <Feather name="image" size={16} color={theme.textSecondary} />
+                <ThemedText type="small" style={[styles.noImagesText, { color: theme.textSecondary }]}>
+                  {t("aiGuide.imageGuideNotAvailable")}
+                </ThemedText>
+              </View>
+            )}
+
+            <Pressable
+              onPress={handleSaveGuide}
+              disabled={isSaved}
+              style={({ pressed }) => [
+                styles.saveButton,
+                { 
+                  backgroundColor: isSaved ? theme.backgroundTertiary : theme.link,
+                  opacity: pressed && !isSaved ? 0.8 : 1 
+                }
+              ]}
+            >
+              <Feather 
+                name={isSaved ? "check" : "bookmark"} 
+                size={18} 
+                color={isSaved ? theme.success : "#FFFFFF"} 
+              />
+              <ThemedText 
+                type="body" 
+                style={{ 
+                  color: isSaved ? theme.success : "#FFFFFF", 
+                  marginLeft: Spacing.sm,
+                  fontWeight: "600"
+                }}
+              >
+                {isSaved ? t("aiGuide.savedGuide") : t("aiGuide.saveGuide")}
+              </ThemedText>
+            </Pressable>
+          </>
+        ) : (
+          <View style={styles.errorContainer}>
+            <Feather name="alert-circle" size={24} color={theme.error} />
+            <ThemedText type="body" style={[styles.errorText, { color: theme.textSecondary }]}>
+              {t("aiGuide.noGuide")}
+            </ThemedText>
+            <Pressable
+              onPress={handleAskAI}
+              style={({ pressed }) => [
+                styles.retryButton,
+                { backgroundColor: theme.link, opacity: pressed ? 0.8 : 1 }
+              ]}
+            >
+              <ThemedText type="small" style={{ color: "#FFFFFF" }}>
+                {t("aiGuide.tryAgain")}
+              </ThemedText>
+            </Pressable>
+          </View>
+        )}
+      </View>
+    );
+  };
+
+  const ListHeader = () => (
+    <>
+      {query.trim().length > 0 && !showAiGuide && (
+        <Pressable
+          onPress={handleAskAI}
+          style={({ pressed }) => [
+            styles.askAIButton,
+            { backgroundColor: theme.link, opacity: pressed ? 0.85 : 1 }
+          ]}
+        >
+          <Feather name="cpu" size={18} color="#FFFFFF" />
+          <ThemedText type="body" style={styles.askAIText}>
+            {t("aiGuide.askAI")}
+          </ThemedText>
+          <Feather name="arrow-right" size={18} color="#FFFFFF" />
+        </Pressable>
+      )}
+      {renderAIGuideCard()}
+    </>
   );
 
   return (
@@ -105,7 +333,11 @@ export default function SearchScreen() {
             <ActivityIndicator size="small" color={theme.link} />
           ) : query.length > 0 ? (
             <Pressable 
-              onPress={() => setQuery("")} 
+              onPress={() => {
+                setQuery("");
+                setShowAiGuide(false);
+                setAiGuide(null);
+              }} 
               hitSlop={8}
               style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
             >
@@ -160,8 +392,9 @@ export default function SearchScreen() {
           styles.listContent,
           { paddingBottom: tabBarHeight + Spacing.xl },
         ]}
+        ListHeaderComponent={ListHeader}
         ListEmptyComponent={isSearching ? (
-          <View style={styles.loadingContainer}>
+          <View style={styles.loadingContainerMain}>
             <ActivityIndicator size="large" color={theme.link} />
           </View>
         ) : renderEmptyState}
@@ -246,8 +479,140 @@ const styles = StyleSheet.create({
     textAlign: "center",
     lineHeight: 22,
   },
-  loadingContainer: {
+  loadingContainerMain: {
     paddingVertical: Spacing["5xl"],
     alignItems: "center",
+  },
+  askAIButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: Spacing.lg,
+    paddingHorizontal: Spacing.xl,
+    borderRadius: BorderRadius.md,
+    marginBottom: Spacing.lg,
+  },
+  askAIText: {
+    color: "#FFFFFF",
+    fontWeight: "600",
+    marginHorizontal: Spacing.md,
+  },
+  aiGuideCard: {
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.xl,
+    marginBottom: Spacing.lg,
+  },
+  aiGuideHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: Spacing.lg,
+  },
+  aiGuideHeaderLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.md,
+  },
+  aiIconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  queryContainer: {
+    padding: Spacing.md,
+    borderRadius: BorderRadius.sm,
+    marginBottom: Spacing.lg,
+  },
+  loadingContainer: {
+    alignItems: "center",
+    paddingVertical: Spacing.xl,
+  },
+  loadingText: {
+    marginTop: Spacing.md,
+  },
+  stepsSection: {
+    marginBottom: Spacing.lg,
+  },
+  sectionTitle: {
+    marginBottom: Spacing.md,
+  },
+  stepItem: {
+    flexDirection: "row",
+    marginBottom: Spacing.md,
+  },
+  stepNumber: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: Spacing.md,
+    marginTop: 2,
+  },
+  stepText: {
+    flex: 1,
+    lineHeight: 22,
+  },
+  imagesSection: {
+    marginBottom: Spacing.lg,
+  },
+  toggleImagesButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: Spacing.md,
+    borderRadius: BorderRadius.sm,
+    marginBottom: Spacing.md,
+  },
+  imagesScrollContainer: {
+    marginHorizontal: -Spacing.xl,
+  },
+  imagesScroll: {
+    paddingHorizontal: Spacing.xl,
+    gap: Spacing.md,
+  },
+  imageItem: {
+    width: 200,
+  },
+  guideImage: {
+    width: 200,
+    height: 200,
+    borderRadius: BorderRadius.md,
+    marginBottom: Spacing.sm,
+  },
+  imageCaption: {
+    textAlign: "center",
+  },
+  noImagesNote: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: Spacing.md,
+    borderRadius: BorderRadius.sm,
+    marginBottom: Spacing.lg,
+  },
+  noImagesText: {
+    marginLeft: Spacing.sm,
+  },
+  saveButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.xl,
+    borderRadius: BorderRadius.md,
+  },
+  errorContainer: {
+    alignItems: "center",
+    paddingVertical: Spacing.xl,
+    gap: Spacing.md,
+  },
+  errorText: {
+    textAlign: "center",
+  },
+  retryButton: {
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.lg,
+    borderRadius: BorderRadius.sm,
   },
 });

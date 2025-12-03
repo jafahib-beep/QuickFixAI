@@ -70,6 +70,25 @@
     "allCategories": "Alle",
     "recentSearches": "Letzte Suchen"
   },
+  "aiGuide": {
+    "title": "KI-Anleitung",
+    "askAI": "KI fragen",
+    "generating": "Anleitung wird erstellt...",
+    "generatingImages": "Visuelle Anleitung wird erstellt...",
+    "stepByStep": "Schritt-für-Schritt-Anleitung",
+    "showImages": "Bildanleitung anzeigen",
+    "hideImages": "Bilder ausblenden",
+    "saveGuide": "Im Werkzeugkasten speichern",
+    "savedGuide": "Gespeichert!",
+    "imageGuideNotAvailable": "Bildanleitung derzeit nicht verfügbar",
+    "noGuide": "Anleitung konnte nicht erstellt werden",
+    "tryAgain": "Erneut versuchen",
+    "savedGuides": "Gespeicherte Anleitungen",
+    "deleteGuide": "Anleitung entfernen",
+    "step": "Schritt",
+    "emptyGuides": "Noch keine gespeicherten Anleitungen",
+    "emptyGuidesHint": "Fragen Sie die KI nach Anleitungen und speichern Sie sie hier"
+  },
   "upload": {
     "title": "Hochladen",
     "selectVideo": "Video auswählen",

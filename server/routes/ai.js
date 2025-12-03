@@ -134,6 +134,139 @@ router.post('/moderate-content', authMiddleware, async (req, res) => {
   }
 });
 
+router.post('/generate-guide', optionalAuth, async (req, res) => {
+  try {
+    const { query, language = 'en', includeImages = true } = req.body;
+    
+    if (!query) {
+      return res.status(400).json({ error: 'Query is required' });
+    }
+    
+    const languageNames = {
+      en: 'English',
+      sv: 'Swedish',
+      ar: 'Arabic',
+      de: 'German',
+      fr: 'French',
+      ru: 'Russian'
+    };
+    const languageName = languageNames[language] || 'English';
+    
+    if (!OPENAI_API_KEY) {
+      const fallbackSteps = [
+        { stepNumber: 1, text: `Search for "${query}" tutorials online` },
+        { stepNumber: 2, text: 'Watch video guides from verified experts' },
+        { stepNumber: 3, text: 'Follow safety precautions for your specific situation' },
+        { stepNumber: 4, text: 'If unsure, consult a professional' }
+      ];
+      return res.json({
+        query,
+        steps: fallbackSteps,
+        images: [],
+        language
+      });
+    }
+    
+    const stepsPrompt = `You are a helpful DIY and home repair assistant. Generate a step-by-step guide for the following problem in ${languageName}:
+
+Problem: ${query}
+
+Requirements:
+- Generate 3-7 clear, actionable steps
+- Each step should be concise (1-2 sentences)
+- Focus on practical, safe solutions
+- Include any necessary safety warnings
+- Be specific about tools or materials needed
+
+Return ONLY a JSON array of objects with "stepNumber" and "text" fields. Example:
+[{"stepNumber": 1, "text": "Turn off the water supply valve under the sink."}, {"stepNumber": 2, "text": "..."}]`;
+
+    const stepsResponse = await callOpenAI('chat/completions', {
+      model: 'gpt-4o-mini',
+      messages: [{ role: 'user', content: stepsPrompt }],
+      temperature: 0.7,
+      max_tokens: 800
+    });
+    
+    let steps;
+    try {
+      const content = stepsResponse.choices[0].message.content.trim();
+      const jsonMatch = content.match(/\[[\s\S]*\]/);
+      steps = jsonMatch ? JSON.parse(jsonMatch[0]) : JSON.parse(content);
+    } catch (parseError) {
+      console.error('Failed to parse steps:', parseError);
+      steps = [{ stepNumber: 1, text: stepsResponse.choices[0].message.content }];
+    }
+    
+    let images = [];
+    
+    if (includeImages && steps.length >= 2) {
+      const imagePromptsRequest = `Based on these repair/DIY steps, generate 2-4 image prompts that would help illustrate the key actions. The images should be clear, instructional diagrams or illustrations.
+
+Steps:
+${steps.map(s => `${s.stepNumber}. ${s.text}`).join('\n')}
+
+Requirements for each image prompt:
+- Describe a clear instructional illustration or diagram
+- Focus on hands performing the action or the tool being used
+- Use simple, clean visual style
+- No text in the images
+- Make prompts specific and visual
+
+Return ONLY a JSON array of objects with "prompt" and "caption" (in ${languageName}) fields. Generate 2-4 prompts. Example:
+[{"prompt": "Clean instructional illustration of hands turning off a water valve under a sink, simple diagram style", "caption": "Turn off the water valve"}]`;
+
+      try {
+        const imagePromptsResponse = await callOpenAI('chat/completions', {
+          model: 'gpt-4o-mini',
+          messages: [{ role: 'user', content: imagePromptsRequest }],
+          temperature: 0.7,
+          max_tokens: 500
+        });
+        
+        let imagePrompts;
+        const promptContent = imagePromptsResponse.choices[0].message.content.trim();
+        const promptJsonMatch = promptContent.match(/\[[\s\S]*\]/);
+        imagePrompts = promptJsonMatch ? JSON.parse(promptJsonMatch[0]) : JSON.parse(promptContent);
+        
+        const imageResults = await Promise.allSettled(
+          imagePrompts.slice(0, 4).map(async (item) => {
+            const imageResponse = await callOpenAI('images/generations', {
+              model: 'dall-e-3',
+              prompt: `Clean, simple instructional diagram illustration: ${item.prompt}. Style: clear line art, minimal colors, no text or labels, educational diagram style.`,
+              n: 1,
+              size: '1024x1024',
+              quality: 'standard'
+            });
+            return {
+              url: imageResponse.data[0].url,
+              caption: item.caption
+            };
+          })
+        );
+        
+        images = imageResults
+          .filter(result => result.status === 'fulfilled')
+          .map(result => result.value);
+          
+      } catch (imageError) {
+        console.error('Image generation error:', imageError);
+      }
+    }
+    
+    res.json({
+      query,
+      steps,
+      images,
+      language
+    });
+    
+  } catch (error) {
+    console.error('Generate guide error:', error);
+    res.status(500).json({ error: 'Failed to generate guide' });
+  }
+});
+
 router.post('/semantic-search', optionalAuth, async (req, res) => {
   try {
     const { query, category, limit = 20 } = req.body;

@@ -70,6 +70,25 @@
     "allCategories": "Alla",
     "recentSearches": "Senaste sökningar"
   },
+  "aiGuide": {
+    "title": "AI-guide",
+    "askAI": "Fråga AI",
+    "generating": "Genererar guide...",
+    "generatingImages": "Skapar visuell guide...",
+    "stepByStep": "Steg-för-steg-guide",
+    "showImages": "Visa bildguide",
+    "hideImages": "Dölj bilder",
+    "saveGuide": "Spara i verktygslådan",
+    "savedGuide": "Sparad!",
+    "imageGuideNotAvailable": "Bildguide inte tillgänglig just nu",
+    "noGuide": "Kunde inte generera guide",
+    "tryAgain": "Försök igen",
+    "savedGuides": "Sparade guider",
+    "deleteGuide": "Ta bort guide",
+    "step": "Steg",
+    "emptyGuides": "Inga sparade guider än",
+    "emptyGuidesHint": "Fråga AI om felsökningsguider och spara dem här"
+  },
   "upload": {
     "title": "Ladda upp",
     "selectVideo": "Välj video",

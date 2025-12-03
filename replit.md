@@ -37,10 +37,11 @@ QuickFix is a mobile-first video troubleshooting app for 30-60 second fix-it vid
 3. **Video Feed** - Home feed with recommended, new, and popular sections
 4. **Search** - Text search with category filtering
 5. **Social Features** - Like, comment, save, share videos
-6. **Toolbox** - Save and organize favorite videos
+6. **Toolbox** - Save and organize favorite videos and AI guides
 7. **Multi-language** - 6 languages with RTL support for Arabic
-8. **AI Features** - Tag suggestions and description generation (requires API)
+8. **AI Features** - Tag suggestions, description generation, and visual step-by-step guides with AI-generated images
 9. **Category System** - 10 fixed categories with filtering, tappable chips on VideoCard/VideoPlayerScreen
+10. **AI Visual Guides** - Generate step-by-step troubleshooting guides with AI-created images from search queries
 
 ## Category System
 - **Fixed Categories**: Kitchen, Bathroom, Cleaning, Laundry, Electronics, Car & Motor, Tools & DIY, Plumbing, Emergency, Other
@@ -80,6 +81,7 @@ Backend requires DATABASE_URL environment variable.
 - GET /api/toolbox - Get saved videos
 - POST /api/ai/suggest-tags - AI tag suggestions
 - POST /api/ai/generate-description - AI description generation
+- POST /api/ai/generate-guide - Generate visual step-by-step guide with AI images
 
 ## Database Schema
 - users - User accounts with profile info
@@ -98,6 +100,14 @@ Backend requires DATABASE_URL environment variable.
 - OPENAI_API_KEY - For AI features (optional)
 
 ## Recent Changes (Dec 2024)
+- **AI Visual Guides**: New feature to generate step-by-step troubleshooting guides with AI-generated images
+  - "Ask AI" button appears when user enters a search query
+  - Generates 3-5 actionable steps using GPT-4o-mini
+  - Creates illustrative images for key steps using DALL-E 3
+  - Guides can be saved to Toolbox for later reference
+  - Multi-language support for guide generation
+  - Fallback to text-only guides when API unavailable
+- **Toolbox Tabs**: Added tabs to switch between saved videos and saved AI guides
 - **TikTok-Style Video Player**: New SwipeVideoPlayerScreen with vertical FlatList for immersive full-screen video swiping
   - Tapping any video card opens SwipeVideoPlayer instead of single VideoPlayer
   - Vertical swipe navigation between videos with paging enabled

@@ -70,6 +70,25 @@
     "allCategories": "الكل",
     "recentSearches": "عمليات البحث الأخيرة"
   },
+  "aiGuide": {
+    "title": "دليل الذكاء الاصطناعي",
+    "askAI": "اسأل AI",
+    "generating": "جارٍ إنشاء الدليل...",
+    "generatingImages": "جارٍ إنشاء الدليل المرئي...",
+    "stepByStep": "دليل خطوة بخطوة",
+    "showImages": "عرض دليل الصور",
+    "hideImages": "إخفاء الصور",
+    "saveGuide": "حفظ في صندوق الأدوات",
+    "savedGuide": "تم الحفظ!",
+    "imageGuideNotAvailable": "دليل الصور غير متاح حالياً",
+    "noGuide": "تعذر إنشاء الدليل",
+    "tryAgain": "حاول مرة أخرى",
+    "savedGuides": "الأدلة المحفوظة",
+    "deleteGuide": "حذف الدليل",
+    "step": "خطوة",
+    "emptyGuides": "لا توجد أدلة محفوظة بعد",
+    "emptyGuidesHint": "اسأل الذكاء الاصطناعي عن أدلة الإصلاح واحفظها هنا"
+  },
   "upload": {
     "title": "رفع",
     "selectVideo": "اختر فيديو",

@@ -318,6 +318,14 @@ class ApiClient {
       requireAuth: true,
     });
   }
+
+  async generateGuide(query: string, language: string = 'en', includeImages: boolean = true) {
+    return this.request<AIGuide>("/ai/generate-guide", {
+      method: "POST",
+      body: { query, language, includeImages },
+      requireAuth: true,
+    });
+  }
 }
 
 export interface User {
@@ -401,6 +409,25 @@ export interface Notification {
   relatedVideoId?: string;
   relatedVideoTitle?: string;
   createdAt: string;
+}
+
+export interface GuideStep {
+  stepNumber: number;
+  text: string;
+}
+
+export interface GuideImage {
+  url: string;
+  caption: string;
+}
+
+export interface AIGuide {
+  id?: string;
+  query: string;
+  steps: GuideStep[];
+  images: GuideImage[];
+  language: string;
+  createdAt?: string;
 }
 
 export const api = new ApiClient();
