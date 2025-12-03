@@ -103,6 +103,35 @@ const initializeDatabase = async () => {
         created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
       );
 
+      CREATE TABLE IF NOT EXISTS community_posts (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        author_id UUID REFERENCES users(id) ON DELETE CASCADE,
+        title VARCHAR(150) NOT NULL,
+        description TEXT NOT NULL,
+        category VARCHAR(50) NOT NULL,
+        image_url TEXT,
+        status VARCHAR(20) DEFAULT 'open',
+        comments_count INTEGER DEFAULT 0,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      );
+
+      CREATE TABLE IF NOT EXISTS community_comments (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        post_id UUID REFERENCES community_posts(id) ON DELETE CASCADE,
+        user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+        content TEXT NOT NULL,
+        linked_video_id UUID REFERENCES videos(id) ON DELETE SET NULL,
+        is_solution BOOLEAN DEFAULT false,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_community_posts_author ON community_posts(author_id);
+      CREATE INDEX IF NOT EXISTS idx_community_posts_category ON community_posts(category);
+      CREATE INDEX IF NOT EXISTS idx_community_posts_status ON community_posts(status);
+      CREATE INDEX IF NOT EXISTS idx_community_posts_created ON community_posts(created_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_community_comments_post ON community_comments(post_id);
+
       CREATE INDEX IF NOT EXISTS idx_videos_author ON videos(author_id);
       CREATE INDEX IF NOT EXISTS idx_videos_category ON videos(category);
       CREATE INDEX IF NOT EXISTS idx_videos_created ON videos(created_at DESC);

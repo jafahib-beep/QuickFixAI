@@ -9,6 +9,7 @@ const userRoutes = require('./routes/users');
 const toolboxRoutes = require('./routes/toolbox');
 const notificationRoutes = require('./routes/notifications');
 const aiRoutes = require('./routes/ai');
+const communityRoutes = require('./routes/community');
 
 const app = express();
 const PORT = process.env.BACKEND_PORT || 3001;
@@ -25,6 +26,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/toolbox', toolboxRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/community', communityRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
