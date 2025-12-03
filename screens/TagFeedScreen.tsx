@@ -29,7 +29,7 @@ export default function TagFeedScreen() {
   const navigation = useNavigation<TagFeedNavigationProp>();
   const route = useRoute<TagFeedRouteProp>();
   const { tag } = route.params;
-  const { feed, isLoading, refreshFeed, toggleSave, toggleLike } = useVideos();
+  const { videos, isLoading, refreshVideos, toggleSave, toggleLike } = useVideos();
   const { paddingBottom } = useScreenInsets();
 
   React.useLayoutEffect(() => {
@@ -39,21 +39,19 @@ export default function TagFeedScreen() {
   }, [navigation, tag]);
 
   const filteredVideos = useMemo(() => {
-    const allVideos = [
-      ...feed.recommended,
-      ...feed.new,
-      ...feed.popular,
-    ];
-    const uniqueVideos = allVideos.filter(
-      (video, index, self) =>
-        index === self.findIndex((v) => v.id === video.id)
+    return videos.filter((v) =>
+      v.videoUrl && v.tags?.some((t) => t.toLowerCase() === tag.toLowerCase())
     );
-    return uniqueVideos.filter((v) =>
-      v.tags?.some((t) => t.toLowerCase() === tag.toLowerCase())
-    );
-  }, [feed, tag]);
+  }, [videos, tag]);
 
-  const videoToLegacy = (video: Video) => ({
+  const handleVideoPress = useCallback(
+    (video: Video) => {
+      navigation.navigate("VideoPlayer", { video });
+    },
+    [navigation]
+  );
+
+  const videoToCardFormat = (video: Video) => ({
     id: video.id,
     uri: video.videoUrl || "",
     thumbnailUri: video.thumbnailUrl || "",
@@ -70,20 +68,13 @@ export default function TagFeedScreen() {
     createdAt: video.createdAt,
   });
 
-  const handleVideoPress = useCallback(
-    (video: Video) => {
-      navigation.navigate("VideoPlayer", { video: videoToLegacy(video) });
-    },
-    [navigation]
-  );
-
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
       <ThemedText type="body" style={{ color: theme.textSecondary }}>
-        {t("search.noResults")}
+        {t("tagFeed.noVideos", { defaultValue: "No videos with this tag yet" })}
       </ThemedText>
       <ThemedText type="small" style={{ color: theme.textSecondary, marginTop: Spacing.sm }}>
-        {t("search.noResultsHint")}
+        {t("tagFeed.noVideosHint", { defaultValue: "Check back soon for new content" })}
       </ThemedText>
     </View>
   );
@@ -108,7 +99,7 @@ export default function TagFeedScreen() {
       refreshControl={
         <RefreshControl
           refreshing={isLoading}
-          onRefresh={refreshFeed}
+          onRefresh={refreshVideos}
           tintColor={theme.text}
         />
       }
@@ -118,7 +109,7 @@ export default function TagFeedScreen() {
           style={({ pressed }) => [{ opacity: pressed ? 0.9 : 1 }]}
         >
           <VideoCard
-            video={videoToLegacy(item)}
+            video={videoToCardFormat(item)}
             isSaved={item.isSaved}
             isLiked={item.isLiked}
             onSave={() => toggleSave(item.id)}

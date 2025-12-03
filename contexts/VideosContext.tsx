@@ -38,24 +38,9 @@ const LIKED_VIDEOS_KEY = "quickfix_liked_videos";
 const USER_VIDEOS_KEY = "quickfix_user_videos";
 const COMMENTS_KEY = "quickfix_comments";
 
-const convertSampleToVideo = (sample: typeof sampleVideos[0]): Video => ({
-  id: sample.id,
-  title: sample.title,
-  description: sample.description || "",
-  category: sample.category,
-  tags: sample.tags,
-  videoUrl: sample.uri || undefined,
-  thumbnailUrl: sample.thumbnailUri || undefined,
-  duration: sample.duration,
-  likesCount: sample.likes,
-  commentsEnabled: sample.commentsEnabled,
-  authorId: sample.authorId,
-  authorName: sample.authorName,
-  authorAvatar: undefined,
-  isLiked: false,
-  isSaved: false,
-  createdAt: sample.createdAt,
-});
+const filterValidVideos = (videos: Video[]): Video[] => {
+  return videos.filter(v => v.videoUrl && v.videoUrl.trim() !== "");
+};
 
 export function VideosProvider({ children }: { children: ReactNode }) {
   const { user, isAuthenticated } = useAuth();
@@ -82,11 +67,11 @@ export function VideosProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const loadSampleData = useCallback(() => {
-    const allVideos = sampleVideos.map(convertSampleToVideo).map(v => ({
+    const validVideos = filterValidVideos(sampleVideos);
+    const allVideos = validVideos.map(v => ({
       ...v,
       isLiked: likedIds.has(v.id),
       isSaved: savedIds.has(v.id),
-      likesCount: v.likesCount + (likedIds.has(v.id) ? 0 : 0),
     }));
     
     setVideos(allVideos);
@@ -96,9 +81,9 @@ export function VideosProvider({ children }: { children: ReactNode }) {
     );
     
     setFeed({
-      recommended: sorted.slice(0, 5),
-      new: recent.slice(0, 5),
-      popular: sorted.slice(0, 5),
+      recommended: sorted.slice(0, 8),
+      new: recent.slice(0, 8),
+      popular: sorted.slice(0, 8),
     });
   }, [likedIds, savedIds]);
 
