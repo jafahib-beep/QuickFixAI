@@ -111,8 +111,10 @@ Backend requires DATABASE_URL environment variable.
 - **AI-First Search Experience**: Redesigned Search screen with problem-solving focus
   - Prominent AI entry area with "What do you want to fix today?" prompt
   - Multiline text input for describing problems in natural language
+  - "Ask AI" button inside input container for quick access
+  - Keyboard return key submits the query (returnKeyType="search")
   - Category filter chips for narrowing search scope
-  - "Find Solution" button triggers both video search and AI guide generation
+  - "Find Solution" button with loading state ("Searching...") triggers both video search and AI guide generation
   - Combined results view: Recommended QuickFix video + Other videos + AI Quick Guide
   - "No videos yet" message shown when no matching videos exist, with AI guide fallback
 - **AI Visual Guides**: Generate step-by-step troubleshooting guides with AI-generated images
