@@ -30,25 +30,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loadUser = async () => {
     try {
       const token = await AsyncStorage.getItem("authToken");
-      if (token) {
-        try {
-          const userData = await api.getMe();
-          setUser(userData);
-        } catch {
-          const localUserJson = await AsyncStorage.getItem(LOCAL_USER_KEY);
-          if (localUserJson) {
-            setUser(JSON.parse(localUserJson));
-          }
-        }
-      } else {
+      if (!token) {
+        setUser(null);
+        setIsLoading(false);
+        return;
+      }
+      
+      try {
+        const userData = await api.getMe();
+        setUser(userData);
+      } catch {
         const localUserJson = await AsyncStorage.getItem(LOCAL_USER_KEY);
         if (localUserJson) {
           setUser(JSON.parse(localUserJson));
+        } else {
+          await AsyncStorage.removeItem("authToken");
+          setUser(null);
         }
       }
     } catch (error) {
       console.log("No valid session found");
-      await api.logout();
+      await AsyncStorage.removeItem("authToken");
+      await AsyncStorage.removeItem(LOCAL_USER_KEY);
+      setUser(null);
     } finally {
       setIsLoading(false);
     }
@@ -115,9 +119,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await api.logout();
     } catch {
-      await AsyncStorage.removeItem("authToken");
-      await AsyncStorage.removeItem(LOCAL_USER_KEY);
+      // API logout failed, continue with local cleanup
     }
+    await AsyncStorage.removeItem("authToken");
+    await AsyncStorage.removeItem(LOCAL_USER_KEY);
     setUser(null);
   };
 

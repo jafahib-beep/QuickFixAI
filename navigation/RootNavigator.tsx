@@ -16,7 +16,8 @@ import CategoriesScreen from "@/screens/CategoriesScreen";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/hooks/useTheme";
 import { getCommonScreenOptions } from "./screenOptions";
-import { storage, Video } from "@/utils/storage";
+import { storage } from "@/utils/storage";
+import { Video } from "@/utils/api";
 
 export type RootStackParamList = {
   Onboarding: undefined;

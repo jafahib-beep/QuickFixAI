@@ -32,7 +32,7 @@ QuickFix is a mobile-first video troubleshooting app for 30-60 second fix-it vid
 ```
 
 ## Key Features
-1. **User Authentication** - Register, login, profile management with local fallback
+1. **User Authentication** - Register, login, profile management with local fallback, proper auth gate (requires login to access main app)
 2. **Video Upload** - Pick or record videos up to 60 seconds with category/tags
 3. **Video Feed** - Home feed with recommended, new, and popular sections
 4. **Search** - Text search with category filtering

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, StyleSheet, Pressable, Switch, Alert } from "react-native";
+import { View, StyleSheet, Pressable, Switch, Alert, Platform } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useTranslation } from "react-i18next";
@@ -33,39 +33,56 @@ export default function SettingsScreen() {
 
   const currentLanguage = languages.find((l) => l.code === i18n.language);
 
-  const handleLogout = () => {
-    Alert.alert(t("auth.logout"), t("auth.logoutConfirm"), [
-      { text: t("common.cancel"), style: "cancel" },
-      {
-        text: t("auth.logout"),
-        style: "destructive",
-        onPress: async () => {
-          await logout();
+  const handleLogout = async () => {
+    if (Platform.OS === "web") {
+      const confirmed = window.confirm(t("auth.logoutConfirm"));
+      if (confirmed) {
+        await logout();
+      }
+    } else {
+      Alert.alert(t("auth.logout"), t("auth.logoutConfirm"), [
+        { text: t("common.cancel"), style: "cancel" },
+        {
+          text: t("auth.logout"),
+          style: "destructive",
+          onPress: async () => {
+            await logout();
+          },
         },
-      },
-    ]);
+      ]);
+    }
   };
 
-  const handleDeleteAccount = () => {
-    Alert.alert(t("settings.deleteAccount"), t("settings.deleteAccountConfirm"), [
-      { text: t("common.cancel"), style: "cancel" },
-      {
-        text: t("common.delete"),
-        style: "destructive",
-        onPress: () => {
-          Alert.alert(t("settings.deleteAccount"), "Are you absolutely sure?", [
-            { text: t("common.cancel"), style: "cancel" },
-            {
-              text: t("common.yes"),
-              style: "destructive",
-              onPress: async () => {
-                await logout();
+  const handleDeleteAccount = async () => {
+    if (Platform.OS === "web") {
+      const confirmed = window.confirm(t("settings.deleteAccountConfirm"));
+      if (confirmed) {
+        const doubleConfirm = window.confirm("Are you absolutely sure?");
+        if (doubleConfirm) {
+          await logout();
+        }
+      }
+    } else {
+      Alert.alert(t("settings.deleteAccount"), t("settings.deleteAccountConfirm"), [
+        { text: t("common.cancel"), style: "cancel" },
+        {
+          text: t("common.delete"),
+          style: "destructive",
+          onPress: () => {
+            Alert.alert(t("settings.deleteAccount"), "Are you absolutely sure?", [
+              { text: t("common.cancel"), style: "cancel" },
+              {
+                text: t("common.yes"),
+                style: "destructive",
+                onPress: async () => {
+                  await logout();
+                },
               },
-            },
-          ]);
+            ]);
+          },
         },
-      },
-    ]);
+      ]);
+    }
   };
 
   const renderSettingRow = (

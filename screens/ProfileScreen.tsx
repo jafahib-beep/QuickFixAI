@@ -12,7 +12,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
 import { useVideos } from "@/contexts/VideosContext";
 import { RootStackParamList } from "@/navigation/RootNavigator";
-import { Video } from "@/utils/storage";
+import { Video } from "@/utils/api";
 
 type ProfileScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -94,7 +94,7 @@ export default function ProfileScreen() {
             <View style={[styles.gridThumbnail, { backgroundColor: theme.backgroundSecondary }]}>
               <Feather name="play-circle" size={24} color={theme.textSecondary} />
             </View>
-            <ThemedText type="caption" numberOfLines={1} style={styles.gridTitle}>
+            <ThemedText type="small" numberOfLines={1} style={styles.gridTitle}>
               {video.title}
             </ThemedText>
           </Pressable>
@@ -113,8 +113,8 @@ export default function ProfileScreen() {
             { opacity: pressed ? 0.8 : 1 },
           ]}
         >
-          {user?.avatar ? (
-            <Image source={{ uri: user.avatar }} style={styles.avatar} />
+          {user?.avatarUrl ? (
+            <Image source={{ uri: user.avatarUrl }} style={styles.avatar} />
           ) : (
             <View style={[styles.avatar, { backgroundColor: theme.backgroundSecondary }]}>
               <ThemedText type="h1">
@@ -137,14 +137,14 @@ export default function ProfileScreen() {
           </ThemedText>
         ) : null}
 
-        {user?.expertise && user.expertise.length > 0 ? (
+        {user?.expertiseCategories && user.expertiseCategories.length > 0 ? (
           <View style={styles.expertiseContainer}>
-            {user.expertise.map((item, index) => (
+            {user.expertiseCategories.map((item: string, index: number) => (
               <View
                 key={index}
                 style={[styles.expertiseTag, { backgroundColor: theme.backgroundSecondary }]}
               >
-                <ThemedText type="caption">{item}</ThemedText>
+                <ThemedText type="small">{item}</ThemedText>
               </View>
             ))}
           </View>
@@ -152,14 +152,14 @@ export default function ProfileScreen() {
 
         <View style={styles.statsRow}>
           <View style={styles.stat}>
-            <ThemedText type="h4">{user?.followers || 0}</ThemedText>
+            <ThemedText type="h4">{user?.followersCount || 0}</ThemedText>
             <ThemedText type="small" style={{ color: theme.textSecondary }}>
               {t("profile.followers")}
             </ThemedText>
           </View>
           <View style={[styles.statDivider, { backgroundColor: theme.border }]} />
           <View style={styles.stat}>
-            <ThemedText type="h4">{user?.following || 0}</ThemedText>
+            <ThemedText type="h4">{user?.followingCount || 0}</ThemedText>
             <ThemedText type="small" style={{ color: theme.textSecondary }}>
               {t("profile.following")}
             </ThemedText>

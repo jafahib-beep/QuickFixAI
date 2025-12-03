@@ -26,6 +26,8 @@ function SettingsButton() {
       onPress={() => navigation.navigate("Settings")}
       hitSlop={8}
       style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
+      accessibilityLabel="Settings"
+      accessibilityRole="button"
     >
       <Feather name="settings" size={22} color={theme.text} />
     </Pressable>
