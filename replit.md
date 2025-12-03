@@ -98,6 +98,13 @@ Backend requires DATABASE_URL environment variable.
 - OPENAI_API_KEY - For AI features (optional)
 
 ## Recent Changes (Dec 2024)
+- **TikTok-Style Video Player**: New SwipeVideoPlayerScreen with vertical FlatList for immersive full-screen video swiping
+  - Tapping any video card opens SwipeVideoPlayer instead of single VideoPlayer
+  - Vertical swipe navigation between videos with paging enabled
+  - Videos auto-pause when swiped away, play when active
+  - Full-screen overlays for title/author/category/tags at bottom
+  - Action buttons (like, save, share) on right side
+  - All feed screens (Home, Category, Tag, Search, Toolbox) navigate to SwipeVideoPlayer
 - **Video Package Update**: Replaced deprecated expo-av with modern expo-video for video playback
 - **VideoCard Touch Fix**: Made entire VideoCard tappable via onPress prop (screens pass onPress to VideoCard, not wrap in Pressable)
 - **Error Handling**: Changed console.error to console.log for expected API fallbacks to prevent red overlays in Expo Go

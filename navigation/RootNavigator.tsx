@@ -6,6 +6,7 @@ import MainTabNavigator from "./MainTabNavigator";
 import AuthNavigator from "./AuthNavigator";
 import OnboardingScreen from "@/screens/OnboardingScreen";
 import VideoPlayerScreen from "@/screens/VideoPlayerScreen";
+import SwipeVideoPlayerScreen from "@/screens/SwipeVideoPlayerScreen";
 import UploadScreen from "@/screens/UploadScreen";
 import SettingsScreen from "@/screens/SettingsScreen";
 import EditProfileScreen from "@/screens/EditProfileScreen";
@@ -24,6 +25,7 @@ export type RootStackParamList = {
   Auth: undefined;
   MainTabs: undefined;
   VideoPlayer: { video: Video };
+  SwipeVideoPlayer: { videos: Video[]; startIndex: number };
   Upload: undefined;
   Settings: undefined;
   EditProfile: undefined;
@@ -78,6 +80,15 @@ export default function RootNavigator() {
           <Stack.Screen
             name="VideoPlayer"
             component={VideoPlayerScreen}
+            options={{
+              presentation: "fullScreenModal",
+              animation: "slide_from_bottom",
+              gestureEnabled: true,
+            }}
+          />
+          <Stack.Screen
+            name="SwipeVideoPlayer"
+            component={SwipeVideoPlayerScreen}
             options={{
               presentation: "fullScreenModal",
               animation: "slide_from_bottom",

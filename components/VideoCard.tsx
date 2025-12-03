@@ -9,7 +9,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { ThemedText } from "./ThemedText";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { useTheme } from "@/hooks/useTheme";
-import { Video } from "@/utils/storage";
+import { Video } from "@/utils/api";
 import { RootStackParamList } from "@/navigation/RootNavigator";
 import { getCategoryByKey } from "@/constants/categories";
 
@@ -185,7 +185,7 @@ export function VideoCard({
                 { color: isLiked ? "#FF3B30" : theme.textSecondary }
               ]}
             >
-              {video.likes ?? 0}
+              {video.likesCount ?? 0}
             </ThemedText>
           </Pressable>
 

@@ -62,28 +62,16 @@ export default function SearchScreen() {
     return () => clearTimeout(searchTimer);
   }, [query, selectedCategory, videos, semanticSearch]);
 
-  const handleVideoPress = useCallback((video: Video) => {
-    navigation.navigate("VideoPlayer", { video });
-  }, [navigation]);
-
-  const videoToCardFormat = (video: Video) => ({
-    id: video.id,
-    uri: video.videoUrl || "",
-    thumbnailUri: video.thumbnailUrl || "",
-    title: video.title,
-    description: video.description || "",
-    category: video.category,
-    tags: video.tags,
-    authorId: video.authorId,
-    authorName: video.authorName,
-    authorAvatar: video.authorAvatar,
-    duration: video.duration,
-    likes: video.likesCount,
-    commentsEnabled: video.commentsEnabled,
-    createdAt: video.createdAt,
-  });
-
   const displayVideos = query.trim() || selectedCategory !== "all" ? searchResults : videos;
+
+  const handleVideoPress = useCallback((video: Video, index: number) => {
+    const playableVideos = displayVideos.filter(v => v.videoUrl);
+    const adjustedIndex = playableVideos.findIndex(v => v.id === video.id);
+    navigation.navigate("SwipeVideoPlayer", { 
+      videos: playableVideos, 
+      startIndex: adjustedIndex >= 0 ? adjustedIndex : 0 
+    });
+  }, [navigation, displayVideos]);
 
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
@@ -177,14 +165,14 @@ export default function SearchScreen() {
             <ActivityIndicator size="large" color={theme.link} />
           </View>
         ) : renderEmptyState}
-        renderItem={({ item }) => (
+        renderItem={({ item, index }) => (
           <VideoCard
-            video={videoToCardFormat(item)}
+            video={item}
             isSaved={item.isSaved}
             isLiked={item.isLiked}
             onSave={() => toggleSave(item.id)}
             onLike={() => toggleLike(item.id)}
-            onPress={() => handleVideoPress(item)}
+            onPress={() => handleVideoPress(item, index)}
           />
         )}
         ItemSeparatorComponent={() => <View style={{ height: Spacing.lg }} />}

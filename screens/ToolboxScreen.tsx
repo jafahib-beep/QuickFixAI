@@ -50,26 +50,14 @@ export default function ToolboxScreen() {
     await loadSavedVideos();
   };
 
-  const videoToLegacy = (video: Video) => ({
-    id: video.id,
-    uri: video.videoUrl || "",
-    thumbnailUri: video.thumbnailUrl || "",
-    title: video.title,
-    description: video.description || "",
-    category: video.category,
-    tags: video.tags,
-    authorId: video.authorId,
-    authorName: video.authorName,
-    authorAvatar: video.authorAvatar,
-    duration: video.duration,
-    likes: video.likesCount,
-    commentsEnabled: video.commentsEnabled,
-    createdAt: video.createdAt,
-  });
-
-  const handleVideoPress = useCallback((video: Video) => {
-    navigation.navigate("VideoPlayer", { video: videoToLegacy(video) });
-  }, [navigation]);
+  const handleVideoPress = useCallback((video: Video, index: number) => {
+    const playableVideos = savedVideos.filter(v => v.videoUrl);
+    const adjustedIndex = playableVideos.findIndex(v => v.id === video.id);
+    navigation.navigate("SwipeVideoPlayer", { 
+      videos: playableVideos, 
+      startIndex: adjustedIndex >= 0 ? adjustedIndex : 0 
+    });
+  }, [navigation, savedVideos]);
 
   const handleToggleSave = async (videoId: string) => {
     const saved = await toggleSave(videoId);
@@ -140,14 +128,14 @@ export default function ToolboxScreen() {
           </ThemedText>
         </View>
       }
-      renderItem={({ item }) => (
+      renderItem={({ item, index }) => (
         <VideoCard
-          video={videoToLegacy(item)}
+          video={item}
           isSaved={item.isSaved}
           isLiked={item.isLiked}
           onSave={() => handleToggleSave(item.id)}
           onLike={() => toggleLike(item.id)}
-          onPress={() => handleVideoPress(item)}
+          onPress={() => handleVideoPress(item, index)}
         />
       )}
       ItemSeparatorComponent={() => <View style={{ height: Spacing.lg }} />}

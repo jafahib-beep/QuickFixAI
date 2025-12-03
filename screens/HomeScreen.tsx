@@ -47,26 +47,14 @@ export default function HomeScreen() {
     [feed, filterByCategory]
   );
 
-  const handleVideoPress = useCallback((video: Video) => {
-    navigation.navigate("VideoPlayer", { video: videoToLegacy(video) });
+  const handleVideoPress = useCallback((video: Video, videoList: Video[], index: number) => {
+    const playableVideos = videoList.filter(v => v.videoUrl);
+    const adjustedIndex = playableVideos.findIndex(v => v.id === video.id);
+    navigation.navigate("SwipeVideoPlayer", { 
+      videos: playableVideos, 
+      startIndex: adjustedIndex >= 0 ? adjustedIndex : 0 
+    });
   }, [navigation]);
-
-  const videoToLegacy = (video: Video) => ({
-    id: video.id,
-    uri: video.videoUrl || "",
-    thumbnailUri: video.thumbnailUrl || "",
-    title: video.title,
-    description: video.description || "",
-    category: video.category,
-    tags: video.tags,
-    authorId: video.authorId,
-    authorName: video.authorName,
-    authorAvatar: video.authorAvatar,
-    duration: video.duration,
-    likes: video.likesCount,
-    commentsEnabled: video.commentsEnabled,
-    createdAt: video.createdAt,
-  });
 
   const renderSection = (title: string, data: Video[]) => (
     <View style={styles.section}>
@@ -84,15 +72,15 @@ export default function HomeScreen() {
         showsHorizontalScrollIndicator={false}
         keyExtractor={(item) => `${title}-${item.id}`}
         contentContainerStyle={styles.horizontalList}
-        renderItem={({ item }) => (
+        renderItem={({ item, index }) => (
           <View style={styles.cardWrapper}>
             <VideoCard
-              video={videoToLegacy(item)}
+              video={item}
               isSaved={item.isSaved}
               isLiked={item.isLiked}
               onSave={() => toggleSave(item.id)}
               onLike={() => toggleLike(item.id)}
-              onPress={() => handleVideoPress(item)}
+              onPress={() => handleVideoPress(item, data, index)}
               horizontal
             />
           </View>
