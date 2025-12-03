@@ -72,6 +72,8 @@
     "whatToFix": "Vad vill du fixa idag?",
     "describeProblem": "Beskriv ditt problem, t.ex. 'kökskranen droppar'.",
     "problemPlaceholder": "Skriv ditt problem här...",
+    "askAI": "Fråga AI",
+    "searching": "Söker...",
     "findSolution": "Hitta lösning",
     "recommendedVideo": "Rekommenderad QuickFix",
     "otherVideos": "Andra hjälpsamma videor",

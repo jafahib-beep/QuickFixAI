@@ -72,6 +72,8 @@
     "whatToFix": "ماذا تريد إصلاحه اليوم؟",
     "describeProblem": "اوصف مشكلتك، مثلاً 'صنبور المطبخ يقطر'.",
     "problemPlaceholder": "اكتب مشكلتك هنا...",
+    "askAI": "اسأل AI",
+    "searching": "جارٍ البحث...",
     "findSolution": "ابحث عن حل",
     "recommendedVideo": "QuickFix الموصى به",
     "otherVideos": "فيديوهات مفيدة أخرى",

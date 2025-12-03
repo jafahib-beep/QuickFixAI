@@ -191,7 +191,43 @@ export default function SearchScreen() {
           multiline
           numberOfLines={3}
           textAlignVertical="top"
+          returnKeyType="search"
+          blurOnSubmit={true}
+          onSubmitEditing={() => {
+            if (problemQuery.trim() && !isSearching) {
+              handleFindSolution();
+            }
+          }}
         />
+        <Pressable
+          onPress={handleFindSolution}
+          disabled={!problemQuery.trim() || isSearching}
+          style={({ pressed }) => [
+            styles.inputAskButton,
+            { 
+              backgroundColor: problemQuery.trim() ? theme.link : theme.backgroundTertiary,
+              opacity: pressed && problemQuery.trim() ? 0.85 : 1 
+            }
+          ]}
+        >
+          {isSearching ? (
+            <ActivityIndicator size="small" color="#FFFFFF" />
+          ) : (
+            <>
+              <Feather name="cpu" size={16} color={problemQuery.trim() ? "#FFFFFF" : theme.textSecondary} />
+              <ThemedText 
+                type="small" 
+                style={{ 
+                  color: problemQuery.trim() ? "#FFFFFF" : theme.textSecondary,
+                  fontWeight: "600",
+                  marginLeft: Spacing.xs
+                }}
+              >
+                {t("search.askAI")}
+              </ThemedText>
+            </>
+          )}
+        </Pressable>
       </View>
 
       {renderCategoryChips()}
@@ -207,22 +243,32 @@ export default function SearchScreen() {
           }
         ]}
       >
-        {isSearching ? (
-          <ActivityIndicator size="small" color="#FFFFFF" />
-        ) : (
-          <>
-            <Feather name="zap" size={20} color={problemQuery.trim() ? "#FFFFFF" : theme.textSecondary} />
-            <ThemedText 
-              type="body" 
-              style={[
-                styles.findButtonText, 
-                { color: problemQuery.trim() ? "#FFFFFF" : theme.textSecondary }
-              ]}
-            >
-              {t("search.findSolution")}
-            </ThemedText>
-          </>
-        )}
+        <View style={styles.findButtonContent}>
+          {isSearching ? (
+            <>
+              <ActivityIndicator size="small" color="#FFFFFF" />
+              <ThemedText 
+                type="body" 
+                style={[styles.findButtonText, { color: "#FFFFFF" }]}
+              >
+                {t("search.searching")}
+              </ThemedText>
+            </>
+          ) : (
+            <>
+              <Feather name="zap" size={20} color={problemQuery.trim() ? "#FFFFFF" : theme.textSecondary} />
+              <ThemedText 
+                type="body" 
+                style={[
+                  styles.findButtonText, 
+                  { color: problemQuery.trim() ? "#FFFFFF" : theme.textSecondary }
+                ]}
+              >
+                {t("search.findSolution")}
+              </ThemedText>
+            </>
+          )}
+        </View>
       </Pressable>
     </View>
   );
@@ -531,6 +577,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 24,
     minHeight: 80,
+    marginBottom: Spacing.sm,
+  },
+  inputAskButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.lg,
+    borderRadius: BorderRadius.md,
+    alignSelf: "flex-end",
   },
   categoriesWrapper: {
     marginHorizontal: -Spacing.xl,
@@ -553,6 +609,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing["3xl"],
     borderRadius: BorderRadius.md,
     width: "100%",
+  },
+  findButtonContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
   },
   findButtonText: {
     fontWeight: "600",

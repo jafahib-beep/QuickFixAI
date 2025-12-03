@@ -72,6 +72,8 @@
     "whatToFix": "Что вы хотите починить сегодня?",
     "describeProblem": "Опишите вашу проблему, например 'кухонный кран капает'.",
     "problemPlaceholder": "Введите вашу проблему здесь...",
+    "askAI": "Спросить ИИ",
+    "searching": "Поиск...",
     "findSolution": "Найти решение",
     "recommendedVideo": "Рекомендуемый QuickFix",
     "otherVideos": "Другие полезные видео",

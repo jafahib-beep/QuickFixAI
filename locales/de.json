@@ -72,6 +72,8 @@
     "whatToFix": "Was möchten Sie heute reparieren?",
     "describeProblem": "Beschreiben Sie Ihr Problem, z.B. 'Küchenwasserhahn tropft'.",
     "problemPlaceholder": "Geben Sie Ihr Problem hier ein...",
+    "askAI": "KI fragen",
+    "searching": "Suche läuft...",
     "findSolution": "Lösung finden",
     "recommendedVideo": "Empfohlener QuickFix",
     "otherVideos": "Weitere hilfreiche Videos",

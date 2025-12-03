@@ -72,6 +72,8 @@
     "whatToFix": "Que voulez-vous réparer aujourd'hui ?",
     "describeProblem": "Décrivez votre problème, par ex. 'le robinet de cuisine goutte'.",
     "problemPlaceholder": "Tapez votre problème ici...",
+    "askAI": "Demander à l'IA",
+    "searching": "Recherche en cours...",
     "findSolution": "Trouver une solution",
     "recommendedVideo": "QuickFix recommandé",
     "otherVideos": "Autres vidéos utiles",
