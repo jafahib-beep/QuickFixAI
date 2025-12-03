@@ -96,16 +96,18 @@ export default function SettingsScreen() {
       onPress={onPress}
       style={({ pressed }) => [
         styles.settingRow,
-        { backgroundColor: theme.backgroundDefault, opacity: pressed && onPress ? 0.8 : 1 },
+        { opacity: pressed && onPress ? 0.85 : 1 },
       ]}
       disabled={!onPress}
     >
       <View style={styles.settingLeft}>
-        <Feather
-          name={icon as any}
-          size={20}
-          color={destructive ? theme.error : theme.text}
-        />
+        <View style={[styles.iconContainer, { backgroundColor: destructive ? `${theme.error}15` : theme.backgroundTertiary }]}>
+          <Feather
+            name={icon as any}
+            size={18}
+            color={destructive ? theme.error : theme.text}
+          />
+        </View>
         <ThemedText
           type="body"
           style={[styles.settingTitle, destructive && { color: theme.error }]}
@@ -124,16 +126,16 @@ export default function SettingsScreen() {
   return (
     <ScreenScrollView contentContainerStyle={styles.content}>
       <View style={styles.section}>
-        <ThemedText type="small" style={[styles.sectionTitle, { color: theme.textSecondary }]}>
+        <ThemedText type="caption" style={[styles.sectionTitle, { color: theme.textSecondary }]}>
           {t("settings.language").toUpperCase()}
         </ThemedText>
-        <View style={[styles.sectionContent, { backgroundColor: theme.backgroundDefault }]}>
+        <View style={[styles.sectionContent, { backgroundColor: theme.cardBackground }]}>
           {renderSettingRow(
             "globe",
             t("settings.language"),
             () => navigation.navigate("LanguagePicker"),
             <View style={styles.rightContent}>
-              <ThemedText type="body" style={{ color: theme.textSecondary }}>
+              <ThemedText type="small" style={{ color: theme.textSecondary }}>
                 {currentLanguage?.nativeName || "English"}
               </ThemedText>
               <Feather name="chevron-right" size={20} color={theme.textSecondary} />
@@ -143,10 +145,10 @@ export default function SettingsScreen() {
       </View>
 
       <View style={styles.section}>
-        <ThemedText type="small" style={[styles.sectionTitle, { color: theme.textSecondary }]}>
+        <ThemedText type="caption" style={[styles.sectionTitle, { color: theme.textSecondary }]}>
           {t("settings.notifications").toUpperCase()}
         </ThemedText>
-        <View style={[styles.sectionContent, { backgroundColor: theme.backgroundDefault }]}>
+        <View style={[styles.sectionContent, { backgroundColor: theme.cardBackground }]}>
           {renderSettingRow(
             "bell",
             t("settings.pushNotifications"),
@@ -174,10 +176,10 @@ export default function SettingsScreen() {
       </View>
 
       <View style={styles.section}>
-        <ThemedText type="small" style={[styles.sectionTitle, { color: theme.textSecondary }]}>
+        <ThemedText type="caption" style={[styles.sectionTitle, { color: theme.textSecondary }]}>
           {t("settings.account").toUpperCase()}
         </ThemedText>
-        <View style={[styles.sectionContent, { backgroundColor: theme.backgroundDefault }]}>
+        <View style={[styles.sectionContent, { backgroundColor: theme.cardBackground }]}>
           {renderSettingRow("lock", t("settings.changePassword"), () => {
             Alert.alert(t("settings.changePassword"), "This feature is coming soon.");
           })}
@@ -187,10 +189,10 @@ export default function SettingsScreen() {
       </View>
 
       <View style={styles.section}>
-        <ThemedText type="small" style={[styles.sectionTitle, { color: theme.textSecondary }]}>
+        <ThemedText type="caption" style={[styles.sectionTitle, { color: theme.textSecondary }]}>
           {t("settings.privacy").toUpperCase()}
         </ThemedText>
-        <View style={[styles.sectionContent, { backgroundColor: theme.backgroundDefault }]}>
+        <View style={[styles.sectionContent, { backgroundColor: theme.cardBackground }]}>
           {renderSettingRow("slash", t("settings.blockedUsers"), () => {
             Alert.alert(t("settings.blockedUsers"), "No blocked users.");
           })}
@@ -198,15 +200,15 @@ export default function SettingsScreen() {
       </View>
 
       <View style={styles.section}>
-        <ThemedText type="small" style={[styles.sectionTitle, { color: theme.textSecondary }]}>
+        <ThemedText type="caption" style={[styles.sectionTitle, { color: theme.textSecondary }]}>
           {t("settings.about").toUpperCase()}
         </ThemedText>
-        <View style={[styles.sectionContent, { backgroundColor: theme.backgroundDefault }]}>
+        <View style={[styles.sectionContent, { backgroundColor: theme.cardBackground }]}>
           {renderSettingRow(
             "info",
             t("settings.version"),
             undefined,
-            <ThemedText type="body" style={{ color: theme.textSecondary }}>
+            <ThemedText type="small" style={{ color: theme.textSecondary }}>
               1.0.0
             </ThemedText>
           )}
@@ -225,7 +227,7 @@ export default function SettingsScreen() {
         onPress={handleLogout}
         style={({ pressed }) => [
           styles.logoutButton,
-          { backgroundColor: theme.backgroundDefault, opacity: pressed ? 0.8 : 1 },
+          { backgroundColor: `${theme.error}10`, opacity: pressed ? 0.85 : 1 },
         ]}
       >
         <Feather name="log-out" size={20} color={theme.error} />
@@ -247,9 +249,11 @@ const styles = StyleSheet.create({
   sectionTitle: {
     marginBottom: Spacing.sm,
     paddingHorizontal: Spacing.xs,
+    fontWeight: "600",
+    letterSpacing: 0.5,
   },
   sectionContent: {
-    borderRadius: BorderRadius.sm,
+    borderRadius: BorderRadius.md,
     overflow: "hidden",
   },
   settingRow: {
@@ -263,8 +267,16 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
+  iconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: Spacing.md,
+  },
   settingTitle: {
-    marginLeft: Spacing.md,
+    fontWeight: "400",
   },
   rightContent: {
     flexDirection: "row",
@@ -273,14 +285,14 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
-    marginLeft: Spacing.lg + 20 + Spacing.md,
+    marginLeft: Spacing.lg + 36 + Spacing.md,
   },
   logoutButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: Spacing.lg,
-    borderRadius: BorderRadius.sm,
+    borderRadius: BorderRadius.md,
     gap: Spacing.sm,
   },
   logoutText: {

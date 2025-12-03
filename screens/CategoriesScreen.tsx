@@ -15,13 +15,13 @@ import { RootStackParamList } from "@/navigation/RootNavigator";
 type CategoriesScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 const { width } = Dimensions.get("window");
-const GRID_SPACING = Spacing.lg;
+const GRID_SPACING = Spacing.md;
 const GRID_COLUMNS = 2;
 const CARD_WIDTH = (width - Spacing.xl * 2 - GRID_SPACING) / GRID_COLUMNS;
 
 export default function CategoriesScreen() {
   const { t } = useTranslation();
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
   const navigation = useNavigation<CategoriesScreenNavigationProp>();
   const { paddingTop, paddingBottom } = useScreenInsets();
 
@@ -38,15 +38,16 @@ export default function CategoriesScreen() {
       style={({ pressed }) => [
         styles.categoryCard,
         {
-          backgroundColor: theme.backgroundSecondary,
-          opacity: pressed ? 0.8 : 1,
+          backgroundColor: theme.cardBackground,
+          opacity: pressed ? 0.85 : 1,
+          transform: [{ scale: pressed ? 0.97 : 1 }],
         },
       ]}
     >
       <View
         style={[
           styles.iconContainer,
-          { backgroundColor: `${item.color}20` },
+          { backgroundColor: `${item.color}${isDark ? '20' : '15'}` },
         ]}
       >
         <Feather name={item.icon} size={28} color={item.color} />
@@ -54,6 +55,9 @@ export default function CategoriesScreen() {
       <ThemedText type="body" style={styles.categoryName}>
         {t(item.labelKey)}
       </ThemedText>
+      <View style={styles.arrowContainer}>
+        <Feather name="chevron-right" size={16} color={theme.textSecondary} />
+      </View>
     </Pressable>
   );
 
@@ -90,14 +94,20 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
   },
   iconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     alignItems: "center",
     justifyContent: "center",
   },
   categoryName: {
-    fontWeight: "500",
+    fontWeight: "600",
     textAlign: "center",
+  },
+  arrowContainer: {
+    position: "absolute",
+    top: Spacing.md,
+    right: Spacing.md,
+    opacity: 0.5,
   },
 });

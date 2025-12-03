@@ -1,13 +1,14 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { View, StyleSheet, FlatList, Pressable, Image, RefreshControl, ActivityIndicator } from "react-native";
+import { View, StyleSheet, FlatList, Pressable, RefreshControl, ActivityIndicator } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useTranslation } from "react-i18next";
+import { Feather } from "@expo/vector-icons";
 
 import { ThemedText } from "@/components/ThemedText";
 import { VideoCard } from "@/components/VideoCard";
 import { ScreenScrollView } from "@/components/ScreenScrollView";
-import { Spacing } from "@/constants/theme";
+import { Spacing, BorderRadius } from "@/constants/theme";
 import { useTheme } from "@/hooks/useTheme";
 import { useVideos } from "@/contexts/VideosContext";
 import { RootStackParamList } from "@/navigation/RootNavigator";
@@ -79,12 +80,10 @@ export default function ToolboxScreen() {
 
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
-      <Image
-        source={require("@/assets/images/empty-states/empty-toolbox.png")}
-        style={styles.emptyImage}
-        resizeMode="contain"
-      />
-      <ThemedText type="h3" style={styles.emptyTitle}>
+      <View style={[styles.emptyIconContainer, { backgroundColor: theme.backgroundSecondary }]}>
+        <Feather name="bookmark" size={40} color={theme.textSecondary} />
+      </View>
+      <ThemedText type="h4" style={[styles.emptyTitle, { color: theme.text }]}>
         {t("toolbox.empty")}
       </ThemedText>
       <ThemedText type="body" style={[styles.emptyHint, { color: theme.textSecondary }]}>
@@ -96,7 +95,7 @@ export default function ToolboxScreen() {
   if (isLoading) {
     return (
       <View style={[styles.loadingContainer, { backgroundColor: theme.backgroundRoot }]}>
-        <ActivityIndicator size="large" color={theme.text} />
+        <ActivityIndicator size="large" color={theme.link} />
       </View>
     );
   }
@@ -109,7 +108,7 @@ export default function ToolboxScreen() {
           <RefreshControl
             refreshing={isRefreshing}
             onRefresh={handleRefresh}
-            tintColor={theme.text}
+            tintColor={theme.link}
           />
         }
       >
@@ -131,13 +130,22 @@ export default function ToolboxScreen() {
         <RefreshControl
           refreshing={isRefreshing}
           onRefresh={handleRefresh}
-          tintColor={theme.text}
+          tintColor={theme.link}
         />
+      }
+      ListHeaderComponent={
+        <View style={styles.headerInfo}>
+          <ThemedText type="small" style={{ color: theme.textSecondary }}>
+            {savedVideos.length} {savedVideos.length === 1 ? 'video' : 'videos'} saved
+          </ThemedText>
+        </View>
       }
       renderItem={({ item }) => (
         <Pressable
           onPress={() => handleVideoPress(item)}
-          style={({ pressed }) => [{ opacity: pressed ? 0.9 : 1 }]}
+          style={({ pressed }) => [
+            { opacity: pressed ? 0.95 : 1, transform: [{ scale: pressed ? 0.99 : 1 }] },
+          ]}
         >
           <VideoCard
             video={videoToLegacy(item)}
@@ -167,20 +175,28 @@ const styles = StyleSheet.create({
   listContent: {
     paddingHorizontal: Spacing.xl,
   },
+  headerInfo: {
+    marginBottom: Spacing.lg,
+  },
   emptyState: {
     alignItems: "center",
     paddingVertical: Spacing["5xl"],
+    paddingHorizontal: Spacing.xl,
   },
-  emptyImage: {
-    width: 120,
-    height: 120,
-    marginBottom: Spacing["2xl"],
-    opacity: 0.6,
+  emptyIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: Spacing.xl,
   },
   emptyTitle: {
     marginBottom: Spacing.sm,
+    textAlign: "center",
   },
   emptyHint: {
     textAlign: "center",
+    lineHeight: 22,
   },
 });

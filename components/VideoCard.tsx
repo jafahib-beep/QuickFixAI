@@ -1,9 +1,10 @@
 import React from "react";
-import { View, StyleSheet, Image, Pressable } from "react-native";
+import { View, StyleSheet, Pressable } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useTranslation } from "react-i18next";
 import { Feather } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 
 import { ThemedText } from "./ThemedText";
 import { Spacing, BorderRadius } from "@/constants/theme";
@@ -40,10 +41,9 @@ export function VideoCard({
   horizontal = false,
 }: VideoCardProps) {
   const { t } = useTranslation();
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
   const navigation = useNavigation<VideoCardNavigationProp>();
 
-  const cardStyle = horizontal ? styles.cardHorizontal : styles.card;
   const category = getCategoryByKey(video.category);
 
   const handleCategoryPress = () => {
@@ -59,20 +59,40 @@ export function VideoCard({
     navigation.navigate("TagFeed", { tag });
   };
 
+  const cardStyles = [
+    styles.card,
+    horizontal && styles.cardHorizontal,
+    { backgroundColor: theme.cardBackground },
+  ];
+
   return (
-    <View style={[cardStyle, { backgroundColor: theme.backgroundDefault }]}>
+    <View style={cardStyles}>
       <Pressable
         onPress={onPress}
         style={({ pressed }) => [
           styles.thumbnailContainer,
-          { opacity: pressed ? 0.9 : 1 },
+          { opacity: pressed ? 0.95 : 1 },
         ]}
       >
         <View style={[styles.thumbnail, { backgroundColor: theme.backgroundSecondary }]}>
-          <Feather name="play-circle" size={40} color={theme.textSecondary} />
+          <LinearGradient
+            colors={isDark 
+              ? ['rgba(10,132,255,0.15)', 'rgba(10,132,255,0.05)']
+              : ['rgba(0,102,255,0.1)', 'rgba(0,102,255,0.03)']
+            }
+            style={styles.thumbnailGradient}
+          />
+          <View style={styles.playIconContainer}>
+            <View style={[
+              styles.playIcon, 
+              { backgroundColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.4)' }
+            ]}>
+              <Feather name="play" size={24} color="#FFFFFF" style={{ marginLeft: 2 }} />
+            </View>
+          </View>
         </View>
-        <View style={[styles.duration, { backgroundColor: theme.overlay }]}>
-          <ThemedText type="small" style={styles.durationText}>
+        <View style={styles.durationBadge}>
+          <ThemedText type="caption" style={styles.durationText}>
             {formatDuration(video.duration)}
           </ThemedText>
         </View>
@@ -84,12 +104,12 @@ export function VideoCard({
         </ThemedText>
 
         <View style={styles.authorRow}>
-          <View style={[styles.avatar, { backgroundColor: theme.backgroundSecondary }]}>
-            <ThemedText type="small" style={{ fontWeight: "600" }}>
+          <View style={[styles.avatar, { backgroundColor: theme.link }]}>
+            <ThemedText type="caption" style={styles.avatarText}>
               {video.authorName?.charAt(0).toUpperCase() || "U"}
             </ThemedText>
           </View>
-          <ThemedText type="small" style={{ color: theme.textSecondary }}>
+          <ThemedText type="small" style={[styles.authorName, { color: theme.textSecondary }]}>
             {video.authorName || "Unknown"}
           </ThemedText>
         </View>
@@ -100,11 +120,14 @@ export function VideoCard({
               onPress={handleCategoryPress}
               style={({ pressed }) => [
                 styles.categoryTag,
-                { backgroundColor: `${category.color}20`, opacity: pressed ? 0.7 : 1 },
+                { 
+                  backgroundColor: `${category.color}${isDark ? '25' : '15'}`,
+                  opacity: pressed ? 0.7 : 1,
+                },
               ]}
             >
-              <Feather name={category.icon} size={12} color={category.color} />
-              <ThemedText type="small" style={{ color: category.color }}>
+              <Feather name={category.icon} size={11} color={category.color} />
+              <ThemedText type="caption" style={{ color: category.color, fontWeight: '500' }}>
                 {t(category.labelKey)}
               </ThemedText>
             </Pressable>
@@ -115,10 +138,13 @@ export function VideoCard({
               onPress={() => handleTagPress(tag)}
               style={({ pressed }) => [
                 styles.tag,
-                { backgroundColor: theme.backgroundSecondary, opacity: pressed ? 0.7 : 1 },
+                { 
+                  backgroundColor: theme.backgroundSecondary,
+                  opacity: pressed ? 0.7 : 1,
+                },
               ]}
             >
-              <ThemedText type="small" style={{ color: theme.textSecondary }}>
+              <ThemedText type="caption" style={{ color: theme.textSecondary }}>
                 #{tag}
               </ThemedText>
             </Pressable>
@@ -132,15 +158,21 @@ export function VideoCard({
               styles.actionButton,
               { opacity: pressed ? 0.6 : 1 },
             ]}
-            hitSlop={8}
+            hitSlop={10}
           >
             <Feather
-              name={isLiked ? "heart" : "heart"}
+              name="heart"
               size={18}
               color={isLiked ? "#FF3B30" : theme.textSecondary}
-              style={isLiked ? { opacity: 1 } : { opacity: 0.6 }}
+              style={{ opacity: isLiked ? 1 : 0.7 }}
             />
-            <ThemedText type="small" style={{ color: theme.textSecondary, marginLeft: 4 }}>
+            <ThemedText 
+              type="caption" 
+              style={[
+                styles.actionCount, 
+                { color: isLiked ? "#FF3B30" : theme.textSecondary }
+              ]}
+            >
               {video.likes ?? 0}
             </ThemedText>
           </Pressable>
@@ -151,13 +183,13 @@ export function VideoCard({
               styles.actionButton,
               { opacity: pressed ? 0.6 : 1 },
             ]}
-            hitSlop={8}
+            hitSlop={10}
           >
             <Feather
-              name={isSaved ? "bookmark" : "bookmark"}
+              name="bookmark"
               size={18}
               color={isSaved ? theme.link : theme.textSecondary}
-              style={isSaved ? { opacity: 1 } : { opacity: 0.6 }}
+              style={{ opacity: isSaved ? 1 : 0.7 }}
             />
           </Pressable>
         </View>
@@ -168,13 +200,11 @@ export function VideoCard({
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: BorderRadius.sm,
+    borderRadius: BorderRadius.md,
     overflow: "hidden",
   },
   cardHorizontal: {
-    width: 260,
-    borderRadius: BorderRadius.sm,
-    overflow: "hidden",
+    width: 280,
   },
   thumbnailContainer: {
     position: "relative",
@@ -185,13 +215,29 @@ const styles = StyleSheet.create({
     height: "100%",
     justifyContent: "center",
     alignItems: "center",
+    overflow: "hidden",
   },
-  duration: {
+  thumbnailGradient: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  playIconContainer: {
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  playIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  durationBadge: {
     position: "absolute",
     bottom: Spacing.sm,
     right: Spacing.sm,
+    backgroundColor: "rgba(0,0,0,0.75)",
     paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
+    paddingVertical: 3,
     borderRadius: BorderRadius.xs,
   },
   durationText: {
@@ -199,51 +245,63 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   content: {
-    padding: Spacing.md,
+    padding: Spacing.lg,
   },
   title: {
     marginBottom: Spacing.sm,
+    lineHeight: 22,
   },
   authorRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.md,
   },
   avatar: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
     justifyContent: "center",
     alignItems: "center",
     marginRight: Spacing.sm,
+  },
+  avatarText: {
+    color: "#FFFFFF",
+    fontWeight: "600",
+  },
+  authorName: {
+    flex: 1,
   },
   tagsRow: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: Spacing.xs,
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.md,
   },
   categoryTag: {
     flexDirection: "row",
     alignItems: "center",
-    gap: Spacing.xs,
+    gap: 4,
     paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
-    borderRadius: BorderRadius.md,
+    paddingVertical: 5,
+    borderRadius: BorderRadius.xs,
   },
   tag: {
     paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
-    borderRadius: BorderRadius.md,
+    paddingVertical: 5,
+    borderRadius: BorderRadius.xs,
   },
   actionsRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginTop: Spacing.xs,
+    paddingTop: Spacing.xs,
   },
   actionButton: {
     flexDirection: "row",
     alignItems: "center",
+    gap: 5,
+  },
+  actionCount: {
+    fontWeight: "500",
   },
 });

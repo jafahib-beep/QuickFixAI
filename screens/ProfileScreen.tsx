@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { View, StyleSheet, Pressable, Image, FlatList, Dimensions } from "react-native";
+import { View, StyleSheet, Pressable, Image, Dimensions, ActivityIndicator } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useTranslation } from "react-i18next";
 import { Feather } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 
 import { ThemedText } from "@/components/ThemedText";
 import { ScreenScrollView } from "@/components/ScreenScrollView";
@@ -23,7 +24,7 @@ const CARD_WIDTH = (width - Spacing.xl * 2 - GRID_SPACING * (GRID_COLUMNS - 1)) 
 
 export default function ProfileScreen() {
   const { t } = useTranslation();
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
   const navigation = useNavigation<ProfileScreenNavigationProp>();
   const { user } = useAuth();
   const { getVideosByAuthor, getSavedVideos } = useVideos();
@@ -63,9 +64,7 @@ export default function ProfileScreen() {
     if (isLoading) {
       return (
         <View style={styles.emptyGrid}>
-          <ThemedText type="body" style={{ color: theme.textSecondary }}>
-            {t("common.loading")}
-          </ThemedText>
+          <ActivityIndicator size="large" color={theme.link} />
         </View>
       );
     }
@@ -73,7 +72,14 @@ export default function ProfileScreen() {
     if (!displayVideos || displayVideos.length === 0) {
       return (
         <View style={styles.emptyGrid}>
-          <ThemedText type="body" style={{ color: theme.textSecondary }}>
+          <View style={[styles.emptyIconContainer, { backgroundColor: theme.backgroundSecondary }]}>
+            <Feather 
+              name={activeTab === "uploads" ? "video" : "bookmark"} 
+              size={32} 
+              color={theme.textSecondary} 
+            />
+          </View>
+          <ThemedText type="body" style={{ color: theme.textSecondary, textAlign: 'center' }}>
             {activeTab === "uploads" ? t("profile.noUploads") : t("toolbox.empty")}
           </ThemedText>
         </View>
@@ -88,13 +94,22 @@ export default function ProfileScreen() {
             onPress={() => handleVideoPress(video)}
             style={({ pressed }) => [
               styles.gridItem,
-              { opacity: pressed ? 0.8 : 1 },
+              { opacity: pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.97 : 1 }] },
             ]}
           >
             <View style={[styles.gridThumbnail, { backgroundColor: theme.backgroundSecondary }]}>
-              <Feather name="play-circle" size={24} color={theme.textSecondary} />
+              <LinearGradient
+                colors={isDark 
+                  ? ['rgba(10,132,255,0.1)', 'rgba(10,132,255,0.02)']
+                  : ['rgba(0,102,255,0.08)', 'rgba(0,102,255,0.02)']
+                }
+                style={StyleSheet.absoluteFill}
+              />
+              <View style={[styles.playBadge, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
+                <Feather name="play" size={16} color="#FFFFFF" />
+              </View>
             </View>
-            <ThemedText type="small" numberOfLines={1} style={styles.gridTitle}>
+            <ThemedText type="small" numberOfLines={2} style={styles.gridTitle}>
               {video.title}
             </ThemedText>
           </Pressable>
@@ -110,20 +125,20 @@ export default function ProfileScreen() {
           onPress={() => navigation.navigate("EditProfile")}
           style={({ pressed }) => [
             styles.avatarContainer,
-            { opacity: pressed ? 0.8 : 1 },
+            { opacity: pressed ? 0.85 : 1 },
           ]}
         >
           {user?.avatarUrl ? (
             <Image source={{ uri: user.avatarUrl }} style={styles.avatar} />
           ) : (
-            <View style={[styles.avatar, { backgroundColor: theme.backgroundSecondary }]}>
-              <ThemedText type="h1">
+            <View style={[styles.avatar, { backgroundColor: theme.link }]}>
+              <ThemedText type="h1" style={{ color: '#FFFFFF' }}>
                 {user?.displayName?.charAt(0).toUpperCase() || "?"}
               </ThemedText>
             </View>
           )}
-          <View style={[styles.editBadge, { backgroundColor: theme.link }]}>
-            <Feather name="edit-2" size={12} color="#FFFFFF" />
+          <View style={[styles.editBadge, { backgroundColor: theme.backgroundSecondary }]}>
+            <Feather name="edit-2" size={12} color={theme.text} />
           </View>
         </Pressable>
 
@@ -144,7 +159,7 @@ export default function ProfileScreen() {
                 key={index}
                 style={[styles.expertiseTag, { backgroundColor: theme.backgroundSecondary }]}
               >
-                <ThemedText type="small">{item}</ThemedText>
+                <ThemedText type="small" style={{ fontWeight: '500' }}>{item}</ThemedText>
               </View>
             ))}
           </View>
@@ -152,16 +167,23 @@ export default function ProfileScreen() {
 
         <View style={styles.statsRow}>
           <View style={styles.stat}>
-            <ThemedText type="h4">{user?.followersCount || 0}</ThemedText>
+            <ThemedText type="h3" style={{ fontWeight: '700' }}>{user?.followersCount || 0}</ThemedText>
             <ThemedText type="small" style={{ color: theme.textSecondary }}>
               {t("profile.followers")}
             </ThemedText>
           </View>
           <View style={[styles.statDivider, { backgroundColor: theme.border }]} />
           <View style={styles.stat}>
-            <ThemedText type="h4">{user?.followingCount || 0}</ThemedText>
+            <ThemedText type="h3" style={{ fontWeight: '700' }}>{user?.followingCount || 0}</ThemedText>
             <ThemedText type="small" style={{ color: theme.textSecondary }}>
               {t("profile.following")}
+            </ThemedText>
+          </View>
+          <View style={[styles.statDivider, { backgroundColor: theme.border }]} />
+          <View style={styles.stat}>
+            <ThemedText type="h3" style={{ fontWeight: '700' }}>{userVideos.length}</ThemedText>
+            <ThemedText type="small" style={{ color: theme.textSecondary }}>
+              {t("profile.uploads")}
             </ThemedText>
           </View>
         </View>
@@ -171,31 +193,37 @@ export default function ProfileScreen() {
           style={({ pressed }) => [
             styles.editButton,
             {
-              backgroundColor: theme.backgroundDefault,
-              borderColor: theme.border,
-              opacity: pressed ? 0.8 : 1,
+              backgroundColor: theme.backgroundSecondary,
+              opacity: pressed ? 0.85 : 1,
             },
           ]}
         >
+          <Feather name="edit-2" size={16} color={theme.text} style={{ marginRight: Spacing.sm }} />
           <ThemedText type="body" style={{ fontWeight: "600" }}>
             {t("profile.editProfile")}
           </ThemedText>
         </Pressable>
       </View>
 
-      <View style={styles.tabsContainer}>
+      <View style={[styles.tabsContainer, { borderBottomColor: theme.border }]}>
         <Pressable
           onPress={() => setActiveTab("uploads")}
           style={[
             styles.tab,
-            activeTab === "uploads" && { borderBottomColor: theme.text, borderBottomWidth: 2 },
+            activeTab === "uploads" && [styles.tabActive, { borderBottomColor: theme.link }],
           ]}
         >
+          <Feather 
+            name="video" 
+            size={18} 
+            color={activeTab === "uploads" ? theme.link : theme.textSecondary}
+            style={{ marginRight: Spacing.sm }}
+          />
           <ThemedText
             type="body"
             style={{
               fontWeight: activeTab === "uploads" ? "600" : "400",
-              color: activeTab === "uploads" ? theme.text : theme.textSecondary,
+              color: activeTab === "uploads" ? theme.link : theme.textSecondary,
             }}
           >
             {t("profile.uploads")}
@@ -205,14 +233,20 @@ export default function ProfileScreen() {
           onPress={() => setActiveTab("saved")}
           style={[
             styles.tab,
-            activeTab === "saved" && { borderBottomColor: theme.text, borderBottomWidth: 2 },
+            activeTab === "saved" && [styles.tabActive, { borderBottomColor: theme.link }],
           ]}
         >
+          <Feather 
+            name="bookmark" 
+            size={18} 
+            color={activeTab === "saved" ? theme.link : theme.textSecondary}
+            style={{ marginRight: Spacing.sm }}
+          />
           <ThemedText
             type="body"
             style={{
               fontWeight: activeTab === "saved" ? "600" : "400",
-              color: activeTab === "saved" ? theme.text : theme.textSecondary,
+              color: activeTab === "saved" ? theme.link : theme.textSecondary,
             }}
           >
             {t("profile.saved")}
@@ -231,7 +265,8 @@ const styles = StyleSheet.create({
   },
   profileHeader: {
     alignItems: "center",
-    paddingVertical: Spacing.xl,
+    paddingVertical: Spacing["2xl"],
+    paddingHorizontal: Spacing.xl,
   },
   avatarContainer: {
     position: "relative",
@@ -246,11 +281,11 @@ const styles = StyleSheet.create({
   },
   editBadge: {
     position: "absolute",
-    bottom: 0,
-    right: 0,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    bottom: 2,
+    right: 2,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -261,13 +296,14 @@ const styles = StyleSheet.create({
     textAlign: "center",
     maxWidth: 280,
     marginBottom: Spacing.lg,
+    lineHeight: 22,
   },
   expertiseContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "center",
     gap: Spacing.xs,
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.xl,
   },
   expertiseTag: {
     paddingHorizontal: Spacing.md,
@@ -285,27 +321,37 @@ const styles = StyleSheet.create({
   },
   statDivider: {
     width: 1,
-    height: 32,
+    height: 36,
   },
   editButton: {
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: Spacing["3xl"],
     paddingVertical: Spacing.md,
-    borderRadius: BorderRadius.sm,
-    borderWidth: 1,
+    borderRadius: BorderRadius.md,
   },
   tabsContainer: {
     flexDirection: "row",
+    borderBottomWidth: 1,
     marginBottom: Spacing.xl,
+    marginHorizontal: Spacing.xl,
   },
   tab: {
     flex: 1,
+    flexDirection: "row",
     alignItems: "center",
-    paddingVertical: Spacing.md,
+    justifyContent: "center",
+    paddingVertical: Spacing.lg,
+  },
+  tabActive: {
+    borderBottomWidth: 2,
+    marginBottom: -1,
   },
   grid: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: GRID_SPACING,
+    paddingHorizontal: Spacing.xl,
   },
   gridItem: {
     width: CARD_WIDTH,
@@ -313,16 +359,34 @@ const styles = StyleSheet.create({
   gridThumbnail: {
     width: "100%",
     aspectRatio: 16 / 9,
-    borderRadius: BorderRadius.sm,
+    borderRadius: BorderRadius.md,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: Spacing.xs,
+    marginBottom: Spacing.sm,
+    overflow: "hidden",
+  },
+  playBadge: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: "center",
+    alignItems: "center",
   },
   gridTitle: {
     paddingHorizontal: Spacing.xs,
+    lineHeight: 18,
   },
   emptyGrid: {
     alignItems: "center",
     paddingVertical: Spacing["4xl"],
+    paddingHorizontal: Spacing.xl,
+  },
+  emptyIconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: Spacing.lg,
   },
 });

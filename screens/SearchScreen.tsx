@@ -87,12 +87,10 @@ export default function SearchScreen() {
 
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
-      <Image
-        source={require("@/assets/images/empty-states/no-results.png")}
-        style={styles.emptyImage}
-        resizeMode="contain"
-      />
-      <ThemedText type="h3" style={styles.emptyTitle}>
+      <View style={[styles.emptyIconContainer, { backgroundColor: theme.backgroundSecondary }]}>
+        <Feather name="search" size={40} color={theme.textSecondary} />
+      </View>
+      <ThemedText type="h4" style={[styles.emptyTitle, { color: theme.text }]}>
         {t("search.noResults")}
       </ThemedText>
       <ThemedText type="body" style={[styles.emptyHint, { color: theme.textSecondary }]}>
@@ -104,22 +102,28 @@ export default function SearchScreen() {
   return (
     <ThemedView style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top + Spacing.lg }]}>
-        <View style={[styles.searchBar, { backgroundColor: theme.backgroundDefault }]}>
+        <View style={[styles.searchBar, { backgroundColor: theme.backgroundSecondary }]}>
           <Feather name="search" size={20} color={theme.textSecondary} />
           <TextInput
             style={[styles.searchInput, { color: theme.text }]}
             value={query}
             onChangeText={setQuery}
             placeholder={t("search.placeholder")}
-            placeholderTextColor={isDark ? Colors.dark.placeholder : Colors.light.placeholder}
+            placeholderTextColor={theme.placeholder}
             returnKeyType="search"
             autoCorrect={false}
           />
           {isSearching ? (
-            <ActivityIndicator size="small" color={theme.textSecondary} />
+            <ActivityIndicator size="small" color={theme.link} />
           ) : query.length > 0 ? (
-            <Pressable onPress={() => setQuery("")} hitSlop={8}>
-              <Feather name="x" size={18} color={theme.textSecondary} />
+            <Pressable 
+              onPress={() => setQuery("")} 
+              hitSlop={8}
+              style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
+            >
+              <View style={[styles.clearButton, { backgroundColor: theme.backgroundTertiary }]}>
+                <Feather name="x" size={14} color={theme.text} />
+              </View>
             </Pressable>
           ) : null}
         </View>
@@ -130,34 +134,34 @@ export default function SearchScreen() {
           contentContainerStyle={styles.categoriesContainer}
           style={styles.categoriesScroll}
         >
-          {CATEGORIES_WITH_ALL.map((category: Category) => (
-            <Pressable
-              key={category.key}
-              onPress={() => setSelectedCategory(category.key)}
-              style={[
-                styles.categoryChip,
-                {
-                  backgroundColor:
-                    selectedCategory === category.key
-                      ? theme.text
-                      : theme.backgroundDefault,
-                },
-              ]}
-            >
-              <ThemedText
-                type="small"
-                style={{
-                  color:
-                    selectedCategory === category.key
-                      ? theme.backgroundRoot
-                      : theme.text,
-                  fontWeight: selectedCategory === category.key ? "600" : "400",
-                }}
+          {CATEGORIES_WITH_ALL.map((category: Category) => {
+            const isSelected = selectedCategory === category.key;
+            return (
+              <Pressable
+                key={category.key}
+                onPress={() => setSelectedCategory(category.key)}
+                style={({ pressed }) => [
+                  styles.categoryChip,
+                  {
+                    backgroundColor: isSelected
+                      ? theme.link
+                      : theme.backgroundSecondary,
+                    opacity: pressed ? 0.85 : 1,
+                  },
+                ]}
               >
-                {t(category.labelKey)}
-              </ThemedText>
-            </Pressable>
-          ))}
+                <ThemedText
+                  type="small"
+                  style={{
+                    color: isSelected ? "#FFFFFF" : theme.text,
+                    fontWeight: isSelected ? "600" : "500",
+                  }}
+                >
+                  {t(category.labelKey)}
+                </ThemedText>
+              </Pressable>
+            );
+          })}
         </ScrollView>
       </View>
 
@@ -168,11 +172,17 @@ export default function SearchScreen() {
           styles.listContent,
           { paddingBottom: tabBarHeight + Spacing.xl },
         ]}
-        ListEmptyComponent={isSearching ? null : renderEmptyState}
+        ListEmptyComponent={isSearching ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={theme.link} />
+          </View>
+        ) : renderEmptyState}
         renderItem={({ item }) => (
           <Pressable
             onPress={() => handleVideoPress(item)}
-            style={({ pressed }) => [{ opacity: pressed ? 0.9 : 1 }]}
+            style={({ pressed }) => [
+              { opacity: pressed ? 0.95 : 1, transform: [{ scale: pressed ? 0.99 : 1 }] },
+            ]}
           >
             <VideoCard
               video={videoToCardFormat(item)}
@@ -200,15 +210,22 @@ const styles = StyleSheet.create({
   searchBar: {
     flexDirection: "row",
     alignItems: "center",
-    height: 44,
-    borderRadius: BorderRadius.sm,
+    height: 48,
+    borderRadius: BorderRadius.md,
     paddingHorizontal: Spacing.lg,
     marginBottom: Spacing.lg,
   },
   searchInput: {
     flex: 1,
-    marginLeft: Spacing.sm,
+    marginLeft: Spacing.md,
     fontSize: 16,
+  },
+  clearButton: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    justifyContent: "center",
+    alignItems: "center",
   },
   categoriesScroll: {
     marginHorizontal: -Spacing.xl,
@@ -229,17 +246,26 @@ const styles = StyleSheet.create({
   emptyState: {
     alignItems: "center",
     paddingVertical: Spacing["5xl"],
+    paddingHorizontal: Spacing.xl,
   },
-  emptyImage: {
-    width: 120,
-    height: 120,
-    marginBottom: Spacing["2xl"],
-    opacity: 0.6,
+  emptyIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: Spacing.xl,
   },
   emptyTitle: {
     marginBottom: Spacing.sm,
+    textAlign: "center",
   },
   emptyHint: {
     textAlign: "center",
+    lineHeight: 22,
+  },
+  loadingContainer: {
+    paddingVertical: Spacing["5xl"],
+    alignItems: "center",
   },
 });

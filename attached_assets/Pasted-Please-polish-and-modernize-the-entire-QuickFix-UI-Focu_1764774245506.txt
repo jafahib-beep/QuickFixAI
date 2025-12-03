@@ -1,0 +1,63 @@
+Please polish and modernize the entire QuickFix UI. 
+Focus on visual design only – do NOT change business logic, navigation logic, or API calls.
+
+Goals:
+- The app should look like a clean, modern short-video app (similar to TikTok/Instagram Reels), but with our QuickFix identity.
+- Consistent dark theme with a primary blue accent.
+
+Please do:
+
+1) Global styling
+   - Standardize font sizes, weights, and colors across all screens.
+   - Use consistent spacing (padding/margins) so elements are not cramped.
+   - Ensure buttons and cards have consistent border radius and subtle shadows.
+   - Make headings (like “Rekommenderat”, “Nytt”) visually clear and aligned.
+
+2) HomeScreen
+   - Improve layout of the header and category chips bar.
+   - Make category chips look like polished pills: padding, active state, hover/touch feedback.
+   - Improve video card layout: thumbnail area, title, creator, tags, like/save icons, duration.
+   - Make sure the Recommended and New sections have proper spacing and look balanced.
+
+3) CategoryFeedScreen & TagFeedScreen
+   - Apply the same polished video card design here.
+   - Add clear titles/subtitles for the selected category or tag.
+   - Ensure scrolling feels smooth and visually consistent with the Home feed.
+
+4) CategoriesScreen
+   - Make the grid of categories visually appealing:
+     * icons + labels centered,
+     * even spacing,
+     * clear tap feedback.
+
+5) SearchScreen
+   - Clean up the search bar styling and results list.
+   - Use the same video card style for search results.
+   - Make empty/“no results” states look friendly and on-brand.
+
+6) ToolboxScreen
+   - Make saved videos list clean and consistent with other feeds.
+   - Clarify tabs/sections for saved content if needed.
+   - Add a friendly empty state when there are no saved items.
+
+7) ProfileScreen
+   - Improve layout:
+     * user avatar, name, stats (followers, following, uploads),
+     * tabs for Uploads and Saved.
+   - Use the same polished video cards in the lists.
+
+8) UploadScreen
+   - Make the form clean and easy to understand:
+     * clear labels for title, description, category, tags,
+     * good spacing between fields,
+     * a clear primary button.
+   - Keep existing AI logic, only improve visuals.
+
+9) SettingsScreen
+   - Make the settings list visually consistent and easy to scan.
+   - Highlight important actions (Language, Log out) with proper spacing and icons.
+
+10) Loading states
+   - Where possible, use subtle loading indicators or skeleton placeholders instead of abrupt empty screens.
+
+Again: do not change how navigation or data fetching works – only visual styling and layout.

@@ -20,7 +20,7 @@ export function CategoryFilter({
   showAllOption = true,
 }: CategoryFilterProps) {
   const { t } = useTranslation();
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
 
   const categories = showAllOption
     ? CATEGORIES_WITH_ALL
@@ -34,6 +34,8 @@ export function CategoryFilter({
     >
       {categories.map((category) => {
         const isSelected = selectedCategory === category.key;
+        const isAll = category.key === "all";
+        
         return (
           <Pressable
             key={category.key}
@@ -42,23 +44,29 @@ export function CategoryFilter({
               styles.chip,
               {
                 backgroundColor: isSelected
-                  ? theme.text
+                  ? theme.link
                   : theme.backgroundSecondary,
-                opacity: pressed ? 0.8 : 1,
+                borderColor: isSelected 
+                  ? theme.link 
+                  : 'transparent',
+                opacity: pressed ? 0.85 : 1,
               },
             ]}
           >
             <Feather
               name={category.icon}
               size={14}
-              color={isSelected ? theme.backgroundRoot : category.color}
+              color={isSelected ? "#FFFFFF" : (isAll ? theme.text : category.color)}
             />
             <ThemedText
-              type="small"
-              style={{
-                color: isSelected ? theme.backgroundRoot : theme.text,
-                fontWeight: isSelected ? "600" : "400",
-              }}
+              type="caption"
+              style={[
+                styles.chipText,
+                {
+                  color: isSelected ? "#FFFFFF" : theme.text,
+                  fontWeight: isSelected ? "600" : "500",
+                },
+              ]}
             >
               {t(category.labelKey)}
             </ThemedText>
@@ -73,13 +81,18 @@ const styles = StyleSheet.create({
   container: {
     paddingHorizontal: Spacing.xl,
     gap: Spacing.sm,
+    paddingVertical: Spacing.xs,
   },
   chip: {
     flexDirection: "row",
     alignItems: "center",
     gap: Spacing.xs,
-    paddingHorizontal: Spacing.md,
+    paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.sm,
     borderRadius: BorderRadius.full,
+    borderWidth: 1,
+  },
+  chipText: {
+    letterSpacing: 0.1,
   },
 });

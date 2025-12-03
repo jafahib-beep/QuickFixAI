@@ -5,6 +5,7 @@ import {
   RefreshControl,
   FlatList,
   Pressable,
+  ActivityIndicator,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -69,9 +70,14 @@ export default function HomeScreen() {
 
   const renderSection = (title: string, data: Video[]) => (
     <View style={styles.section}>
-      <ThemedText type="h3" style={styles.sectionTitle}>
-        {title}
-      </ThemedText>
+      <View style={styles.sectionHeader}>
+        <ThemedText type="h3" style={styles.sectionTitle}>
+          {title}
+        </ThemedText>
+        <ThemedText type="small" style={{ color: theme.textSecondary }}>
+          {data.length} {data.length === 1 ? 'video' : 'videos'}
+        </ThemedText>
+      </View>
       <FlatList
         data={data}
         horizontal
@@ -83,7 +89,7 @@ export default function HomeScreen() {
             onPress={() => handleVideoPress(item)}
             style={({ pressed }) => [
               styles.cardWrapper,
-              { opacity: pressed ? 0.9 : 1 },
+              { opacity: pressed ? 0.95 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] },
             ]}
           >
             <VideoCard
@@ -98,7 +104,7 @@ export default function HomeScreen() {
         )}
         ListEmptyComponent={
           <View style={styles.emptySection}>
-            <ThemedText type="body" style={{ opacity: 0.5 }}>
+            <ThemedText type="body" style={{ color: theme.textSecondary }}>
               {t("common.noVideos")}
             </ThemedText>
           </View>
@@ -118,7 +124,7 @@ export default function HomeScreen() {
         <RefreshControl
           refreshing={isLoading}
           onRefresh={refreshFeed}
-          tintColor={theme.text}
+          tintColor={theme.link}
         />
       }
       contentContainerStyle={styles.content}
@@ -130,7 +136,11 @@ export default function HomeScreen() {
         />
       </View>
 
-      {hasFilteredContent ? (
+      {isLoading && !hasFilteredContent ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={theme.link} />
+        </View>
+      ) : hasFilteredContent ? (
         <>
           {filteredFeed.recommended.length > 0
             ? renderSection(t("home.recommended"), filteredFeed.recommended)
@@ -144,8 +154,11 @@ export default function HomeScreen() {
         </>
       ) : (
         <View style={styles.emptyState}>
-          <ThemedText type="body" style={{ color: theme.textSecondary }}>
+          <ThemedText type="h4" style={{ color: theme.textSecondary, marginBottom: Spacing.sm }}>
             {t("search.noResults")}
+          </ThemedText>
+          <ThemedText type="body" style={{ color: theme.textSecondary, opacity: 0.7, textAlign: 'center' }}>
+            {t("search.noResultsHint")}
           </ThemedText>
         </View>
       )}
@@ -159,27 +172,40 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing["5xl"],
   },
   filterContainer: {
-    marginBottom: Spacing.xl,
+    marginBottom: Spacing.lg,
   },
   section: {
-    marginBottom: Spacing["2xl"],
+    marginBottom: Spacing["3xl"],
   },
-  sectionTitle: {
+  sectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingHorizontal: Spacing.xl,
     marginBottom: Spacing.lg,
+  },
+  sectionTitle: {
+    letterSpacing: -0.3,
   },
   horizontalList: {
     paddingHorizontal: Spacing.xl,
     gap: Spacing.lg,
   },
   cardWrapper: {
-    width: 260,
+    width: 280,
   },
   emptySection: {
     paddingHorizontal: Spacing.xl,
-    paddingVertical: Spacing["2xl"],
+    paddingVertical: Spacing["3xl"],
   },
   emptyState: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: Spacing["5xl"],
+    paddingHorizontal: Spacing["3xl"],
+  },
+  loadingContainer: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",

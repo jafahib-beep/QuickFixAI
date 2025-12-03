@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState, useMemo } from "react";
+import React, { useCallback, useMemo } from "react";
 import {
   View,
   StyleSheet,
@@ -10,15 +10,17 @@ import {
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useTranslation } from "react-i18next";
+import { Feather } from "@expo/vector-icons";
 
 import { ThemedText } from "@/components/ThemedText";
 import { VideoCard } from "@/components/VideoCard";
-import { Spacing } from "@/constants/theme";
+import { Spacing, BorderRadius } from "@/constants/theme";
 import { useTheme } from "@/hooks/useTheme";
 import { useVideos } from "@/contexts/VideosContext";
 import { useScreenInsets } from "@/hooks/useScreenInsets";
 import { RootStackParamList } from "@/navigation/RootNavigator";
 import { Video } from "@/utils/api";
+import { getCategoryByKey } from "@/constants/categories";
 
 type CategoryFeedRouteProp = RouteProp<RootStackParamList, "CategoryFeed">;
 type CategoryFeedNavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -31,6 +33,8 @@ export default function CategoryFeedScreen() {
   const { categoryKey, categoryLabel } = route.params;
   const { videos, isLoading, refreshVideos, toggleSave, toggleLike } = useVideos();
   const { paddingTop, paddingBottom } = useScreenInsets();
+
+  const category = getCategoryByKey(categoryKey);
 
   React.useLayoutEffect(() => {
     navigation.setOptions({
@@ -68,11 +72,26 @@ export default function CategoryFeedScreen() {
 
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
-      <ThemedText type="body" style={{ color: theme.textSecondary }}>
-        {t("categoryFeed.noVideos", { defaultValue: "No videos yet in this category" })}
+      <View style={[styles.emptyIconContainer, { backgroundColor: category ? `${category.color}15` : theme.backgroundSecondary }]}>
+        <Feather 
+          name={category?.icon || "video"} 
+          size={40} 
+          color={category?.color || theme.textSecondary} 
+        />
+      </View>
+      <ThemedText type="h4" style={{ color: theme.text, marginBottom: Spacing.sm }}>
+        {t("categoryFeed.noVideos", { defaultValue: "No videos yet" })}
       </ThemedText>
-      <ThemedText type="small" style={{ color: theme.textSecondary, marginTop: Spacing.sm }}>
+      <ThemedText type="body" style={[styles.emptyHint, { color: theme.textSecondary }]}>
         {t("categoryFeed.noVideosHint", { defaultValue: "Check back soon for new content" })}
+      </ThemedText>
+    </View>
+  );
+
+  const renderHeader = () => (
+    <View style={styles.headerInfo}>
+      <ThemedText type="small" style={{ color: theme.textSecondary }}>
+        {filteredVideos.length} {filteredVideos.length === 1 ? 'video' : 'videos'}
       </ThemedText>
     </View>
   );
@@ -80,7 +99,7 @@ export default function CategoryFeedScreen() {
   if (isLoading && filteredVideos.length === 0) {
     return (
       <View style={[styles.loadingContainer, { backgroundColor: theme.backgroundRoot }]}>
-        <ActivityIndicator size="large" color={theme.text} />
+        <ActivityIndicator size="large" color={theme.link} />
       </View>
     );
   }
@@ -91,20 +110,23 @@ export default function CategoryFeedScreen() {
       keyExtractor={(item) => item.id}
       contentContainerStyle={[
         styles.listContent,
-        { paddingTop: Spacing.xl, paddingBottom },
+        { paddingTop: Spacing.lg, paddingBottom },
       ]}
       style={{ backgroundColor: theme.backgroundRoot }}
       refreshControl={
         <RefreshControl
           refreshing={isLoading}
           onRefresh={refreshVideos}
-          tintColor={theme.text}
+          tintColor={theme.link}
         />
       }
+      ListHeaderComponent={filteredVideos.length > 0 ? renderHeader : null}
       renderItem={({ item }) => (
         <Pressable
           onPress={() => handleVideoPress(item)}
-          style={({ pressed }) => [{ opacity: pressed ? 0.9 : 1 }]}
+          style={({ pressed }) => [
+            { opacity: pressed ? 0.95 : 1, transform: [{ scale: pressed ? 0.99 : 1 }] },
+          ]}
         >
           <VideoCard
             video={videoToCardFormat(item)}
@@ -130,8 +152,24 @@ const styles = StyleSheet.create({
   listContent: {
     paddingHorizontal: Spacing.xl,
   },
+  headerInfo: {
+    marginBottom: Spacing.lg,
+  },
   emptyState: {
     alignItems: "center",
     paddingVertical: Spacing["5xl"],
+    paddingHorizontal: Spacing.xl,
+  },
+  emptyIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: Spacing.xl,
+  },
+  emptyHint: {
+    textAlign: "center",
+    lineHeight: 22,
   },
 });

@@ -93,8 +93,11 @@ Backend requires DATABASE_URL environment variable.
 - OPENAI_API_KEY - For AI features (optional)
 
 ## Design Guidelines
-- iOS 26 Liquid Glass UI style
+- Modern dark theme with blue accent (#0A84FF) - respects system color scheme
+- iOS 26 Liquid Glass UI inspired styling
 - Feather icons from @expo/vector-icons
-- Clean minimal design with white background
+- Dark backgrounds (#0D0D0D root, #1A1A1A cards, #252525 secondary)
+- Polished UI with refined shadows, modern card designs, and pill-shaped chips
 - 5-tab bottom navigation with center FAB for upload
 - Safe area insets handled by helper components
+- See design_guidelines.md for complete style guide

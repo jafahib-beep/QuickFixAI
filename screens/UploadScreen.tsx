@@ -16,8 +16,7 @@ import * as ImagePicker from "expo-image-picker";
 
 import { ThemedText } from "@/components/ThemedText";
 import { ScreenKeyboardAwareScrollView } from "@/components/ScreenKeyboardAwareScrollView";
-import { Button } from "@/components/Button";
-import { Spacing, BorderRadius, Colors } from "@/constants/theme";
+import { Spacing, BorderRadius } from "@/constants/theme";
 import { useTheme } from "@/hooks/useTheme";
 import { useVideos } from "@/contexts/VideosContext";
 import { CATEGORIES } from "@/constants/categories";
@@ -203,7 +202,7 @@ export default function UploadScreen() {
   const inputStyle = [
     styles.input,
     {
-      backgroundColor: theme.backgroundDefault,
+      backgroundColor: theme.backgroundSecondary,
       borderColor: theme.border,
       color: theme.text,
     },
@@ -214,13 +213,16 @@ export default function UploadScreen() {
       <View style={styles.section}>
         {videoUri ? (
           <View style={[styles.videoPreview, { backgroundColor: theme.backgroundSecondary }]}>
-            <Feather name="video" size={40} color={theme.textSecondary} />
+            <Feather name="video" size={40} color={theme.link} />
             <ThemedText type="small" style={{ color: theme.textSecondary, marginTop: Spacing.sm }}>
               Video selected
             </ThemedText>
             <Pressable
               onPress={() => setVideoUri(null)}
-              style={[styles.removeButton, { backgroundColor: theme.error }]}
+              style={({ pressed }) => [
+                styles.removeButton, 
+                { backgroundColor: theme.error, opacity: pressed ? 0.8 : 1 }
+              ]}
             >
               <Feather name="x" size={16} color="#FFFFFF" />
             </Pressable>
@@ -229,19 +231,29 @@ export default function UploadScreen() {
           <View style={styles.videoButtons}>
             <Pressable
               onPress={pickVideo}
-              style={[styles.videoButton, { backgroundColor: theme.backgroundDefault }]}
+              style={({ pressed }) => [
+                styles.videoButton, 
+                { backgroundColor: theme.backgroundSecondary, opacity: pressed ? 0.85 : 1 }
+              ]}
             >
-              <Feather name="folder" size={28} color={theme.text} />
-              <ThemedText type="small" style={{ marginTop: Spacing.sm }}>
+              <View style={[styles.videoButtonIcon, { backgroundColor: `${theme.link}20` }]}>
+                <Feather name="folder" size={24} color={theme.link} />
+              </View>
+              <ThemedText type="small" style={{ marginTop: Spacing.md, fontWeight: '500' }}>
                 {t("upload.selectVideo")}
               </ThemedText>
             </Pressable>
             <Pressable
               onPress={recordVideo}
-              style={[styles.videoButton, { backgroundColor: theme.backgroundDefault }]}
+              style={({ pressed }) => [
+                styles.videoButton, 
+                { backgroundColor: theme.backgroundSecondary, opacity: pressed ? 0.85 : 1 }
+              ]}
             >
-              <Feather name="video" size={28} color={theme.text} />
-              <ThemedText type="small" style={{ marginTop: Spacing.sm }}>
+              <View style={[styles.videoButtonIcon, { backgroundColor: `${theme.link}20` }]}>
+                <Feather name="video" size={24} color={theme.link} />
+              </View>
+              <ThemedText type="small" style={{ marginTop: Spacing.md, fontWeight: '500' }}>
                 {t("upload.recordVideo")}
               </ThemedText>
             </Pressable>
@@ -250,7 +262,7 @@ export default function UploadScreen() {
       </View>
 
       <View style={styles.section}>
-        <ThemedText type="small" style={styles.label}>
+        <ThemedText type="small" style={[styles.label, { color: theme.text }]}>
           {t("upload.title")} *
         </ThemedText>
         <TextInput
@@ -258,30 +270,36 @@ export default function UploadScreen() {
           value={title}
           onChangeText={(text) => setTitle(text.slice(0, 60))}
           placeholder={t("upload.titlePlaceholder")}
-          placeholderTextColor={isDark ? Colors.dark.placeholder : Colors.light.placeholder}
+          placeholderTextColor={theme.placeholder}
           maxLength={60}
         />
-        <ThemedText type="small" style={[styles.charCount, { color: theme.textSecondary }]}>
+        <ThemedText type="caption" style={[styles.charCount, { color: theme.textSecondary }]}>
           {title.length}/60
         </ThemedText>
       </View>
 
       <View style={styles.section}>
         <View style={styles.labelRow}>
-          <ThemedText type="small" style={styles.label}>
+          <ThemedText type="small" style={[styles.label, { color: theme.text }]}>
             {t("upload.descriptionPlaceholder")}
           </ThemedText>
           <Pressable
             onPress={handleGenerateDescription}
             disabled={isGeneratingDesc || !title.trim()}
-            style={[styles.aiButton, { opacity: isGeneratingDesc || !title.trim() ? 0.5 : 1 }]}
+            style={({ pressed }) => [
+              styles.aiButton, 
+              { 
+                backgroundColor: `${theme.link}15`,
+                opacity: (isGeneratingDesc || !title.trim()) ? 0.5 : (pressed ? 0.8 : 1),
+              }
+            ]}
           >
             {isGeneratingDesc ? (
               <ActivityIndicator size="small" color={theme.link} />
             ) : (
               <>
                 <Feather name="zap" size={14} color={theme.link} />
-                <ThemedText type="small" style={{ color: theme.link, marginLeft: 4 }}>
+                <ThemedText type="caption" style={{ color: theme.link, marginLeft: 4, fontWeight: '500' }}>
                   AI Generate
                 </ThemedText>
               </>
@@ -293,23 +311,27 @@ export default function UploadScreen() {
           value={description}
           onChangeText={(text) => setDescription(text.slice(0, 300))}
           placeholder={t("upload.descriptionPlaceholder")}
-          placeholderTextColor={isDark ? Colors.dark.placeholder : Colors.light.placeholder}
+          placeholderTextColor={theme.placeholder}
           multiline
           numberOfLines={4}
           maxLength={300}
         />
-        <ThemedText type="small" style={[styles.charCount, { color: theme.textSecondary }]}>
+        <ThemedText type="caption" style={[styles.charCount, { color: theme.textSecondary }]}>
           {description.length}/300
         </ThemedText>
       </View>
 
       <View style={styles.section}>
-        <ThemedText type="small" style={styles.label}>
+        <ThemedText type="small" style={[styles.label, { color: theme.text }]}>
           {t("upload.category")} *
         </ThemedText>
         <Pressable
           onPress={() => setShowCategoryPicker(!showCategoryPicker)}
-          style={[inputStyle, styles.picker]}
+          style={({ pressed }) => [
+            inputStyle, 
+            styles.picker,
+            { opacity: pressed ? 0.85 : 1 }
+          ]}
         >
           <ThemedText
             type="body"
@@ -326,7 +348,7 @@ export default function UploadScreen() {
           />
         </Pressable>
         {showCategoryPicker ? (
-          <View style={[styles.categoryList, { backgroundColor: theme.backgroundDefault }]}>
+          <View style={[styles.categoryList, { backgroundColor: theme.backgroundSecondary }]}>
             {CATEGORIES.map((category) => (
               <Pressable
                 key={category.key}
@@ -334,13 +356,16 @@ export default function UploadScreen() {
                   setSelectedCategory(category.key);
                   setShowCategoryPicker(false);
                 }}
-                style={[
+                style={({ pressed }) => [
                   styles.categoryItem,
-                  selectedCategory === category.key && { backgroundColor: theme.backgroundSecondary },
+                  selectedCategory === category.key && { backgroundColor: theme.backgroundTertiary },
+                  { opacity: pressed ? 0.8 : 1 },
                 ]}
               >
                 <View style={{ flexDirection: "row", alignItems: "center", gap: Spacing.md }}>
-                  <Feather name={category.icon} size={18} color={category.color} />
+                  <View style={[styles.categoryIcon, { backgroundColor: `${category.color}20` }]}>
+                    <Feather name={category.icon} size={16} color={category.color} />
+                  </View>
                   <ThemedText type="body">{t(category.labelKey)}</ThemedText>
                 </View>
                 {selectedCategory === category.key ? (
@@ -354,20 +379,26 @@ export default function UploadScreen() {
 
       <View style={styles.section}>
         <View style={styles.labelRow}>
-          <ThemedText type="small" style={styles.label}>
+          <ThemedText type="small" style={[styles.label, { color: theme.text }]}>
             {t("upload.tags")}
           </ThemedText>
           <Pressable
             onPress={handleSuggestTags}
             disabled={isGeneratingTags || !title.trim()}
-            style={[styles.aiButton, { opacity: isGeneratingTags || !title.trim() ? 0.5 : 1 }]}
+            style={({ pressed }) => [
+              styles.aiButton, 
+              { 
+                backgroundColor: `${theme.link}15`,
+                opacity: (isGeneratingTags || !title.trim()) ? 0.5 : (pressed ? 0.8 : 1),
+              }
+            ]}
           >
             {isGeneratingTags ? (
               <ActivityIndicator size="small" color={theme.link} />
             ) : (
               <>
                 <Feather name="zap" size={14} color={theme.link} />
-                <ThemedText type="small" style={{ color: theme.link, marginLeft: 4 }}>
+                <ThemedText type="caption" style={{ color: theme.link, marginLeft: 4, fontWeight: '500' }}>
                   AI Suggest
                 </ThemedText>
               </>
@@ -380,27 +411,34 @@ export default function UploadScreen() {
             value={tagInput}
             onChangeText={setTagInput}
             placeholder={t("upload.addTags")}
-            placeholderTextColor={isDark ? Colors.dark.placeholder : Colors.light.placeholder}
+            placeholderTextColor={theme.placeholder}
             onSubmitEditing={addTag}
             returnKeyType="done"
           />
           <Pressable
             onPress={addTag}
             disabled={!tagInput.trim()}
-            style={[
+            style={({ pressed }) => [
               styles.addTagButton,
-              { backgroundColor: theme.text, opacity: tagInput.trim() ? 1 : 0.5 },
+              { 
+                backgroundColor: theme.link, 
+                opacity: tagInput.trim() ? (pressed ? 0.8 : 1) : 0.5,
+              },
             ]}
           >
-            <Feather name="plus" size={20} color={theme.backgroundRoot} />
+            <Feather name="plus" size={20} color="#FFFFFF" />
           </Pressable>
         </View>
         {tags.length > 0 ? (
           <View style={styles.tagsContainer}>
             {tags.map((tag) => (
               <View key={tag} style={[styles.tag, { backgroundColor: theme.backgroundSecondary }]}>
-                <ThemedText type="small">{tag}</ThemedText>
-                <Pressable onPress={() => removeTag(tag)} hitSlop={8}>
+                <ThemedText type="small" style={{ fontWeight: '500' }}>#{tag}</ThemedText>
+                <Pressable 
+                  onPress={() => removeTag(tag)} 
+                  hitSlop={8}
+                  style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
+                >
                   <Feather name="x" size={14} color={theme.textSecondary} />
                 </Pressable>
               </View>
@@ -409,8 +447,11 @@ export default function UploadScreen() {
         ) : null}
       </View>
 
-      <View style={[styles.section, styles.toggleRow]}>
-        <ThemedText type="body">{t("upload.allowComments")}</ThemedText>
+      <View style={[styles.toggleSection, { backgroundColor: theme.backgroundSecondary }]}>
+        <View style={styles.toggleContent}>
+          <Feather name="message-circle" size={20} color={theme.text} />
+          <ThemedText type="body" style={{ marginLeft: Spacing.md }}>{t("upload.allowComments")}</ThemedText>
+        </View>
         <Switch
           value={allowComments}
           onValueChange={setAllowComments}
@@ -431,6 +472,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontWeight: "600",
+    marginBottom: Spacing.sm,
   },
   labelRow: {
     flexDirection: "row",
@@ -441,19 +483,20 @@ const styles = StyleSheet.create({
   aiButton: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: Spacing.sm,
+    paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.xs,
+    borderRadius: BorderRadius.xs,
   },
   input: {
     height: Spacing.inputHeight,
-    borderRadius: BorderRadius.sm,
+    borderRadius: BorderRadius.md,
     borderWidth: 1,
     paddingHorizontal: Spacing.lg,
     fontSize: 16,
   },
   textArea: {
-    height: 100,
-    paddingTop: Spacing.md,
+    height: 120,
+    paddingTop: Spacing.lg,
     textAlignVertical: "top",
   },
   charCount: {
@@ -467,7 +510,7 @@ const styles = StyleSheet.create({
   },
   categoryList: {
     marginTop: Spacing.sm,
-    borderRadius: BorderRadius.sm,
+    borderRadius: BorderRadius.md,
     overflow: "hidden",
   },
   categoryItem: {
@@ -475,7 +518,14 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
+    paddingVertical: Spacing.lg,
+  },
+  categoryIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: "center",
+    alignItems: "center",
   },
   videoButtons: {
     flexDirection: "row",
@@ -484,24 +534,31 @@ const styles = StyleSheet.create({
   videoButton: {
     flex: 1,
     aspectRatio: 1,
-    borderRadius: BorderRadius.sm,
+    borderRadius: BorderRadius.md,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  videoButtonIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     justifyContent: "center",
     alignItems: "center",
   },
   videoPreview: {
     aspectRatio: 16 / 9,
-    borderRadius: BorderRadius.sm,
+    borderRadius: BorderRadius.md,
     justifyContent: "center",
     alignItems: "center",
     position: "relative",
   },
   removeButton: {
     position: "absolute",
-    top: Spacing.sm,
-    right: Spacing.sm,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    top: Spacing.md,
+    right: Spacing.md,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -515,7 +572,7 @@ const styles = StyleSheet.create({
   addTagButton: {
     width: Spacing.inputHeight,
     height: Spacing.inputHeight,
-    borderRadius: BorderRadius.sm,
+    borderRadius: BorderRadius.md,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -523,7 +580,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     gap: Spacing.sm,
-    marginTop: Spacing.md,
+    marginTop: Spacing.lg,
   },
   tag: {
     flexDirection: "row",
@@ -533,9 +590,15 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.sm,
     borderRadius: BorderRadius.full,
   },
-  toggleRow: {
+  toggleSection: {
     flexDirection: "row",
     justifyContent: "space-between",
+    alignItems: "center",
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.md,
+  },
+  toggleContent: {
+    flexDirection: "row",
     alignItems: "center",
   },
 });
