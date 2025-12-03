@@ -55,12 +55,17 @@ QuickFix is a mobile-first video troubleshooting app for 30-60 second fix-it vid
 ```bash
 npm run dev
 ```
-The app runs in offline-first mode using sample data and local storage.
+The app runs in offline-first mode using sample data and local storage. When the API is unavailable, the app gracefully falls back to sample data without showing error screens.
 
 ### Full Stack (Production)
 1. Start backend: `node server/index.js`
 2. Start frontend: `npm run dev`
 Backend requires DATABASE_URL environment variable.
+
+### Mobile Testing (Expo Go)
+- Scan QR code from Replit's URL bar menu to test on physical device
+- API URL is configured via `app.config.js` using REPLIT_DEV_DOMAIN
+- App uses console.log instead of console.error for API fallbacks to avoid red error overlays on mobile
 
 ## API Endpoints
 - POST /api/auth/register - User registration

@@ -72,7 +72,7 @@ export function VideosProvider({ children }: { children: ReactNode }) {
       
       return { savedIds: loadedSavedIds, likedIds: loadedLikedIds, comments: loadedComments };
     } catch (error) {
-      console.error("Failed to load saved state:", error);
+      console.log("[VideosContext] Failed to load saved state:", error);
       return { savedIds: new Set(), likedIds: new Set(), comments: {} };
     }
   }, []);
@@ -113,7 +113,7 @@ export function VideosProvider({ children }: { children: ReactNode }) {
         loadSampleData(persistedLikedIds, persistedSavedIds);
       }
     } catch (error) {
-      console.error("API unavailable, using sample data:", error);
+      console.log("[VideosContext] API unavailable, using sample data");
       loadSampleData(persistedLikedIds, persistedSavedIds);
     } finally {
       setIsLoading(false);
@@ -130,7 +130,7 @@ export function VideosProvider({ children }: { children: ReactNode }) {
       const allVideos = await api.getVideos();
       setVideos(allVideos);
     } catch (error) {
-      console.error("Failed to refresh videos:", error);
+      console.log("[VideosContext] Failed to refresh videos:", error);
     } finally {
       setIsLoading(false);
     }
@@ -142,7 +142,7 @@ export function VideosProvider({ children }: { children: ReactNode }) {
       const feedData = await api.getFeed();
       setFeed(feedData);
     } catch (error) {
-      console.error("Failed to refresh feed:", error);
+      console.log("[VideosContext] Failed to refresh feed:", error);
     } finally {
       setIsLoading(false);
     }
@@ -189,7 +189,7 @@ export function VideosProvider({ children }: { children: ReactNode }) {
       await refreshFeed();
       return true;
     } catch (error) {
-      console.error("Failed to delete video:", error);
+      console.log("[VideosContext] Failed to delete video:", error);
       return false;
     }
   };
@@ -322,7 +322,7 @@ export function VideosProvider({ children }: { children: ReactNode }) {
     try {
       return await api.semanticSearch(query, category);
     } catch (error) {
-      console.error("Semantic search failed, falling back to regular search:", error);
+      console.log("[VideosContext] Semantic search failed, falling back to regular search");
       return searchVideos(query, category);
     }
   };
@@ -332,7 +332,7 @@ export function VideosProvider({ children }: { children: ReactNode }) {
       await api.reportVideo(videoId, reason, description);
       return true;
     } catch (error) {
-      console.error("Failed to report video:", error);
+      console.log("[VideosContext] Failed to report video:", error);
       return false;
     }
   };

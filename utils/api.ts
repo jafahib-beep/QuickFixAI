@@ -12,11 +12,14 @@ const getBaseUrl = () => {
     }
     return `${window.location.protocol}//${window.location.hostname}:3001`;
   }
-  const expoHost = Constants.expoConfig?.hostUri;
-  if (expoHost) {
-    const host = expoHost.split(":")[0];
-    return `http://${host}:3001`;
+  
+  const replitDevDomain = Constants.expoConfig?.extra?.REPLIT_DEV_DOMAIN;
+  if (replitDevDomain) {
+    const parts = replitDevDomain.split(".");
+    parts[0] = parts[0] + "-3001";
+    return `https://${parts.join(".")}`;
   }
+  
   return "https://quickfix-app.replit.app";
 };
 
