@@ -3,7 +3,6 @@ import {
   View,
   StyleSheet,
   TextInput,
-  FlatList,
   Pressable,
   ScrollView,
   Image,
@@ -19,7 +18,7 @@ import { Feather } from "@expo/vector-icons";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { VideoCard } from "@/components/VideoCard";
-import { Spacing, BorderRadius, Colors } from "@/constants/theme";
+import { Spacing, BorderRadius } from "@/constants/theme";
 import { useTheme } from "@/hooks/useTheme";
 import { useVideos } from "@/contexts/VideosContext";
 import { RootStackParamList } from "@/navigation/RootNavigator";
@@ -30,81 +29,68 @@ type SearchScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export default function SearchScreen() {
   const { t, i18n } = useTranslation();
-  const { theme, isDark } = useTheme();
+  const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const tabBarHeight = useBottomTabBarHeight();
   const navigation = useNavigation<SearchScreenNavigationProp>();
   const { videos, semanticSearch, toggleSave, toggleLike, generateGuide, saveGuide } = useVideos();
   const language = i18n.language;
 
-  const [query, setQuery] = useState("");
+  const [problemQuery, setProblemQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
-  const [searchResults, setSearchResults] = useState<Video[]>([]);
+  const [hasSearched, setHasSearched] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   
+  const [recommendedVideo, setRecommendedVideo] = useState<Video | null>(null);
+  const [otherVideos, setOtherVideos] = useState<Video[]>([]);
   const [aiGuide, setAiGuide] = useState<AIGuide | null>(null);
   const [isGeneratingGuide, setIsGeneratingGuide] = useState(false);
-  const [isGeneratingImages, setIsGeneratingImages] = useState(false);
-  const [showImages, setShowImages] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
-  const [showAiGuide, setShowAiGuide] = useState(false);
 
-  useEffect(() => {
-    const searchTimer = setTimeout(async () => {
-      if (query.trim() || selectedCategory !== "all") {
-        setIsSearching(true);
-        try {
-          const results = await semanticSearch(query, selectedCategory !== "all" ? selectedCategory : undefined);
-          setSearchResults(results);
-        } catch (error) {
-          console.log("Search failed:", error);
-          setSearchResults([]);
-        } finally {
-          setIsSearching(false);
-        }
-      } else {
-        setSearchResults(videos);
-      }
-    }, 300);
-
-    return () => clearTimeout(searchTimer);
-  }, [query, selectedCategory, videos, semanticSearch]);
-
-  const displayVideos = query.trim() || selectedCategory !== "all" ? searchResults : videos;
-
-  const handleVideoPress = useCallback((video: Video, index: number) => {
-    const playableVideos = displayVideos.filter(v => v.videoUrl);
-    const adjustedIndex = playableVideos.findIndex(v => v.id === video.id);
-    navigation.navigate("SwipeVideoPlayer", { 
-      videos: playableVideos, 
-      startIndex: adjustedIndex >= 0 ? adjustedIndex : 0 
-    });
-  }, [navigation, displayVideos]);
-
-  const handleAskAI = async () => {
-    if (!query.trim()) return;
+  const handleFindSolution = async () => {
+    if (!problemQuery.trim()) return;
     
-    setShowAiGuide(true);
+    setHasSearched(true);
+    setIsSearching(true);
     setIsGeneratingGuide(true);
-    setIsGeneratingImages(false);
+    setRecommendedVideo(null);
+    setOtherVideos([]);
     setAiGuide(null);
     setIsSaved(false);
-    setShowImages(false);
-    
+
     try {
-      const guide = await generateGuide(query, language, true);
+      const [searchResults, guide] = await Promise.all([
+        semanticSearch(problemQuery, selectedCategory !== "all" ? selectedCategory : undefined),
+        generateGuide(problemQuery, language, false)
+      ]);
+
+      if (searchResults.length > 0) {
+        setRecommendedVideo(searchResults[0]);
+        setOtherVideos(searchResults.slice(1, 5));
+      }
+
       if (guide) {
         setAiGuide(guide);
-        if (guide.images && guide.images.length > 0) {
-          setShowImages(true);
-        }
       }
     } catch (error) {
-      console.log("Generate guide failed:", error);
+      console.log("Search/Guide failed:", error);
     } finally {
+      setIsSearching(false);
       setIsGeneratingGuide(false);
     }
   };
+
+  const handleVideoPress = useCallback((video: Video) => {
+    const allVideos = recommendedVideo 
+      ? [recommendedVideo, ...otherVideos]
+      : otherVideos;
+    const playableVideos = allVideos.filter(v => v.videoUrl);
+    const index = playableVideos.findIndex(v => v.id === video.id);
+    navigation.navigate("SwipeVideoPlayer", { 
+      videos: playableVideos, 
+      startIndex: index >= 0 ? index : 0 
+    });
+  }, [navigation, recommendedVideo, otherVideos]);
 
   const handleSaveGuide = async () => {
     if (!aiGuide) return;
@@ -114,302 +100,390 @@ export default function SearchScreen() {
     }
   };
 
-  const renderEmptyState = () => (
-    <View style={styles.emptyState}>
-      <View style={[styles.emptyIconContainer, { backgroundColor: theme.backgroundSecondary }]}>
-        <Feather name="search" size={40} color={theme.textSecondary} />
-      </View>
-      <ThemedText type="h4" style={[styles.emptyTitle, { color: theme.text }]}>
-        {t("search.noResults")}
-      </ThemedText>
-      <ThemedText type="body" style={[styles.emptyHint, { color: theme.textSecondary }]}>
-        {t("search.noResultsHint")}
-      </ThemedText>
+  const handleClear = () => {
+    setProblemQuery("");
+    setHasSearched(false);
+    setRecommendedVideo(null);
+    setOtherVideos([]);
+    setAiGuide(null);
+    setIsSaved(false);
+  };
+
+  const handleCategoryChange = async (categoryKey: string) => {
+    setSelectedCategory(categoryKey);
+    if (hasSearched && problemQuery.trim()) {
+      setIsSearching(true);
+      try {
+        const results = await semanticSearch(problemQuery, categoryKey !== "all" ? categoryKey : undefined);
+        if (results.length > 0) {
+          setRecommendedVideo(results[0]);
+          setOtherVideos(results.slice(1, 5));
+        } else {
+          setRecommendedVideo(null);
+          setOtherVideos([]);
+        }
+      } catch (error) {
+        console.log("Category filter search failed:", error);
+      } finally {
+        setIsSearching(false);
+      }
+    }
+  };
+
+  const renderCategoryChips = () => (
+    <View style={styles.categoriesWrapper}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.categoriesContainer}
+      >
+        {CATEGORIES_WITH_ALL.map((category: Category) => {
+          const isSelected = selectedCategory === category.key;
+          return (
+            <Pressable
+              key={category.key}
+              onPress={() => handleCategoryChange(category.key)}
+              style={({ pressed }) => [
+                styles.categoryChip,
+                {
+                  backgroundColor: isSelected ? theme.link : theme.backgroundSecondary,
+                  opacity: pressed ? 0.85 : 1,
+                },
+              ]}
+              accessibilityRole="button"
+              accessibilityState={{ selected: isSelected }}
+            >
+              <ThemedText
+                type="small"
+                style={{
+                  color: isSelected ? "#FFFFFF" : theme.text,
+                  fontWeight: isSelected ? "600" : "500",
+                }}
+              >
+                {t(category.labelKey)}
+              </ThemedText>
+            </Pressable>
+          );
+        })}
+      </ScrollView>
     </View>
   );
 
-  const renderAIGuideCard = () => {
-    if (!showAiGuide) return null;
+  const renderAIEntryArea = () => (
+    <View style={styles.aiEntryArea}>
+      <View style={[styles.aiIconLarge, { backgroundColor: theme.link }]}>
+        <Feather name="cpu" size={28} color="#FFFFFF" />
+      </View>
+      <ThemedText type="h3" style={[styles.mainTitle, { color: theme.text }]}>
+        {t("search.whatToFix")}
+      </ThemedText>
+      <ThemedText type="body" style={[styles.subtitle, { color: theme.textSecondary }]}>
+        {t("search.describeProblem")}
+      </ThemedText>
+      
+      <View style={[styles.problemInputContainer, { backgroundColor: theme.backgroundSecondary }]}>
+        <TextInput
+          style={[styles.problemInput, { color: theme.text }]}
+          value={problemQuery}
+          onChangeText={setProblemQuery}
+          placeholder={t("search.problemPlaceholder")}
+          placeholderTextColor={theme.placeholder}
+          multiline
+          numberOfLines={3}
+          textAlignVertical="top"
+        />
+      </View>
 
-    return (
-      <View style={[styles.aiGuideCard, { backgroundColor: theme.backgroundSecondary }]}>
-        <View style={styles.aiGuideHeader}>
-          <View style={styles.aiGuideHeaderLeft}>
-            <View style={[styles.aiIconContainer, { backgroundColor: theme.link }]}>
-              <Feather name="cpu" size={18} color="#FFFFFF" />
-            </View>
-            <ThemedText type="h4" style={{ color: theme.text }}>
-              {t("aiGuide.title")}
-            </ThemedText>
-          </View>
-          <Pressable
-            onPress={() => {
-              setShowAiGuide(false);
-              setAiGuide(null);
-            }}
-            hitSlop={8}
-            style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
-          >
-            <Feather name="x" size={20} color={theme.textSecondary} />
-          </Pressable>
-        </View>
+      {renderCategoryChips()}
 
-        {aiGuide?.query && (
-          <View style={[styles.queryContainer, { backgroundColor: theme.backgroundTertiary }]}>
-            <ThemedText type="small" style={{ color: theme.textSecondary }}>
-              {aiGuide.query}
-            </ThemedText>
-          </View>
-        )}
-
-        {isGeneratingGuide ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={theme.link} />
-            <ThemedText type="body" style={[styles.loadingText, { color: theme.textSecondary }]}>
-              {isGeneratingImages ? t("aiGuide.generatingImages") : t("aiGuide.generating")}
-            </ThemedText>
-          </View>
-        ) : aiGuide ? (
+      <Pressable
+        onPress={handleFindSolution}
+        disabled={!problemQuery.trim() || isSearching}
+        style={({ pressed }) => [
+          styles.findButton,
+          { 
+            backgroundColor: problemQuery.trim() ? theme.link : theme.backgroundTertiary,
+            opacity: pressed && problemQuery.trim() ? 0.85 : 1 
+          }
+        ]}
+      >
+        {isSearching ? (
+          <ActivityIndicator size="small" color="#FFFFFF" />
+        ) : (
           <>
-            <View style={styles.stepsSection}>
-              <ThemedText type="body" style={[styles.sectionTitle, { color: theme.text, fontWeight: "600" }]}>
-                {t("aiGuide.stepByStep")}
+            <Feather name="zap" size={20} color={problemQuery.trim() ? "#FFFFFF" : theme.textSecondary} />
+            <ThemedText 
+              type="body" 
+              style={[
+                styles.findButtonText, 
+                { color: problemQuery.trim() ? "#FFFFFF" : theme.textSecondary }
+              ]}
+            >
+              {t("search.findSolution")}
+            </ThemedText>
+          </>
+        )}
+      </Pressable>
+    </View>
+  );
+
+  const renderRecommendedVideo = () => {
+    if (!recommendedVideo) return null;
+    
+    return (
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <Feather name="star" size={18} color={theme.link} />
+          <ThemedText type="h4" style={[styles.sectionTitle, { color: theme.text }]}>
+            {t("search.recommendedVideo")}
+          </ThemedText>
+        </View>
+        <Pressable
+          onPress={() => handleVideoPress(recommendedVideo)}
+          style={({ pressed }) => [
+            styles.recommendedCard,
+            { backgroundColor: theme.backgroundSecondary, opacity: pressed ? 0.9 : 1 }
+          ]}
+        >
+          <Image
+            source={{ uri: recommendedVideo.thumbnailUrl }}
+            style={styles.recommendedThumbnail}
+            resizeMode="cover"
+          />
+          <View style={styles.playOverlay}>
+            <View style={[styles.playButton, { backgroundColor: theme.link }]}>
+              <Feather name="play" size={24} color="#FFFFFF" />
+            </View>
+          </View>
+          <View style={styles.recommendedInfo}>
+            <ThemedText type="body" style={[styles.recommendedTitle, { color: theme.text }]} numberOfLines={2}>
+              {recommendedVideo.title}
+            </ThemedText>
+            <View style={styles.recommendedMeta}>
+              <ThemedText type="small" style={{ color: theme.textSecondary }}>
+                {recommendedVideo.authorName}
               </ThemedText>
-              {aiGuide.steps.map((step, index) => (
-                <View key={index} style={styles.stepItem}>
-                  <View style={[styles.stepNumber, { backgroundColor: theme.link }]}>
-                    <ThemedText type="small" style={{ color: "#FFFFFF", fontWeight: "600" }}>
-                      {step.stepNumber}
-                    </ThemedText>
-                  </View>
-                  <ThemedText type="body" style={[styles.stepText, { color: theme.text }]}>
-                    {step.text}
+              {recommendedVideo.category && (
+                <View style={[styles.categoryBadge, { backgroundColor: theme.backgroundTertiary }]}>
+                  <ThemedText type="small" style={{ color: theme.link }}>
+                    {t(`categories.${recommendedVideo.category}`)}
                   </ThemedText>
                 </View>
-              ))}
+              )}
             </View>
-
-            {aiGuide.images && aiGuide.images.length > 0 ? (
-              <View style={styles.imagesSection}>
-                <Pressable
-                  onPress={() => setShowImages(!showImages)}
-                  style={({ pressed }) => [
-                    styles.toggleImagesButton,
-                    { backgroundColor: theme.backgroundTertiary, opacity: pressed ? 0.8 : 1 }
-                  ]}
-                >
-                  <Feather 
-                    name={showImages ? "chevron-up" : "image"} 
-                    size={18} 
-                    color={theme.link} 
-                  />
-                  <ThemedText type="small" style={{ color: theme.link, marginLeft: Spacing.sm }}>
-                    {showImages ? t("aiGuide.hideImages") : t("aiGuide.showImages")}
-                  </ThemedText>
-                </Pressable>
-
-                {showImages && (
-                  <ScrollView 
-                    horizontal 
-                    showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={styles.imagesScroll}
-                    style={styles.imagesScrollContainer}
-                  >
-                    {aiGuide.images.map((img, index) => (
-                      <View key={index} style={styles.imageItem}>
-                        <Image 
-                          source={{ uri: img.url }} 
-                          style={styles.guideImage}
-                          resizeMode="cover"
-                        />
-                        <ThemedText 
-                          type="small" 
-                          style={[styles.imageCaption, { color: theme.textSecondary }]}
-                          numberOfLines={2}
-                        >
-                          {img.caption}
-                        </ThemedText>
-                      </View>
-                    ))}
-                  </ScrollView>
-                )}
-              </View>
-            ) : (
-              <View style={[styles.noImagesNote, { backgroundColor: theme.backgroundTertiary }]}>
-                <Feather name="image" size={16} color={theme.textSecondary} />
-                <ThemedText type="small" style={[styles.noImagesText, { color: theme.textSecondary }]}>
-                  {t("aiGuide.imageGuideNotAvailable")}
-                </ThemedText>
-              </View>
-            )}
-
-            <Pressable
-              onPress={handleSaveGuide}
-              disabled={isSaved}
-              style={({ pressed }) => [
-                styles.saveButton,
-                { 
-                  backgroundColor: isSaved ? theme.backgroundTertiary : theme.link,
-                  opacity: pressed && !isSaved ? 0.8 : 1 
-                }
-              ]}
-            >
-              <Feather 
-                name={isSaved ? "check" : "bookmark"} 
-                size={18} 
-                color={isSaved ? theme.success : "#FFFFFF"} 
-              />
-              <ThemedText 
-                type="body" 
-                style={{ 
-                  color: isSaved ? theme.success : "#FFFFFF", 
-                  marginLeft: Spacing.sm,
-                  fontWeight: "600"
-                }}
-              >
-                {isSaved ? t("aiGuide.savedGuide") : t("aiGuide.saveGuide")}
-              </ThemedText>
-            </Pressable>
-          </>
-        ) : (
-          <View style={styles.errorContainer}>
-            <Feather name="alert-circle" size={24} color={theme.error} />
-            <ThemedText type="body" style={[styles.errorText, { color: theme.textSecondary }]}>
-              {t("aiGuide.noGuide")}
-            </ThemedText>
-            <Pressable
-              onPress={handleAskAI}
-              style={({ pressed }) => [
-                styles.retryButton,
-                { backgroundColor: theme.link, opacity: pressed ? 0.8 : 1 }
-              ]}
-            >
-              <ThemedText type="small" style={{ color: "#FFFFFF" }}>
-                {t("aiGuide.tryAgain")}
-              </ThemedText>
-            </Pressable>
           </View>
-        )}
+        </Pressable>
       </View>
     );
   };
 
-  const ListHeader = () => (
-    <>
-      {query.trim().length > 0 && !showAiGuide && (
-        <Pressable
-          onPress={handleAskAI}
-          style={({ pressed }) => [
-            styles.askAIButton,
-            { backgroundColor: theme.link, opacity: pressed ? 0.85 : 1 }
-          ]}
-        >
-          <Feather name="cpu" size={18} color="#FFFFFF" />
-          <ThemedText type="body" style={styles.askAIText}>
-            {t("aiGuide.askAI")}
+  const renderOtherVideos = () => {
+    if (otherVideos.length === 0) return null;
+
+    return (
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <Feather name="video" size={18} color={theme.textSecondary} />
+          <ThemedText type="h4" style={[styles.sectionTitle, { color: theme.text }]}>
+            {t("search.otherVideos")}
           </ThemedText>
-          <Feather name="arrow-right" size={18} color="#FFFFFF" />
-        </Pressable>
-      )}
-      {renderAIGuideCard()}
-    </>
-  );
+        </View>
+        {otherVideos.map((video) => (
+          <View key={video.id} style={styles.videoCardWrapper}>
+            <VideoCard
+              video={video}
+              isSaved={video.isSaved}
+              isLiked={video.isLiked}
+              onSave={() => toggleSave(video.id)}
+              onLike={() => toggleLike(video.id)}
+              onPress={() => handleVideoPress(video)}
+            />
+          </View>
+        ))}
+      </View>
+    );
+  };
+
+  const renderAIGuide = () => {
+    if (!hasSearched) return null;
+
+    const noVideosFound = !recommendedVideo && otherVideos.length === 0 && !isSearching;
+
+    return (
+      <View style={styles.section}>
+        {noVideosFound && !isGeneratingGuide && (
+          <View style={[styles.noVideosMessage, { backgroundColor: theme.backgroundTertiary }]}>
+            <Feather name="info" size={16} color={theme.textSecondary} />
+            <ThemedText type="small" style={[styles.noVideosText, { color: theme.textSecondary }]}>
+              {t("search.noVideosFound")} — {t("search.aiGuideAvailable")}
+            </ThemedText>
+          </View>
+        )}
+
+        <View style={[styles.aiGuideCard, { backgroundColor: theme.backgroundSecondary }]}>
+          <View style={styles.aiGuideHeader}>
+            <View style={styles.aiGuideHeaderLeft}>
+              <View style={[styles.aiIconContainer, { backgroundColor: theme.link }]}>
+                <Feather name="cpu" size={18} color="#FFFFFF" />
+              </View>
+              <ThemedText type="h4" style={{ color: theme.text }}>
+                {t("aiGuide.title")}
+              </ThemedText>
+            </View>
+          </View>
+
+          {aiGuide?.query && (
+            <View style={[styles.queryContainer, { backgroundColor: theme.backgroundTertiary }]}>
+              <ThemedText type="small" style={{ color: theme.textSecondary }}>
+                {aiGuide.query}
+              </ThemedText>
+            </View>
+          )}
+
+          {isGeneratingGuide ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color={theme.link} />
+              <ThemedText type="body" style={[styles.loadingText, { color: theme.textSecondary }]}>
+                {t("aiGuide.generating")}
+              </ThemedText>
+            </View>
+          ) : aiGuide ? (
+            <>
+              <View style={styles.stepsContainer}>
+                {aiGuide.steps.map((step, index) => (
+                  <View key={index} style={styles.stepItem}>
+                    <View style={[styles.stepNumber, { backgroundColor: theme.link }]}>
+                      <ThemedText type="small" style={{ color: "#FFFFFF", fontWeight: "600" }}>
+                        {step.stepNumber}
+                      </ThemedText>
+                    </View>
+                    <ThemedText type="body" style={[styles.stepText, { color: theme.text }]}>
+                      {step.text}
+                    </ThemedText>
+                  </View>
+                ))}
+              </View>
+
+              <Pressable
+                onPress={handleSaveGuide}
+                disabled={isSaved}
+                style={({ pressed }) => [
+                  styles.saveButton,
+                  { 
+                    backgroundColor: isSaved ? theme.backgroundTertiary : theme.link,
+                    opacity: pressed && !isSaved ? 0.8 : 1 
+                  }
+                ]}
+              >
+                <Feather 
+                  name={isSaved ? "check" : "bookmark"} 
+                  size={18} 
+                  color={isSaved ? theme.success : "#FFFFFF"} 
+                />
+                <ThemedText 
+                  type="body" 
+                  style={{ 
+                    color: isSaved ? theme.success : "#FFFFFF", 
+                    marginLeft: Spacing.sm,
+                    fontWeight: "600"
+                  }}
+                >
+                  {isSaved ? t("aiGuide.savedGuide") : t("aiGuide.saveGuide")}
+                </ThemedText>
+              </Pressable>
+            </>
+          ) : (
+            <View style={styles.errorContainer}>
+              <Feather name="alert-circle" size={24} color={theme.error} />
+              <ThemedText type="body" style={[styles.errorText, { color: theme.textSecondary }]}>
+                {t("aiGuide.noGuide")}
+              </ThemedText>
+              <Pressable
+                onPress={handleFindSolution}
+                style={({ pressed }) => [
+                  styles.retryButton,
+                  { backgroundColor: theme.link, opacity: pressed ? 0.8 : 1 }
+                ]}
+              >
+                <ThemedText type="small" style={{ color: "#FFFFFF" }}>
+                  {t("aiGuide.tryAgain")}
+                </ThemedText>
+              </Pressable>
+            </View>
+          )}
+        </View>
+      </View>
+    );
+  };
+
+  const renderResults = () => {
+    if (isSearching && !aiGuide) {
+      return (
+        <View style={styles.loadingContainerMain}>
+          <ActivityIndicator size="large" color={theme.link} />
+          <ThemedText type="body" style={[styles.loadingText, { color: theme.textSecondary }]}>
+            {t("aiGuide.generating")}
+          </ThemedText>
+        </View>
+      );
+    }
+
+    return (
+      <>
+        {renderRecommendedVideo()}
+        {renderOtherVideos()}
+        {renderAIGuide()}
+      </>
+    );
+  };
 
   return (
     <ThemedView style={styles.container}>
-      <View style={[styles.header, { paddingTop: insets.top + Spacing.lg }]}>
-        <View style={[styles.searchBar, { backgroundColor: theme.backgroundSecondary }]}>
-          <Feather name="search" size={20} color={theme.textSecondary} />
-          <TextInput
-            style={[styles.searchInput, { color: theme.text }]}
-            value={query}
-            onChangeText={setQuery}
-            placeholder={t("search.placeholder")}
-            placeholderTextColor={theme.placeholder}
-            returnKeyType="search"
-            autoCorrect={false}
-          />
-          {isSearching ? (
-            <ActivityIndicator size="small" color={theme.link} />
-          ) : query.length > 0 ? (
-            <Pressable 
-              onPress={() => {
-                setQuery("");
-                setShowAiGuide(false);
-                setAiGuide(null);
-              }} 
-              hitSlop={8}
-              style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
-            >
-              <View style={[styles.clearButton, { backgroundColor: theme.backgroundTertiary }]}>
-                <Feather name="x" size={14} color={theme.text} />
-              </View>
-            </Pressable>
-          ) : null}
-        </View>
-
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.categoriesContainer}
-          style={styles.categoriesScroll}
-        >
-          {CATEGORIES_WITH_ALL.map((category: Category) => {
-            const isSelected = selectedCategory === category.key;
-            return (
-              <Pressable
-                key={category.key}
-                onPress={() => setSelectedCategory(category.key)}
-                style={({ pressed }) => [
-                  styles.categoryChip,
-                  {
-                    backgroundColor: isSelected
-                      ? theme.link
-                      : theme.backgroundSecondary,
-                    opacity: pressed ? 0.85 : 1,
-                  },
-                ]}
-              >
-                <ThemedText
-                  type="small"
-                  style={{
-                    color: isSelected ? "#FFFFFF" : theme.text,
-                    fontWeight: isSelected ? "600" : "500",
-                  }}
-                >
-                  {t(category.labelKey)}
-                </ThemedText>
-              </Pressable>
-            );
-          })}
-        </ScrollView>
-      </View>
-
-      <FlatList
-        data={displayVideos}
-        keyExtractor={(item) => item.id}
+      <ScrollView
         contentContainerStyle={[
-          styles.listContent,
-          { paddingBottom: tabBarHeight + Spacing.xl },
+          styles.scrollContent,
+          { paddingTop: insets.top + Spacing.lg, paddingBottom: tabBarHeight + Spacing.xl }
         ]}
-        ListHeaderComponent={ListHeader}
-        ListEmptyComponent={isSearching ? (
-          <View style={styles.loadingContainerMain}>
-            <ActivityIndicator size="large" color={theme.link} />
-          </View>
-        ) : renderEmptyState}
-        renderItem={({ item, index }) => (
-          <VideoCard
-            video={item}
-            isSaved={item.isSaved}
-            isLiked={item.isLiked}
-            onSave={() => toggleSave(item.id)}
-            onLike={() => toggleLike(item.id)}
-            onPress={() => handleVideoPress(item, index)}
-          />
+        showsVerticalScrollIndicator={false}
+      >
+        {hasSearched && (
+          <Pressable
+            onPress={handleClear}
+            style={({ pressed }) => [
+              styles.backButton,
+              { opacity: pressed ? 0.7 : 1 }
+            ]}
+          >
+            <Feather name="arrow-left" size={20} color={theme.link} />
+            <ThemedText type="body" style={{ color: theme.link, marginLeft: Spacing.sm }}>
+              {t("common.back")}
+            </ThemedText>
+          </Pressable>
         )}
-        ItemSeparatorComponent={() => <View style={{ height: Spacing.lg }} />}
-      />
+
+        {!hasSearched ? (
+          renderAIEntryArea()
+        ) : (
+          <>
+            <View style={[styles.searchSummary, { backgroundColor: theme.backgroundSecondary }]}>
+              <Feather name="search" size={16} color={theme.textSecondary} />
+              <ThemedText 
+                type="body" 
+                style={[styles.searchSummaryText, { color: theme.text }]}
+                numberOfLines={1}
+              >
+                {problemQuery}
+              </ThemedText>
+              <Pressable onPress={handleClear} hitSlop={8}>
+                <Feather name="x" size={18} color={theme.textSecondary} />
+              </Pressable>
+            </View>
+            
+            {renderCategoryChips()}
+            {renderResults()}
+          </>
+        )}
+      </ScrollView>
     </ThemedView>
   );
 }
@@ -418,32 +492,49 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  header: {
+  scrollContent: {
     paddingHorizontal: Spacing.xl,
-    paddingBottom: Spacing.lg,
   },
-  searchBar: {
+  backButton: {
     flexDirection: "row",
     alignItems: "center",
-    height: 48,
-    borderRadius: BorderRadius.md,
-    paddingHorizontal: Spacing.lg,
     marginBottom: Spacing.lg,
   },
-  searchInput: {
-    flex: 1,
-    marginLeft: Spacing.md,
-    fontSize: 16,
+  aiEntryArea: {
+    alignItems: "center",
+    paddingTop: Spacing.xl,
   },
-  clearButton: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
+  aiIconLarge: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     justifyContent: "center",
     alignItems: "center",
+    marginBottom: Spacing.xl,
   },
-  categoriesScroll: {
+  mainTitle: {
+    textAlign: "center",
+    marginBottom: Spacing.sm,
+  },
+  subtitle: {
+    textAlign: "center",
+    marginBottom: Spacing.xl,
+    paddingHorizontal: Spacing.lg,
+  },
+  problemInputContainer: {
+    width: "100%",
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.lg,
+    marginBottom: Spacing.lg,
+  },
+  problemInput: {
+    fontSize: 16,
+    lineHeight: 24,
+    minHeight: 80,
+  },
+  categoriesWrapper: {
     marginHorizontal: -Spacing.xl,
+    marginBottom: Spacing.xl,
   },
   categoriesContainer: {
     paddingHorizontal: Spacing.xl,
@@ -454,53 +545,100 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.sm,
     borderRadius: BorderRadius.full,
   },
-  listContent: {
-    paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing.sm,
-  },
-  emptyState: {
-    alignItems: "center",
-    paddingVertical: Spacing["5xl"],
-    paddingHorizontal: Spacing.xl,
-  },
-  emptyIconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: Spacing.xl,
-  },
-  emptyTitle: {
-    marginBottom: Spacing.sm,
-    textAlign: "center",
-  },
-  emptyHint: {
-    textAlign: "center",
-    lineHeight: 22,
-  },
-  loadingContainerMain: {
-    paddingVertical: Spacing["5xl"],
-    alignItems: "center",
-  },
-  askAIButton: {
+  findButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: Spacing.lg,
-    paddingHorizontal: Spacing.xl,
+    paddingHorizontal: Spacing["3xl"],
     borderRadius: BorderRadius.md,
-    marginBottom: Spacing.lg,
+    width: "100%",
   },
-  askAIText: {
-    color: "#FFFFFF",
+  findButtonText: {
     fontWeight: "600",
+    marginLeft: Spacing.md,
+  },
+  searchSummary: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: Spacing.md,
+    borderRadius: BorderRadius.md,
+    marginBottom: Spacing.xl,
+  },
+  searchSummaryText: {
+    flex: 1,
     marginHorizontal: Spacing.md,
+  },
+  section: {
+    marginBottom: Spacing.xl,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: Spacing.md,
+    gap: Spacing.sm,
+  },
+  sectionTitle: {
+    flex: 1,
+  },
+  recommendedCard: {
+    borderRadius: BorderRadius.lg,
+    overflow: "hidden",
+  },
+  recommendedThumbnail: {
+    width: "100%",
+    height: 200,
+  },
+  playOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.3)",
+    height: 200,
+  },
+  playButton: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingLeft: 4,
+  },
+  recommendedInfo: {
+    padding: Spacing.lg,
+  },
+  recommendedTitle: {
+    fontWeight: "600",
+    marginBottom: Spacing.sm,
+  },
+  recommendedMeta: {
+    flexDirection: "row",
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: Spacing.sm,
+  },
+  categoryBadge: {
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 2,
+    borderRadius: BorderRadius.sm,
+  },
+  videoCardWrapper: {
+    marginBottom: Spacing.md,
+  },
+  noVideosMessage: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: Spacing.md,
+    borderRadius: BorderRadius.md,
+    marginBottom: Spacing.md,
+    gap: Spacing.sm,
+  },
+  noVideosText: {
+    flex: 1,
   },
   aiGuideCard: {
     borderRadius: BorderRadius.lg,
     padding: Spacing.xl,
-    marginBottom: Spacing.lg,
   },
   aiGuideHeader: {
     flexDirection: "row",
@@ -529,14 +667,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: Spacing.xl,
   },
+  loadingContainerMain: {
+    alignItems: "center",
+    paddingVertical: Spacing["5xl"],
+  },
   loadingText: {
     marginTop: Spacing.md,
   },
-  stepsSection: {
+  stepsContainer: {
     marginBottom: Spacing.lg,
-  },
-  sectionTitle: {
-    marginBottom: Spacing.md,
   },
   stepItem: {
     flexDirection: "row",
@@ -554,45 +693,6 @@ const styles = StyleSheet.create({
   stepText: {
     flex: 1,
     lineHeight: 22,
-  },
-  imagesSection: {
-    marginBottom: Spacing.lg,
-  },
-  toggleImagesButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: Spacing.md,
-    borderRadius: BorderRadius.sm,
-    marginBottom: Spacing.md,
-  },
-  imagesScrollContainer: {
-    marginHorizontal: -Spacing.xl,
-  },
-  imagesScroll: {
-    paddingHorizontal: Spacing.xl,
-    gap: Spacing.md,
-  },
-  imageItem: {
-    width: 200,
-  },
-  guideImage: {
-    width: 200,
-    height: 200,
-    borderRadius: BorderRadius.md,
-    marginBottom: Spacing.sm,
-  },
-  imageCaption: {
-    textAlign: "center",
-  },
-  noImagesNote: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: Spacing.md,
-    borderRadius: BorderRadius.sm,
-    marginBottom: Spacing.lg,
-  },
-  noImagesText: {
-    marginLeft: Spacing.sm,
   },
   saveButton: {
     flexDirection: "row",
