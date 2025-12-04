@@ -63,9 +63,19 @@ export default function SearchScreen() {
     try {
       const [searchResults, guide, aiResponse] = await Promise.all([
         semanticSearch(problemQuery, selectedCategory !== "all" ? selectedCategory : undefined),
-        generateGuide(problemQuery, language, false),
-        api.askAI(problemQuery, language).catch(() => null)
+        generateGuide(problemQuery, language, false).catch((err) => {
+          console.log("[SearchScreen] generateGuide error:", err?.message || err);
+          return null;
+        }),
+        api.askAI(problemQuery, language).catch((err) => {
+          console.log("[SearchScreen] askAI error:", err?.message || err);
+          return null;
+        })
       ]);
+
+      console.log("[SearchScreen] Search results:", searchResults?.length || 0);
+      console.log("[SearchScreen] Guide:", guide ? "received" : "null");
+      console.log("[SearchScreen] AI Response:", aiResponse ? "received" : "null");
 
       if (searchResults.length > 0) {
         setRecommendedVideo(searchResults[0]);
@@ -77,10 +87,11 @@ export default function SearchScreen() {
       }
 
       if (aiResponse?.answer) {
+        console.log("[SearchScreen] Setting AI answer:", aiResponse.answer.substring(0, 100) + "...");
         setAiAnswer(aiResponse.answer);
       }
-    } catch (error) {
-      console.log("Search/Guide failed:", error);
+    } catch (error: any) {
+      console.log("[SearchScreen] Search/Guide failed:", error?.message || error);
     } finally {
       setIsSearching(false);
       setIsGeneratingGuide(false);

@@ -2,28 +2,57 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Platform } from "react-native";
 import Constants from "expo-constants";
 
+const BACKEND_PORT = 3001;
+
 const getBaseUrl = () => {
   if (Platform.OS === "web") {
     const hostname = window.location.hostname;
     if (hostname.includes("replit")) {
-      const parts = window.location.hostname.split(".");
-      parts[0] = parts[0] + "-3001";
-      return `https://${parts.join(".")}`;
+      const parts = hostname.split(".");
+      if (parts[0].includes("-")) {
+        const subParts = parts[0].split("-");
+        const lastPart = subParts[subParts.length - 1];
+        if (/^\d+$/.test(lastPart)) {
+          subParts[subParts.length - 1] = String(BACKEND_PORT);
+        } else {
+          subParts.push(String(BACKEND_PORT));
+        }
+        parts[0] = subParts.join("-");
+      } else {
+        parts[0] = parts[0] + "-" + BACKEND_PORT;
+      }
+      const url = `https://${parts.join(".")}`;
+      console.log("[API] Web base URL:", url);
+      return url;
     }
-    return `${window.location.protocol}//${window.location.hostname}:3001`;
+    return `${window.location.protocol}//${window.location.hostname}:${BACKEND_PORT}`;
   }
   
   const replitDevDomain = Constants.expoConfig?.extra?.REPLIT_DEV_DOMAIN;
   if (replitDevDomain) {
     const parts = replitDevDomain.split(".");
-    parts[0] = parts[0] + "-3001";
-    return `https://${parts.join(".")}`;
+    if (parts[0].includes("-")) {
+      const subParts = parts[0].split("-");
+      const lastPart = subParts[subParts.length - 1];
+      if (/^\d+$/.test(lastPart)) {
+        subParts[subParts.length - 1] = String(BACKEND_PORT);
+      } else {
+        subParts.push(String(BACKEND_PORT));
+      }
+      parts[0] = subParts.join("-");
+    } else {
+      parts[0] = parts[0] + "-" + BACKEND_PORT;
+    }
+    const url = `https://${parts.join(".")}`;
+    console.log("[API] Native base URL:", url);
+    return url;
   }
   
   return "https://quickfix-app.replit.app";
 };
 
 const API_BASE_URL = `${getBaseUrl()}/api`;
+console.log("[API] Full API URL:", API_BASE_URL);
 
 interface ApiOptions {
   method?: "GET" | "POST" | "PUT" | "DELETE";
@@ -51,6 +80,7 @@ class ApiClient {
 
   async request<T>(endpoint: string, options: ApiOptions = {}): Promise<T> {
     const { method = "GET", body, requireAuth = false } = options;
+    const url = `${API_BASE_URL}${endpoint}`;
 
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
@@ -72,14 +102,24 @@ class ApiClient {
       config.body = JSON.stringify(body);
     }
 
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
+    try {
+      console.log(`[API] ${method} ${url}`);
+      const response = await fetch(url, config);
 
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: "Request failed" }));
-      throw new Error(error.error || "Request failed");
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: "Request failed" }));
+        console.log(`[API] Error ${response.status}: ${JSON.stringify(errorData)}`);
+        throw new Error(errorData.error || `Request failed with status ${response.status}`);
+      }
+
+      return response.json();
+    } catch (error: any) {
+      if (error.message?.includes("Request failed")) {
+        throw error;
+      }
+      console.log(`[API] Network error for ${url}:`, error.message || error);
+      throw new Error(`Network error: ${error.message || 'Connection failed'}`);
     }
-
-    return response.json();
   }
 
   async register(email: string, password: string, displayName: string) {
