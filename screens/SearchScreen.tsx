@@ -396,6 +396,16 @@ export default function SearchScreen() {
     if (!hasSearched) return null;
 
     const noVideosFound = !recommendedVideo && otherVideos.length === 0 && !isSearching;
+    
+    const isGenericFallback = aiGuide && aiGuide.steps.length > 0 && 
+      aiGuide.steps.some(step => 
+        step.text.toLowerCase().includes("search for tutorials") ||
+        step.text.toLowerCase().includes("watch video guides") ||
+        step.text.toLowerCase().includes("consult a professional")
+      );
+    
+    const hasRealAIContent = aiAnswer && aiAnswer.length > 50;
+    const useAIAnswerInstead = hasRealAIContent && (!aiGuide || isGenericFallback);
 
     return (
       <View style={styles.section}>
@@ -420,22 +430,28 @@ export default function SearchScreen() {
             </View>
           </View>
 
-          {aiGuide?.query && (
+          {(aiGuide?.query || problemQuery) && (
             <View style={[styles.queryContainer, { backgroundColor: theme.backgroundTertiary }]}>
               <ThemedText type="small" style={{ color: theme.textSecondary }}>
-                {aiGuide.query}
+                {aiGuide?.query || problemQuery}
               </ThemedText>
             </View>
           )}
 
-          {isGeneratingGuide ? (
+          {isGeneratingGuide && !aiAnswer ? (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color={theme.link} />
               <ThemedText type="body" style={[styles.loadingText, { color: theme.textSecondary }]}>
-                {t("aiGuide.generating")}
+                {t("search.thinking")}
               </ThemedText>
             </View>
-          ) : aiGuide ? (
+          ) : useAIAnswerInstead ? (
+            <View style={styles.aiAnswerContainer}>
+              <ThemedText type="body" style={[styles.aiAnswerFullText, { color: theme.text }]}>
+                {aiAnswer}
+              </ThemedText>
+            </View>
+          ) : aiGuide && !isGenericFallback ? (
             <>
               <View style={styles.stepsContainer}>
                 {aiGuide.steps.map((step, index) => (
@@ -480,6 +496,12 @@ export default function SearchScreen() {
                 </ThemedText>
               </Pressable>
             </>
+          ) : aiAnswer ? (
+            <View style={styles.aiAnswerContainer}>
+              <ThemedText type="body" style={[styles.aiAnswerFullText, { color: theme.text }]}>
+                {aiAnswer}
+              </ThemedText>
+            </View>
           ) : (
             <View style={styles.errorContainer}>
               <Feather name="alert-circle" size={24} color={theme.error} />
@@ -749,6 +771,12 @@ const styles = StyleSheet.create({
     padding: Spacing.xl,
   },
   aiAnswerText: {
+    lineHeight: 24,
+  },
+  aiAnswerContainer: {
+    paddingVertical: Spacing.sm,
+  },
+  aiAnswerFullText: {
     lineHeight: 24,
   },
   aiGuideHeader: {

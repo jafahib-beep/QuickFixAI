@@ -83,6 +83,7 @@ Backend requires DATABASE_URL environment variable.
 - POST /api/ai/suggest-tags - AI tag suggestions
 - POST /api/ai/generate-description - AI description generation
 - POST /api/ai/generate-guide - Generate visual step-by-step guide with AI images
+- POST /api/ai/ask-ai - Conversational AI responses: {question, language} -> {answer}
 - GET /api/community/posts - Get community posts
 - POST /api/community/posts - Create new community post
 - GET /api/community/posts/:id/comments - Get post comments
@@ -114,9 +115,15 @@ Backend requires DATABASE_URL environment variable.
   - "Ask AI" button inside input container for quick access
   - Keyboard return key submits the query (returnKeyType="search")
   - Category filter chips for narrowing search scope
-  - "Find Solution" button with loading state ("Searching...") triggers both video search and AI guide generation
+  - "Find Solution" button with loading state ("Searching...") triggers video search + AI guide + conversational AI
   - Combined results view: Recommended QuickFix video + Other videos + AI Quick Guide
   - "No videos yet" message shown when no matching videos exist, with AI guide fallback
+- **AI Conversational Responses**: New `/ask-ai` endpoint for natural language troubleshooting
+  - Uses GPT-4o-mini for helpful, detailed responses
+  - Supports all 6 languages (responds in user's selected language)
+  - SearchScreen shows real AI response in "AI snabbguide" card instead of generic fallback steps
+  - Fallback: If AI returns generic content (like "Search for tutorials"), shows conversational answer instead
+  - Demo login fallback: When API unavailable, creates demo user for testing
 - **AI Visual Guides**: Generate step-by-step troubleshooting guides with AI-generated images
   - Generates 3-5 actionable steps using GPT-4o-mini
   - Creates illustrative images for key steps using DALL-E 3
