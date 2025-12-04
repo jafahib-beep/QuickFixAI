@@ -1,10 +1,13 @@
 const express = require('express');
+const OpenAI = require('openai');
 const { pool } = require('../db');
 const { authMiddleware, optionalAuth } = require('../middleware/auth');
 
 const router = express.Router();
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+
+const openai = OPENAI_API_KEY ? new OpenAI({ apiKey: OPENAI_API_KEY }) : null;
 
 async function callOpenAI(endpoint, body) {
   if (!OPENAI_API_KEY) {
@@ -27,6 +30,56 @@ async function callOpenAI(endpoint, body) {
   
   return response.json();
 }
+
+router.post('/ask-ai', async (req, res) => {
+  try {
+    const { question, language = 'en' } = req.body;
+    
+    if (!question || typeof question !== 'string') {
+      return res.status(400).json({ error: 'Question is required' });
+    }
+    
+    if (!openai) {
+      return res.json({ 
+        answer: 'AI service is not configured. Please check your OpenAI API key.' 
+      });
+    }
+    
+    const languageNames = {
+      en: 'English',
+      sv: 'Swedish',
+      ar: 'Arabic',
+      de: 'German',
+      fr: 'French',
+      ru: 'Russian'
+    };
+    const languageName = languageNames[language] || 'English';
+    
+    const systemPrompt = `You are QuickFix AI, a helpful DIY and home repair assistant. 
+You provide concise, practical advice for fixing common household problems.
+Keep responses under 300 words.
+Be friendly and encouraging.
+If a problem seems dangerous or requires professional help, say so.
+Respond in ${languageName}.`;
+
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: question }
+      ],
+      temperature: 0.7,
+      max_tokens: 500
+    });
+    
+    const answer = completion.choices[0].message.content.trim();
+    
+    res.json({ answer });
+  } catch (error) {
+    console.error('Ask AI error:', error);
+    res.status(500).json({ error: 'Failed to get AI response' });
+  }
+});
 
 router.post('/suggest-tags', authMiddleware, async (req, res) => {
   try {

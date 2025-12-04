@@ -74,6 +74,8 @@
     "problemPlaceholder": "Type your problem here...",
     "askAI": "Ask AI",
     "searching": "Searching...",
+    "thinking": "Thinking...",
+    "aiResponse": "AI Response",
     "findSolution": "Find Solution",
     "recommendedVideo": "Recommended QuickFix",
     "otherVideos": "Other Helpful Videos",

@@ -74,6 +74,8 @@
     "problemPlaceholder": "Skriv ditt problem här...",
     "askAI": "Fråga AI",
     "searching": "Söker...",
+    "thinking": "Tänker...",
+    "aiResponse": "AI-svar",
     "findSolution": "Hitta lösning",
     "recommendedVideo": "Rekommenderad QuickFix",
     "otherVideos": "Andra hjälpsamma videor",

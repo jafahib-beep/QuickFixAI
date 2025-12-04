@@ -327,6 +327,13 @@ class ApiClient {
     });
   }
 
+  async askAI(question: string, language: string = 'en') {
+    return this.request<{ answer: string }>("/ai/ask-ai", {
+      method: "POST",
+      body: { question, language },
+    });
+  }
+
   async getCommunityPosts(params?: { category?: string; status?: string }) {
     const query = new URLSearchParams();
     if (params?.category && params.category !== 'all') query.set("category", params.category);

@@ -74,6 +74,8 @@
     "problemPlaceholder": "Tapez votre problème ici...",
     "askAI": "Demander à l'IA",
     "searching": "Recherche en cours...",
+    "thinking": "Réflexion en cours...",
+    "aiResponse": "Réponse de l'IA",
     "findSolution": "Trouver une solution",
     "recommendedVideo": "QuickFix recommandé",
     "otherVideos": "Autres vidéos utiles",

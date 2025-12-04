@@ -74,6 +74,8 @@
     "problemPlaceholder": "Geben Sie Ihr Problem hier ein...",
     "askAI": "KI fragen",
     "searching": "Suche läuft...",
+    "thinking": "Denkt nach...",
+    "aiResponse": "KI-Antwort",
     "findSolution": "Lösung finden",
     "recommendedVideo": "Empfohlener QuickFix",
     "otherVideos": "Weitere hilfreiche Videos",

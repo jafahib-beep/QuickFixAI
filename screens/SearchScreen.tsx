@@ -22,7 +22,7 @@ import { Spacing, BorderRadius } from "@/constants/theme";
 import { useTheme } from "@/hooks/useTheme";
 import { useVideos } from "@/contexts/VideosContext";
 import { RootStackParamList } from "@/navigation/RootNavigator";
-import { Video, AIGuide } from "@/utils/api";
+import { Video, AIGuide, api } from "@/utils/api";
 import { CATEGORIES_WITH_ALL, Category } from "@/constants/categories";
 
 type SearchScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -44,6 +44,7 @@ export default function SearchScreen() {
   const [recommendedVideo, setRecommendedVideo] = useState<Video | null>(null);
   const [otherVideos, setOtherVideos] = useState<Video[]>([]);
   const [aiGuide, setAiGuide] = useState<AIGuide | null>(null);
+  const [aiAnswer, setAiAnswer] = useState<string | null>(null);
   const [isGeneratingGuide, setIsGeneratingGuide] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
 
@@ -56,12 +57,14 @@ export default function SearchScreen() {
     setRecommendedVideo(null);
     setOtherVideos([]);
     setAiGuide(null);
+    setAiAnswer(null);
     setIsSaved(false);
 
     try {
-      const [searchResults, guide] = await Promise.all([
+      const [searchResults, guide, aiResponse] = await Promise.all([
         semanticSearch(problemQuery, selectedCategory !== "all" ? selectedCategory : undefined),
-        generateGuide(problemQuery, language, false)
+        generateGuide(problemQuery, language, false),
+        api.askAI(problemQuery, language).catch(() => null)
       ]);
 
       if (searchResults.length > 0) {
@@ -71,6 +74,10 @@ export default function SearchScreen() {
 
       if (guide) {
         setAiGuide(guide);
+      }
+
+      if (aiResponse?.answer) {
+        setAiAnswer(aiResponse.answer);
       }
     } catch (error) {
       console.log("Search/Guide failed:", error);
@@ -106,6 +113,7 @@ export default function SearchScreen() {
     setRecommendedVideo(null);
     setOtherVideos([]);
     setAiGuide(null);
+    setAiAnswer(null);
     setIsSaved(false);
   };
 
@@ -350,6 +358,40 @@ export default function SearchScreen() {
     );
   };
 
+  const renderAIAnswer = () => {
+    if (!hasSearched || (!aiAnswer && !isGeneratingGuide)) return null;
+
+    return (
+      <View style={styles.section}>
+        <View style={[styles.aiAnswerCard, { backgroundColor: theme.backgroundSecondary }]}>
+          <View style={styles.aiGuideHeader}>
+            <View style={styles.aiGuideHeaderLeft}>
+              <View style={[styles.aiIconContainer, { backgroundColor: theme.link }]}>
+                <Feather name="message-circle" size={18} color="#FFFFFF" />
+              </View>
+              <ThemedText type="h4" style={{ color: theme.text }}>
+                {t("search.aiResponse")}
+              </ThemedText>
+            </View>
+          </View>
+
+          {isGeneratingGuide && !aiAnswer ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="small" color={theme.link} />
+              <ThemedText type="small" style={[styles.loadingText, { color: theme.textSecondary }]}>
+                {t("search.thinking")}
+              </ThemedText>
+            </View>
+          ) : aiAnswer ? (
+            <ThemedText type="body" style={[styles.aiAnswerText, { color: theme.text }]}>
+              {aiAnswer}
+            </ThemedText>
+          ) : null}
+        </View>
+      </View>
+    );
+  };
+
   const renderAIGuide = () => {
     if (!hasSearched) return null;
 
@@ -476,6 +518,7 @@ export default function SearchScreen() {
 
     return (
       <>
+        {renderAIAnswer()}
         {renderRecommendedVideo()}
         {renderOtherVideos()}
         {renderAIGuide()}
@@ -700,6 +743,13 @@ const styles = StyleSheet.create({
   aiGuideCard: {
     borderRadius: BorderRadius.lg,
     padding: Spacing.xl,
+  },
+  aiAnswerCard: {
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.xl,
+  },
+  aiAnswerText: {
+    lineHeight: 24,
   },
   aiGuideHeader: {
     flexDirection: "row",

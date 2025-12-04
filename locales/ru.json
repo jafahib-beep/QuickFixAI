@@ -74,6 +74,8 @@
     "problemPlaceholder": "Введите вашу проблему здесь...",
     "askAI": "Спросить ИИ",
     "searching": "Поиск...",
+    "thinking": "Думаю...",
+    "aiResponse": "Ответ ИИ",
     "findSolution": "Найти решение",
     "recommendedVideo": "Рекомендуемый QuickFix",
     "otherVideos": "Другие полезные видео",

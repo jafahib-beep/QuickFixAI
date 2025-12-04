@@ -74,6 +74,8 @@
     "problemPlaceholder": "اكتب مشكلتك هنا...",
     "askAI": "اسأل AI",
     "searching": "جارٍ البحث...",
+    "thinking": "جارٍ التفكير...",
+    "aiResponse": "رد الذكاء الاصطناعي",
     "findSolution": "ابحث عن حل",
     "recommendedVideo": "QuickFix الموصى به",
     "otherVideos": "فيديوهات مفيدة أخرى",
