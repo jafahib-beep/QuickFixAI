@@ -427,22 +427,41 @@ router.post('/:id/report', authMiddleware, async (req, res) => {
 });
 
 // Award XP for watching a video
+// In-memory cache for video watch XP cooldowns (user_id:video_id -> timestamp)
+const videoWatchCooldowns = new Map();
+const VIDEO_WATCH_XP_COOLDOWN_MS = 5 * 60 * 1000; // 5 minutes
+
 router.post('/:id/watch', authMiddleware, async (req, res) => {
   try {
+    const videoId = req.params.id;
+    const userId = req.userId;
+    
     // Verify the video exists
     const videoResult = await pool.query(
       'SELECT id FROM videos WHERE id = $1',
-      [req.params.id]
+      [videoId]
     );
     
     if (videoResult.rows.length === 0) {
       return res.status(404).json({ error: 'Video not found' });
     }
     
-    // Award XP (non-blocking approach, but return result for confirmation)
-    const xpResult = await awardXp(req.userId, 'video_watch');
+    // Check cooldown for this user+video combination
+    const cooldownKey = `${userId}:${videoId}`;
+    const lastWatchTime = videoWatchCooldowns.get(cooldownKey);
+    const now = Date.now();
+    
+    if (lastWatchTime && (now - lastWatchTime) < VIDEO_WATCH_XP_COOLDOWN_MS) {
+      // Cooldown active - no XP awarded but still count as successful watch
+      console.log(`[Video Watch] XP cooldown active for user ${userId} on video ${videoId}`);
+      return res.json({ success: true, xpAwarded: 0 });
+    }
+    
+    // Award XP and update cooldown
+    const xpResult = await awardXp(userId, 'video_watch');
     
     if (xpResult.success) {
+      videoWatchCooldowns.set(cooldownKey, now);
       res.json({ 
         success: true, 
         xpAwarded: xpResult.xpAwarded,

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   StyleSheet,
@@ -64,6 +64,9 @@ export default function VideoPlayerScreen() {
   const isSaved = video.isSaved ?? false;
   const isLiked = video.isLiked ?? false;
   const category = getCategoryByKey(video.category);
+  
+  // Track if watch XP has been recorded for this video
+  const watchRecordedRef = useRef(false);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -72,14 +75,15 @@ export default function VideoPlayerScreen() {
     return () => clearTimeout(timer);
   }, []);
 
-  // Record video watch for XP (non-blocking, fires once per video)
+  // Record video watch for XP (non-blocking, fires once per mount)
   useEffect(() => {
-    if (user && video.id) {
+    if (user && video.id && !watchRecordedRef.current) {
+      watchRecordedRef.current = true;
       api.recordVideoWatch(video.id).catch(err => {
         console.log('[XP] Video watch record failed:', err.message);
       });
     }
-  }, [video.id, user?.id]);
+  }, []);
 
   const handleCategoryPress = () => {
     if (category) {
