@@ -1,6 +1,7 @@
 const express = require('express');
 const { pool } = require('../db');
 const { authMiddleware, optionalAuth } = require('../middleware/auth');
+const { awardXp } = require('../services/xp');
 
 const router = express.Router();
 
@@ -421,6 +422,40 @@ router.post('/:id/report', authMiddleware, async (req, res) => {
     res.json({ message: 'Report submitted' });
   } catch (error) {
     console.error('Report video error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Award XP for watching a video
+router.post('/:id/watch', authMiddleware, async (req, res) => {
+  try {
+    // Verify the video exists
+    const videoResult = await pool.query(
+      'SELECT id FROM videos WHERE id = $1',
+      [req.params.id]
+    );
+    
+    if (videoResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Video not found' });
+    }
+    
+    // Award XP (non-blocking approach, but return result for confirmation)
+    const xpResult = await awardXp(req.userId, 'video_watch');
+    
+    if (xpResult.success) {
+      res.json({ 
+        success: true, 
+        xpAwarded: xpResult.xpAwarded,
+        totalXp: xpResult.xp,
+        level: xpResult.level
+      });
+    } else {
+      // XP award failed but video watch was successful
+      console.log('[Video Watch] XP award failed:', xpResult.error);
+      res.json({ success: true, xpAwarded: 0 });
+    }
+  } catch (error) {
+    console.error('Video watch error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });

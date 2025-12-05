@@ -2,6 +2,7 @@ const express = require('express');
 const OpenAI = require('openai');
 const { pool } = require('../db');
 const { authMiddleware, optionalAuth } = require('../middleware/auth');
+const { awardXp } = require('../services/xp');
 
 const router = express.Router();
 
@@ -90,7 +91,7 @@ Respond in ${languageName}.`;
  * FIX: Ensured proper message formatting for OpenAI API and added
  * better error handling with descriptive error messages.
  */
-router.post('/chat', async (req, res) => {
+router.post('/chat', optionalAuth, async (req, res) => {
   try {
     const { messages, language = 'en', imageBase64, videoFileName } = req.body;
     
@@ -236,6 +237,13 @@ Remember: A real technician asks questions first, diagnoses second, and fixes la
       return res.status(500).json({ error: 'No response from AI' });
     }
     
+    // Award XP for successful AI chat message (non-blocking)
+    if (req.userId) {
+      awardXp(req.userId, 'ai_chat_message').catch(err => {
+        console.log('[XP] Non-blocking XP award error:', err.message);
+      });
+    }
+    
     res.json({ answer });
   } catch (error) {
     console.error('Chat error:', error.message || error);
@@ -250,7 +258,7 @@ Remember: A real technician asks questions first, diagnoses second, and fixes la
  * LiveAssist endpoint - Visual troubleshooting with AI
  * Accepts an image and returns a structured repair guide
  */
-router.post('/liveassist', async (req, res) => {
+router.post('/liveassist', optionalAuth, async (req, res) => {
   try {
     const { imageBase64, language = 'en' } = req.body;
     
@@ -602,6 +610,13 @@ When you see an image, respond with EXACTLY this JSON format. Return ONLY valid 
       riskOverlaysCount: riskOverlays.length,
       sparePartsCount: spareParts.length
     });
+    
+    // Award XP for successful LiveAssist scan (non-blocking)
+    if (req.userId) {
+      awardXp(req.userId, 'liveassist_scan').catch(err => {
+        console.log('[XP] Non-blocking XP award error:', err.message);
+      });
+    }
     
     res.json({
       success: true,
