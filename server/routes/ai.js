@@ -276,7 +276,7 @@ router.post('/liveassist', async (req, res) => {
     
     const systemPrompt = `You are LiveAssist, an expert visual troubleshooting assistant for the QuickFix app.
 
-Your job is to analyze images of home repair problems and provide instant, actionable guidance.
+Your job is to analyze images of home repair problems and provide instant, actionable guidance with visual annotations.
 
 ## Your Personality:
 - You're a friendly, experienced technician who can diagnose problems from photos
@@ -284,28 +284,47 @@ Your job is to analyze images of home repair problems and provide instant, actio
 - Safety-conscious - always mention if something is dangerous
 
 ## Response Structure (MUST FOLLOW):
-When you see an image, respond with EXACTLY this format:
+When you see an image, respond with EXACTLY this JSON format. Return ONLY valid JSON, no markdown:
 
-**What I See:**
-[1-2 sentences describing what's visible in the image]
+{
+  "whatISee": "1-2 sentences describing what's visible in the image",
+  "likelyIssue": "1 sentence identifying the most probable problem",
+  "steps": [
+    {"stepNumber": 1, "text": "First step description"},
+    {"stepNumber": 2, "text": "Second step description"},
+    {"stepNumber": 3, "text": "Third step description"}
+  ],
+  "safetyNote": "Optional safety warning, or empty string if none",
+  "overlays": [
+    {
+      "x": 0.3,
+      "y": 0.2,
+      "width": 0.4,
+      "height": 0.3,
+      "stepIndex": 1,
+      "label": "Brief label for this area"
+    }
+  ]
+}
 
-**Likely Issue:**
-[1 sentence identifying the most probable problem]
-
-**Steps to Fix:**
-1. [First step]
-2. [Second step]
-3. [Third step]
-[Continue with 3-6 total steps]
-
-**Safety Note:** [Optional - only include if there's a safety concern]
+## Overlay Guidelines:
+- Provide 1-3 overlay regions highlighting the key problem areas in the image
+- Use NORMALIZED coordinates (0-1 range based on image dimensions):
+  - x: horizontal position from left edge (0 = left, 1 = right)
+  - y: vertical position from top edge (0 = top, 1 = bottom)
+  - width: width of region as fraction of image width
+  - height: height of region as fraction of image height
+- stepIndex links the overlay to a specific repair step (1-indexed), or null if just highlighting the problem area
+- label is a very brief description (2-4 words) of what's highlighted
+- If you cannot determine specific coordinates, return an empty overlays array []
 
 ## Guidelines:
 - Be specific based on what you actually see in the image
-- Keep steps practical and actionable
+- Keep steps practical and actionable (3-6 steps total)
 - If you can't clearly identify the problem, say what you need to see better
 - If the repair is dangerous or complex, recommend a professional
-- Respond in ${languageName}`;
+- Respond in ${languageName}
+- IMPORTANT: Return ONLY the JSON object, no additional text or markdown`;
 
     console.log('[LiveAssist] Processing image analysis request');
     
@@ -337,45 +356,96 @@ When you see an image, respond with EXACTLY this format:
       return res.status(500).json({ error: 'No response from AI' });
     }
     
-    // Parse the response into structured format
+    // Parse the JSON response
     let summary = '';
     let possibleIssue = '';
     let steps = [];
     let safetyNote = '';
+    let overlays = [];
     
-    // Extract "What I See:" section
-    const seeMatch = answer.match(/\*\*What I See:\*\*\s*\n?([\s\S]*?)(?=\n\*\*|$)/i);
-    if (seeMatch) {
-      summary = seeMatch[1].trim();
-    }
-    
-    // Extract "Likely Issue:" section
-    const issueMatch = answer.match(/\*\*Likely Issue:\*\*\s*\n?([\s\S]*?)(?=\n\*\*|$)/i);
-    if (issueMatch) {
-      possibleIssue = issueMatch[1].trim();
-    }
-    
-    // Extract "Steps to Fix:" section
-    const stepsMatch = answer.match(/\*\*Steps to Fix:\*\*\s*\n?([\s\S]*?)(?=\n\*\*Safety|$)/i);
-    if (stepsMatch) {
-      const stepsText = stepsMatch[1].trim();
-      const stepLines = stepsText.split('\n').filter(line => line.match(/^\d+\./));
-      steps = stepLines.map((line, idx) => ({
-        stepNumber: idx + 1,
-        text: line.replace(/^\d+\.\s*/, '').trim()
-      }));
-    }
-    
-    // Extract "Safety Note:" if present
-    const safetyMatch = answer.match(/\*\*Safety Note:\*\*\s*\n?([\s\S]*?)$/i);
-    if (safetyMatch) {
-      safetyNote = safetyMatch[1].trim();
+    try {
+      // Try to extract JSON from the response (handle cases where AI adds markdown)
+      let jsonStr = answer;
+      
+      // Remove markdown code blocks if present
+      const jsonMatch = answer.match(/```(?:json)?\s*([\s\S]*?)```/);
+      if (jsonMatch) {
+        jsonStr = jsonMatch[1].trim();
+      }
+      
+      // Try to find JSON object in the response
+      const jsonObjectMatch = jsonStr.match(/\{[\s\S]*\}/);
+      if (jsonObjectMatch) {
+        jsonStr = jsonObjectMatch[0];
+      }
+      
+      const parsed = JSON.parse(jsonStr);
+      
+      summary = parsed.whatISee || '';
+      possibleIssue = parsed.likelyIssue || '';
+      safetyNote = parsed.safetyNote || '';
+      
+      // Parse steps
+      if (Array.isArray(parsed.steps)) {
+        steps = parsed.steps.map((step, idx) => ({
+          stepNumber: step.stepNumber || idx + 1,
+          text: step.text || ''
+        }));
+      }
+      
+      // Parse overlays with validation
+      if (Array.isArray(parsed.overlays)) {
+        overlays = parsed.overlays
+          .filter(o => typeof o.x === 'number' && typeof o.y === 'number')
+          .map(o => ({
+            x: Math.max(0, Math.min(1, o.x)),
+            y: Math.max(0, Math.min(1, o.y)),
+            width: Math.max(0.05, Math.min(1, o.width || 0.2)),
+            height: Math.max(0.05, Math.min(1, o.height || 0.2)),
+            stepIndex: typeof o.stepIndex === 'number' ? o.stepIndex : null,
+            label: o.label || ''
+          }));
+      }
+      
+      console.log('[LiveAssist] Parsed JSON response successfully');
+    } catch (parseError) {
+      console.log('[LiveAssist] JSON parse failed, falling back to text parsing:', parseError.message);
+      
+      // Fallback to legacy text parsing for backward compatibility
+      const seeMatch = answer.match(/\*\*What I See:\*\*\s*\n?([\s\S]*?)(?=\n\*\*|$)/i);
+      if (seeMatch) {
+        summary = seeMatch[1].trim();
+      }
+      
+      const issueMatch = answer.match(/\*\*Likely Issue:\*\*\s*\n?([\s\S]*?)(?=\n\*\*|$)/i);
+      if (issueMatch) {
+        possibleIssue = issueMatch[1].trim();
+      }
+      
+      const stepsMatch = answer.match(/\*\*Steps to Fix:\*\*\s*\n?([\s\S]*?)(?=\n\*\*Safety|$)/i);
+      if (stepsMatch) {
+        const stepsText = stepsMatch[1].trim();
+        const stepLines = stepsText.split('\n').filter(line => line.match(/^\d+\./));
+        steps = stepLines.map((line, idx) => ({
+          stepNumber: idx + 1,
+          text: line.replace(/^\d+\.\s*/, '').trim()
+        }));
+      }
+      
+      const safetyMatch = answer.match(/\*\*Safety Note:\*\*\s*\n?([\s\S]*?)$/i);
+      if (safetyMatch) {
+        safetyNote = safetyMatch[1].trim();
+      }
+      
+      // No overlays in fallback mode
+      overlays = [];
     }
     
     console.log('[LiveAssist] Analysis complete:', { 
       hasSummary: !!summary, 
       hasIssue: !!possibleIssue, 
-      stepsCount: steps.length 
+      stepsCount: steps.length,
+      overlaysCount: overlays.length
     });
     
     res.json({
@@ -385,6 +455,7 @@ When you see an image, respond with EXACTLY this format:
         possibleIssue,
         steps,
         safetyNote,
+        overlays,
         rawResponse: answer
       }
     });

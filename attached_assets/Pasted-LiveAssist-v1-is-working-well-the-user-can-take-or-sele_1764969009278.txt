@@ -1,0 +1,50 @@
+LiveAssist v1 is working well: the user can take or select a photo, the backend uses GPT-4o Vision, and the app shows a structured diagnosis: "What I See", "Likely Issue", "Steps to Fix", and "Safety Note".
+
+Now I want to implement LiveAssist v2 with visual overlays on top of the user’s image.
+
+Goal:
+- After the AI analyzes the image, the app should not only show text, but also visually highlight the important area(s) on the image where the problem is.
+- The user should see their original photo with:
+  - A highlighted region (bounding box or semi-transparent overlay) around the main problem area.
+  - Optional numbered markers that correspond to the step numbers in the instructions (Step 1, Step 2, Step 3, …).
+
+Implementation requirements:
+
+1. Backend – extend /api/ai/liveassist:
+   - Keep the current structured text fields: summary, possible_issue, steps, safety_note.
+   - Add a new field to the JSON response, for example `overlays`, which is an array of objects like:
+     {
+       "x": number,      // normalized 0–1
+       "y": number,      // normalized 0–1
+       "width": number,  // normalized 0–1
+       "height": number, // normalized 0–1
+       "stepIndex": number | null  // index of the related step, if applicable
+     }
+   - Update the system/prompt for the vision model so that, in addition to generating the text, it also returns one or more overlay regions in this normalized format. The coordinates should be relative to the original image size (0–1 range for x, y, width, height).
+   - If the model cannot reliably give coordinates, implement a safe fallback: return an empty `overlays` array and keep the current text-only behavior.
+
+2. Frontend – overlay rendering:
+   - On the LiveAssist result screen, where the image preview is shown, render an overlay layer on top of the image.
+   - Use the `overlays` array from the backend to:
+     - Draw semi-transparent rectangles or highlighted regions in the correct positions.
+     - Optionally draw small numbered markers (1, 2, 3, …) near each region. If `stepIndex` is provided, the number should match the corresponding step in the "Steps to Fix" section.
+   - Make sure the overlay is correctly scaled and positioned even when the image is resized to fit the screen (use the normalized coordinates to calculate absolute positions based on the displayed image dimensions).
+
+3. Behavior & UX:
+   - If `overlays` is non-empty, show the visual highlights together with the text response.
+   - If `overlays` is empty or missing, fall back to the current v1 behavior (text result only) without breaking anything.
+   - Keep the existing loading, error handling, translations, and general layout as they are.
+
+4. Code quality:
+   - Reuse existing components where possible (do not duplicate the LiveAssist screen).
+   - Create a dedicated Overlay / Highlight component if that makes the code cleaner.
+   - Make sure TypeScript types or interfaces are updated for the new `overlays` field on both client and server.
+
+Please:
+- Scan the current LiveAssist frontend and backend implementation.
+- Implement the new overlay support end-to-end (backend response + frontend rendering).
+- Show the key code changes.
+- Test with at least one example image and verify that:
+  - The diagnosis still works.
+  - The overlay appears in the correct place on top of the image.
+  - The app still works when no overlay data is returned.

@@ -636,6 +636,15 @@ export interface LiveAssistStep {
   text: string;
 }
 
+export interface LiveAssistOverlay {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  stepIndex: number | null;
+  label: string;
+}
+
 export interface LiveAssistResponse {
   success: boolean;
   analysis: {
@@ -643,6 +652,7 @@ export interface LiveAssistResponse {
     possibleIssue: string;
     steps: LiveAssistStep[];
     safetyNote?: string;
+    overlays?: LiveAssistOverlay[];
     rawResponse: string;
   };
   error?: string;

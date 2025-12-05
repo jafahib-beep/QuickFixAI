@@ -144,6 +144,15 @@ When running without the backend, the app operates in offline-first mode using s
 - OPENAI_API_KEY - For AI features (optional)
 
 ## Recent Changes (Dec 2024)
+- **LiveAssist v2 Visual Overlays**: Enhanced visual troubleshooting with annotated overlays
+  - AI now returns overlay coordinates highlighting problem areas in the image
+  - Semi-transparent dashed rectangles show exact locations of issues
+  - Numbered markers link overlays to corresponding repair steps
+  - Labels provide brief descriptions of highlighted areas
+  - Backend returns JSON response with normalized coordinates (0-1 range)
+  - Graceful fallback: if no overlays returned, displays text-only diagnosis (v1 behavior)
+  - Frontend uses onLayout to calculate overlay positions based on displayed image size
+  - Types: LiveAssistOverlay interface added to utils/api.ts
 - **LiveAssist Dedicated Tab**: Promoted LiveAssist to its own main tab in bottom navigation
   - New "LiveAssist" tab with lightning bolt icon between AI Chat and Upload
   - Dedicated LiveAssistScreen with prominent camera and gallery buttons
@@ -156,7 +165,7 @@ When running without the backend, the app operates in offline-first mode using s
   - Prominent blue "LiveAssist" button with lightning bolt icon in AI Chat input area
   - Tap button → camera opens → photo sent to GPT-4o vision → AI returns structured diagnosis
   - Backend POST /api/ai/liveassist with structured response format
-  - Response includes: summary (what AI sees), possible issue, numbered steps to fix, safety note
+  - Response includes: summary (what AI sees), possible issue, numbered steps to fix, safety note, overlays (optional)
   - Loading state with "Analyzing your photo..." indicator
 - **Smart Question Flow**: AI chat now behaves like a real technician
   - AI asks 1-2 targeted follow-up questions before giving solutions

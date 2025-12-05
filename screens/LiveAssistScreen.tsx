@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   Image,
   Alert,
+  LayoutChangeEvent,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
@@ -19,13 +20,14 @@ import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { Spacing, BorderRadius, Typography } from "@/constants/theme";
 import { useTheme } from "@/hooks/useTheme";
-import { api, LiveAssistResponse } from "@/utils/api";
+import { api, LiveAssistResponse, LiveAssistOverlay } from "@/utils/api";
 
 interface AnalysisResult {
   summary: string;
   possibleIssue: string;
   steps: Array<{ stepNumber: number; text: string }>;
   safetyNote?: string;
+  overlays?: LiveAssistOverlay[];
   rawResponse?: string;
 }
 
@@ -40,6 +42,7 @@ export default function LiveAssistScreen() {
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [imageDimensions, setImageDimensions] = useState<{ width: number; height: number } | null>(null);
 
   const handleTakePhoto = async () => {
     const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
@@ -91,12 +94,20 @@ export default function LiveAssistScreen() {
   const analyzeImage = async (imageBase64: string) => {
     setIsLoading(true);
     setAnalysisResult(null);
+    setImageDimensions(null);
 
     try {
       const response = await api.liveAssist(imageBase64, language);
 
       if (response.success && response.analysis) {
-        setAnalysisResult(response.analysis);
+        setAnalysisResult({
+          summary: response.analysis.summary,
+          possibleIssue: response.analysis.possibleIssue,
+          steps: response.analysis.steps,
+          safetyNote: response.analysis.safetyNote,
+          overlays: response.analysis.overlays || [],
+          rawResponse: response.analysis.rawResponse,
+        });
       } else {
         setError(response.analysis?.rawResponse || t("chat.liveAssistError"));
       }
@@ -112,6 +123,56 @@ export default function LiveAssistScreen() {
     setCapturedImage(null);
     setAnalysisResult(null);
     setError(null);
+    setImageDimensions(null);
+  };
+
+  const handleImageLayout = (event: LayoutChangeEvent) => {
+    const { width, height } = event.nativeEvent.layout;
+    setImageDimensions({ width, height });
+  };
+
+  const renderOverlays = () => {
+    if (!analysisResult?.overlays || analysisResult.overlays.length === 0 || !imageDimensions) {
+      return null;
+    }
+
+    return analysisResult.overlays.map((overlay, index) => {
+      const left = overlay.x * imageDimensions.width;
+      const top = overlay.y * imageDimensions.height;
+      const width = overlay.width * imageDimensions.width;
+      const height = overlay.height * imageDimensions.height;
+
+      return (
+        <View
+          key={index}
+          style={[
+            styles.overlayBox,
+            {
+              left,
+              top,
+              width,
+              height,
+              borderColor: theme.link,
+            },
+          ]}
+        >
+          {overlay.stepIndex ? (
+            <View style={[styles.overlayMarker, { backgroundColor: theme.link }]}>
+              <ThemedText style={styles.overlayMarkerText}>
+                {overlay.stepIndex}
+              </ThemedText>
+            </View>
+          ) : null}
+          {overlay.label ? (
+            <View style={[styles.overlayLabel, { backgroundColor: theme.link }]}>
+              <ThemedText style={styles.overlayLabelText} numberOfLines={1}>
+                {overlay.label}
+              </ThemedText>
+            </View>
+          ) : null}
+        </View>
+      );
+    });
   };
 
   const renderWelcomeState = () => (
@@ -214,7 +275,14 @@ export default function LiveAssistScreen() {
       showsVerticalScrollIndicator={false}
     >
       {capturedImage ? (
-        <Image source={{ uri: capturedImage }} style={styles.resultImage} />
+        <View style={styles.imageWithOverlay}>
+          <Image 
+            source={{ uri: capturedImage }} 
+            style={styles.resultImage} 
+            onLayout={handleImageLayout}
+          />
+          {renderOverlays()}
+        </View>
       ) : null}
 
       {analysisResult ? (
@@ -543,5 +611,52 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     ...Typography.body,
     fontWeight: "600",
+  },
+  imageWithOverlay: {
+    position: "relative",
+    width: "100%",
+  },
+  overlayBox: {
+    position: "absolute",
+    borderWidth: 2,
+    borderStyle: "dashed",
+    backgroundColor: "rgba(10, 132, 255, 0.15)",
+    borderRadius: BorderRadius.sm,
+  },
+  overlayMarker: {
+    position: "absolute",
+    top: -12,
+    left: -12,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 4,
+  },
+  overlayMarkerText: {
+    color: "#FFFFFF",
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  overlayLabel: {
+    position: "absolute",
+    bottom: -8,
+    left: "50%",
+    transform: [{ translateX: "-50%" }],
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 2,
+    borderRadius: BorderRadius.sm,
+    maxWidth: 120,
+  },
+  overlayLabelText: {
+    color: "#FFFFFF",
+    fontSize: 10,
+    fontWeight: "600",
+    textAlign: "center",
   },
 });
