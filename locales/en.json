@@ -237,6 +237,19 @@
     "feature3": "Safety recommendations included",
     "newScan": "Scan Another Problem"
   },
+  "riskScanner": {
+    "title": "Risk Assessment",
+    "riskLevel": "Risk Level",
+    "low": "Low",
+    "medium": "Medium",
+    "high": "High",
+    "lowDescription": "Safe for DIY",
+    "mediumDescription": "Caution needed",
+    "highDescription": "Professional recommended",
+    "identifiedRisks": "Identified Risks",
+    "recommendation": "Recommendation",
+    "noRisksIdentified": "No significant risks identified"
+  },
   "community": {
     "title": "Community",
     "askCommunity": "Ask the Community",

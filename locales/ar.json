@@ -237,6 +237,19 @@
     "feature3": "توصيات السلامة مضمنة",
     "newScan": "فحص مشكلة أخرى"
   },
+  "riskScanner": {
+    "title": "تقييم المخاطر",
+    "riskLevel": "مستوى الخطر",
+    "low": "منخفض",
+    "medium": "متوسط",
+    "high": "مرتفع",
+    "lowDescription": "آمن للإصلاح الذاتي",
+    "mediumDescription": "يتطلب الحذر",
+    "highDescription": "يوصى بمختص",
+    "identifiedRisks": "المخاطر المحددة",
+    "recommendation": "التوصية",
+    "noRisksIdentified": "لم يتم تحديد مخاطر كبيرة"
+  },
   "community": {
     "title": "المجتمع",
     "askCommunity": "اسأل المجتمع",

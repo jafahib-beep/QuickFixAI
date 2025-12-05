@@ -237,6 +237,19 @@
     "feature3": "Sicherheitsempfehlungen inklusive",
     "newScan": "Weiteres Problem scannen"
   },
+  "riskScanner": {
+    "title": "Risikobewertung",
+    "riskLevel": "Risikostufe",
+    "low": "Niedrig",
+    "medium": "Mittel",
+    "high": "Hoch",
+    "lowDescription": "Sicher für Heimwerker",
+    "mediumDescription": "Vorsicht erforderlich",
+    "highDescription": "Fachmann empfohlen",
+    "identifiedRisks": "Erkannte Risiken",
+    "recommendation": "Empfehlung",
+    "noRisksIdentified": "Keine signifikanten Risiken erkannt"
+  },
   "community": {
     "title": "Community",
     "askCommunity": "Frag die Community",

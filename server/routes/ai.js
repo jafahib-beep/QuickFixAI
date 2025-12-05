@@ -274,14 +274,16 @@ router.post('/liveassist', async (req, res) => {
     };
     const languageName = languageNames[language] || 'English';
     
-    const systemPrompt = `You are LiveAssist, an expert visual troubleshooting assistant for the QuickFix app.
+    const systemPrompt = `You are LiveAssist, an expert visual troubleshooting assistant with integrated RiskScanner AI for the QuickFix app.
 
-Your job is to analyze images of home repair problems and provide instant, actionable guidance with visual annotations.
+Your job is to analyze images of home repair problems and provide:
+1. Instant, actionable repair guidance with visual annotations
+2. Safety and structural risk assessment (RiskScanner)
 
 ## Your Personality:
 - You're a friendly, experienced technician who can diagnose problems from photos
 - Confident but not condescending - you explain things clearly
-- Safety-conscious - always mention if something is dangerous
+- Safety-conscious - always identify and highlight potential dangers
 
 ## Response Structure (MUST FOLLOW):
 When you see an image, respond with EXACTLY this JSON format. Return ONLY valid JSON, no markdown:
@@ -304,10 +306,29 @@ When you see an image, respond with EXACTLY this JSON format. Return ONLY valid 
       "stepIndex": 1,
       "label": "Brief label for this area"
     }
+  ],
+  "riskLevel": "low",
+  "riskSummary": "Brief overall assessment of safety risks",
+  "risks": [
+    {
+      "label": "Risk name, e.g. Water near electrical outlet",
+      "severity": "high",
+      "recommendation": "Specific safety action to take"
+    }
+  ],
+  "riskOverlays": [
+    {
+      "x": 0.5,
+      "y": 0.3,
+      "width": 0.2,
+      "height": 0.2,
+      "riskLabel": "Brief label for danger zone",
+      "severity": "high"
+    }
   ]
 }
 
-## Overlay Guidelines:
+## Overlay Guidelines (for repair overlays):
 - Provide 1-3 overlay regions highlighting the key problem areas in the image
 - Use NORMALIZED coordinates (0-1 range based on image dimensions):
   - x: horizontal position from left edge (0 = left, 1 = right)
@@ -318,11 +339,32 @@ When you see an image, respond with EXACTLY this JSON format. Return ONLY valid 
 - label is a very brief description (2-4 words) of what's highlighted
 - If you cannot determine specific coordinates, return an empty overlays array []
 
+## RiskScanner Guidelines:
+- riskLevel: Assess overall risk as "low", "medium", or "high"
+  - low: Safe for DIY, no immediate dangers
+  - medium: Caution needed, some hazards present
+  - high: Dangerous, professional help recommended or immediate action required
+- riskSummary: 1-2 sentences summarizing the overall safety situation
+- risks: Array of specific identified risks. Look for:
+  - Electrical hazards (exposed wiring, water near outlets, damaged cords)
+  - Water damage (leaks, flooding, moisture)
+  - Mold or fungal growth
+  - Structural damage (cracks, rot, sagging)
+  - Fire hazards (flammable materials near heat, damaged gas lines)
+  - Chemical hazards (asbestos, lead paint, toxic substances)
+  - Unsafe tool usage or positioning
+  - Slip/fall hazards
+- Each risk has: label (what it is), severity (low/medium/high), recommendation (what to do)
+- riskOverlays: Highlight dangerous areas with coordinates (same format as overlays)
+  - Use these to show WHERE the risks are in the image
+  - If you cannot determine specific coordinates, return an empty array []
+
 ## Guidelines:
 - Be specific based on what you actually see in the image
 - Keep steps practical and actionable (3-6 steps total)
 - If you can't clearly identify the problem, say what you need to see better
 - If the repair is dangerous or complex, recommend a professional
+- ALWAYS assess risks even if they seem minor - users need to know
 - Respond in ${languageName}
 - IMPORTANT: Return ONLY the JSON object, no additional text or markdown`;
 
@@ -362,6 +404,11 @@ When you see an image, respond with EXACTLY this JSON format. Return ONLY valid 
     let steps = [];
     let safetyNote = '';
     let overlays = [];
+    // RiskScanner fields
+    let riskLevel = 'low';
+    let riskSummary = '';
+    let risks = [];
+    let riskOverlays = [];
     
     try {
       // Try to extract JSON from the response (handle cases where AI adds markdown)
@@ -407,6 +454,42 @@ When you see an image, respond with EXACTLY this JSON format. Return ONLY valid 
           }));
       }
       
+      // Parse RiskScanner fields
+      if (parsed.riskLevel && ['low', 'medium', 'high'].includes(parsed.riskLevel.toLowerCase())) {
+        riskLevel = parsed.riskLevel.toLowerCase();
+      }
+      
+      riskSummary = parsed.riskSummary || '';
+      
+      // Parse risks array
+      if (Array.isArray(parsed.risks)) {
+        risks = parsed.risks
+          .filter(r => r.label)
+          .map(r => ({
+            label: r.label || '',
+            severity: ['low', 'medium', 'high'].includes(r.severity?.toLowerCase()) 
+              ? r.severity.toLowerCase() 
+              : 'medium',
+            recommendation: r.recommendation || ''
+          }));
+      }
+      
+      // Parse risk overlays with validation
+      if (Array.isArray(parsed.riskOverlays)) {
+        riskOverlays = parsed.riskOverlays
+          .filter(o => typeof o.x === 'number' && typeof o.y === 'number')
+          .map(o => ({
+            x: Math.max(0, Math.min(1, o.x)),
+            y: Math.max(0, Math.min(1, o.y)),
+            width: Math.max(0.05, Math.min(1, o.width || 0.15)),
+            height: Math.max(0.05, Math.min(1, o.height || 0.15)),
+            riskLabel: o.riskLabel || '',
+            severity: ['low', 'medium', 'high'].includes(o.severity?.toLowerCase()) 
+              ? o.severity.toLowerCase() 
+              : 'medium'
+          }));
+      }
+      
       console.log('[LiveAssist] Parsed JSON response successfully');
     } catch (parseError) {
       console.log('[LiveAssist] JSON parse failed, falling back to text parsing:', parseError.message);
@@ -437,15 +520,22 @@ When you see an image, respond with EXACTLY this JSON format. Return ONLY valid 
         safetyNote = safetyMatch[1].trim();
       }
       
-      // No overlays in fallback mode
+      // No overlays or risk data in fallback mode
       overlays = [];
+      riskLevel = 'low';
+      riskSummary = '';
+      risks = [];
+      riskOverlays = [];
     }
     
     console.log('[LiveAssist] Analysis complete:', { 
       hasSummary: !!summary, 
       hasIssue: !!possibleIssue, 
       stepsCount: steps.length,
-      overlaysCount: overlays.length
+      overlaysCount: overlays.length,
+      riskLevel,
+      risksCount: risks.length,
+      riskOverlaysCount: riskOverlays.length
     });
     
     res.json({
@@ -456,6 +546,10 @@ When you see an image, respond with EXACTLY this JSON format. Return ONLY valid 
         steps,
         safetyNote,
         overlays,
+        riskLevel,
+        riskSummary,
+        risks,
+        riskOverlays,
         rawResponse: answer
       }
     });

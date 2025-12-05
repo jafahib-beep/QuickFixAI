@@ -1,0 +1,76 @@
+LiveAssist v2 is now working: 
+- The user can take or select a photo.
+- The backend uses GPT-4o Vision.
+- The app displays a structured diagnosis (What I See, Likely Issue, Steps to Fix, Safety Note).
+- Visual overlays highlight problem areas with numbered markers.
+
+Now I want to extend this with a dedicated "RiskScanner AI" layer that focuses specifically on safety and structural risks.
+
+Goal:
+For every LiveAssist analysis, the AI should also:
+- Detect potential safety and structural risks in the image.
+- Return a clear risk level (Low, Medium, High).
+- List specific risks (e.g. water near electrical components, mold, structural damage, fire hazard, unsafe tool usage).
+- Optionally return overlays highlighting the dangerous areas in red.
+- Provide concrete safety recommendations (e.g. "Do not attempt this repair yourself", "Turn off power at the breaker", "Wear gloves and mask", etc.).
+
+Implementation approach:
+
+1. Backend – extend /api/ai/liveassist response:
+   - Keep the existing fields: summary, possible_issue, steps, safety_note, overlays.
+   - Add new fields for RiskScanner:
+     - `risk_level`: "low" | "medium" | "high"
+     - `risk_summary`: short human-readable summary of the overall risk.
+     - `risks`: an array of objects, e.g.:
+       {
+         "label": string,        // e.g. "Water near electrical outlet"
+         "severity": "low" | "medium" | "high",
+         "recommendation": string
+       }
+     - `riskOverlays`: optional array of overlay regions similar to the existing overlays, e.g.:
+       {
+         "x": number,
+         "y": number,
+         "width": number,
+         "height": number,
+         "riskLabel": string,
+         "severity": "low" | "medium" | "high"
+       }
+   - Update the system prompt / instructions to the vision model so that, in addition to the normal diagnosis, it explicitly performs a safety/risk analysis:
+     - Identify electrical risks, water leaks, mold, structural cracks, flammable materials, unsafe positioning of tools, etc.
+     - Assign an overall risk level.
+     - Return detailed risk entries and, where possible, associated overlay regions.
+
+   - If `riskOverlays` cannot be reliably produced, the endpoint should still return `risk_level` and `risk_summary` and an empty riskOverlays array.
+
+2. Frontend – LiveAssist result UI:
+   - On the LiveAssist result screen, add a new "RiskScanner" / "Risk Assessment" section below the existing cards.
+   - This section should:
+     - Show a small header with an icon and the risk level (color-coded: green for low, yellow for medium, red for high).
+     - Display the `risk_summary`.
+     - List individual `risks` with their severity and recommendations.
+   - For the image overlays:
+     - Reuse the existing overlay rendering system.
+     - Render risk overlays with a distinct red styling (e.g. semi-transparent red background and dashed border) so they are clearly different from the blue problem/repair overlays.
+     - Optionally, show a small label near each risk overlay with the risk label or severity.
+
+3. Behavior & UX:
+   - RiskScanner should always run as part of LiveAssist analysis (no separate user action required for now).
+   - If the backend returns `risk_level` and `risk_summary`, always show the RiskScanner section.
+   - If risk data is missing or empty, hide the section gracefully without breaking the layout.
+   - Existing text diagnosis and overlays must continue to work as before.
+
+4. Code quality:
+   - Update TypeScript types/interfaces on both client and server to include the new risk fields.
+   - Keep the risk-related rendering encapsulated (for example, a dedicated RiskAssessment component).
+   - Preserve localization support: make sure titles like "Risk Assessment", "Risk Level", "Low/Medium/High", and list labels go through the i18n system.
+
+Please:
+- Scan the current LiveAssist backend and frontend implementation.
+- Implement the risk analysis fields in the backend, including the updated AI prompt.
+- Implement the RiskScanner UI section and risk overlays on the frontend.
+- Show the key code changes.
+- Test with at least one image that clearly contains a risk (e.g. water damage near a pipe, mold, or exposed wiring) and verify that:
+  - A risk level is shown.
+  - At least one risk entry is listed.
+  - Risk overlays appear in red on the image when provided.

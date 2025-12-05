@@ -645,6 +645,23 @@ export interface LiveAssistOverlay {
   label: string;
 }
 
+export type RiskSeverity = 'low' | 'medium' | 'high';
+
+export interface RiskEntry {
+  label: string;
+  severity: RiskSeverity;
+  recommendation: string;
+}
+
+export interface RiskOverlay {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  riskLabel: string;
+  severity: RiskSeverity;
+}
+
 export interface LiveAssistResponse {
   success: boolean;
   analysis: {
@@ -653,6 +670,10 @@ export interface LiveAssistResponse {
     steps: LiveAssistStep[];
     safetyNote?: string;
     overlays?: LiveAssistOverlay[];
+    riskLevel?: RiskSeverity;
+    riskSummary?: string;
+    risks?: RiskEntry[];
+    riskOverlays?: RiskOverlay[];
     rawResponse: string;
   };
   error?: string;

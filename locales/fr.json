@@ -237,6 +237,19 @@
     "feature3": "Recommandations de sécurité incluses",
     "newScan": "Scanner un autre problème"
   },
+  "riskScanner": {
+    "title": "Évaluation des risques",
+    "riskLevel": "Niveau de risque",
+    "low": "Faible",
+    "medium": "Moyen",
+    "high": "Élevé",
+    "lowDescription": "Sûr pour le bricolage",
+    "mediumDescription": "Prudence requise",
+    "highDescription": "Professionnel recommandé",
+    "identifiedRisks": "Risques identifiés",
+    "recommendation": "Recommandation",
+    "noRisksIdentified": "Aucun risque significatif identifié"
+  },
   "community": {
     "title": "Communauté",
     "askCommunity": "Demandez à la communauté",

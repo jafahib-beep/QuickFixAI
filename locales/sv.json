@@ -237,6 +237,19 @@
     "feature3": "Säkerhetsrekommendationer inkluderade",
     "newScan": "Skanna ett annat problem"
   },
+  "riskScanner": {
+    "title": "Riskbedömning",
+    "riskLevel": "Risknivå",
+    "low": "Låg",
+    "medium": "Medel",
+    "high": "Hög",
+    "lowDescription": "Säkert för gör-det-själv",
+    "mediumDescription": "Försiktighet krävs",
+    "highDescription": "Professionell rekommenderas",
+    "identifiedRisks": "Identifierade risker",
+    "recommendation": "Rekommendation",
+    "noRisksIdentified": "Inga betydande risker identifierade"
+  },
   "community": {
     "title": "Community",
     "askCommunity": "Fråga communityn",
