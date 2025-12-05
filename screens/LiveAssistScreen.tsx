@@ -20,7 +20,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { Spacing, BorderRadius, Typography } from "@/constants/theme";
 import { useTheme } from "@/hooks/useTheme";
-import { api, LiveAssistResponse, LiveAssistOverlay, RiskSeverity, RiskEntry, RiskOverlay } from "@/utils/api";
+import { api, LiveAssistResponse, LiveAssistOverlay, RiskSeverity, RiskEntry, RiskOverlay, SparePart, SparePartPriority } from "@/utils/api";
 
 interface AnalysisResult {
   summary: string;
@@ -32,6 +32,7 @@ interface AnalysisResult {
   riskSummary?: string;
   risks?: RiskEntry[];
   riskOverlays?: RiskOverlay[];
+  spareParts?: SparePart[];
   rawResponse?: string;
 }
 
@@ -114,6 +115,7 @@ export default function LiveAssistScreen() {
           riskSummary: response.analysis.riskSummary,
           risks: response.analysis.risks || [],
           riskOverlays: response.analysis.riskOverlays || [],
+          spareParts: response.analysis.spareParts || [],
           rawResponse: response.analysis.rawResponse,
         });
       } else {
@@ -355,6 +357,129 @@ export default function LiveAssistScreen() {
     );
   };
 
+  const renderSparePartsSection = () => {
+    if (!analysisResult?.spareParts || analysisResult.spareParts.length === 0) {
+      return null;
+    }
+
+    const getPriorityColor = (priority: SparePartPriority) => {
+      return priority === 'primary' ? theme.link : theme.textSecondary;
+    };
+
+    // Helper to validate overlayIndex (1-based, must be within overlays range)
+    const isValidOverlayIndex = (idx: number | null): boolean => {
+      if (idx === null || typeof idx !== 'number') return false;
+      const overlaysCount = analysisResult.overlays?.length || 0;
+      return Number.isFinite(idx) && idx >= 1 && idx <= overlaysCount;
+    };
+
+    return (
+      <View style={[styles.sparePartsSection, { backgroundColor: theme.backgroundSecondary }]}>
+        <View style={styles.sparePartsHeader}>
+          <Feather name="tool" size={22} color={theme.link} />
+          <ThemedText style={[styles.sparePartsTitle, { color: theme.text }]}>
+            {t('spareParts.title')}
+          </ThemedText>
+        </View>
+
+        <ThemedText style={[styles.sparePartsSubtitle, { color: theme.textSecondary }]}>
+          {t('spareParts.subtitle')}
+        </ThemedText>
+
+        {analysisResult.spareParts.map((part, index) => {
+          const isPrimary = part.priority === 'primary';
+          const priorityColor = getPriorityColor(part.priority);
+
+          return (
+            <View 
+              key={index} 
+              style={[
+                styles.sparePartCard, 
+                { 
+                  backgroundColor: isDark ? '#1A1A1A' : '#F5F5F5',
+                  borderLeftColor: priorityColor,
+                }
+              ]}
+            >
+              <View style={styles.sparePartHeaderRow}>
+                <Feather 
+                  name={isPrimary ? "star" : "circle"} 
+                  size={16} 
+                  color={priorityColor} 
+                />
+                <ThemedText style={[styles.sparePartName, { color: theme.text }]}>
+                  {part.name}
+                </ThemedText>
+                {isPrimary ? (
+                  <View style={[styles.primaryBadge, { backgroundColor: theme.link + '20' }]}>
+                    <ThemedText style={[styles.primaryBadgeText, { color: theme.link }]}>
+                      {t('spareParts.primary')}
+                    </ThemedText>
+                  </View>
+                ) : null}
+              </View>
+
+              <View style={[styles.categoryChip, { backgroundColor: theme.link + '15' }]}>
+                <ThemedText style={[styles.categoryChipText, { color: theme.link }]}>
+                  {part.category}
+                </ThemedText>
+              </View>
+
+              {part.description ? (
+                <ThemedText style={[styles.sparePartDescription, { color: theme.textSecondary }]}>
+                  {part.description}
+                </ThemedText>
+              ) : null}
+
+              {part.specs && part.specs.length > 0 ? (
+                <View style={styles.specsContainer}>
+                  <ThemedText style={[styles.specsLabel, { color: theme.text }]}>
+                    {t('spareParts.specs')}:
+                  </ThemedText>
+                  {part.specs.map((spec, specIndex) => (
+                    <View key={specIndex} style={styles.specRow}>
+                      <View style={[styles.specBullet, { backgroundColor: theme.link }]} />
+                      <ThemedText style={[styles.specText, { color: theme.textSecondary }]}>
+                        {spec}
+                      </ThemedText>
+                    </View>
+                  ))}
+                </View>
+              ) : null}
+
+              {part.compatibility ? (
+                <View style={styles.compatibilityContainer}>
+                  <Feather name="check-circle" size={14} color={theme.success} />
+                  <ThemedText style={[styles.compatibilityText, { color: theme.textSecondary }]}>
+                    {part.compatibility}
+                  </ThemedText>
+                </View>
+              ) : null}
+
+              {part.notes ? (
+                <View style={[styles.notesContainer, { backgroundColor: '#FFF3CD' + (isDark ? '30' : '') }]}>
+                  <Feather name="info" size={14} color="#856404" />
+                  <ThemedText style={[styles.notesText, { color: isDark ? '#FFD93D' : '#856404' }]}>
+                    {part.notes}
+                  </ThemedText>
+                </View>
+              ) : null}
+
+              {isValidOverlayIndex(part.overlayIndex) ? (
+                <View style={styles.overlayLinkContainer}>
+                  <Feather name="map-pin" size={12} color={theme.link} />
+                  <ThemedText style={[styles.overlayLinkText, { color: theme.link }]}>
+                    {t('spareParts.shownOnImage')} #{part.overlayIndex}
+                  </ThemedText>
+                </View>
+              ) : null}
+            </View>
+          );
+        })}
+      </View>
+    );
+  };
+
   const renderWelcomeState = () => (
     <View style={[styles.welcomeContainer, { paddingBottom: tabBarHeight + Spacing.xl }]}>
       <View style={[styles.iconContainer, { backgroundColor: theme.link + "20" }]}>
@@ -534,6 +659,8 @@ export default function LiveAssistScreen() {
           ) : null}
 
           {renderRiskAssessment()}
+          
+          {renderSparePartsSection()}
         </View>
       ) : error ? (
         <View style={[styles.errorCard, { backgroundColor: theme.error + "20" }]}>
@@ -980,5 +1107,124 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     paddingBottom: Spacing.lg,
     fontStyle: "italic",
+  },
+  sparePartsSection: {
+    marginTop: Spacing.lg,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.lg,
+  },
+  sparePartsHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+    marginBottom: Spacing.xs,
+  },
+  sparePartsTitle: {
+    ...Typography.h4,
+    fontWeight: "600",
+  },
+  sparePartsSubtitle: {
+    ...Typography.caption,
+    marginBottom: Spacing.md,
+  },
+  sparePartCard: {
+    borderRadius: BorderRadius.md,
+    padding: Spacing.md,
+    marginBottom: Spacing.md,
+    borderLeftWidth: 3,
+  },
+  sparePartHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+    marginBottom: Spacing.sm,
+    flexWrap: "wrap",
+  },
+  sparePartName: {
+    ...Typography.body,
+    fontWeight: "600",
+    flex: 1,
+  },
+  primaryBadge: {
+    paddingVertical: 2,
+    paddingHorizontal: Spacing.sm,
+    borderRadius: BorderRadius.sm,
+  },
+  primaryBadgeText: {
+    ...Typography.small,
+    fontWeight: "600",
+    textTransform: "uppercase",
+  },
+  categoryChip: {
+    alignSelf: "flex-start",
+    paddingVertical: 2,
+    paddingHorizontal: Spacing.sm,
+    borderRadius: BorderRadius.sm,
+    marginBottom: Spacing.sm,
+  },
+  categoryChipText: {
+    ...Typography.small,
+    fontWeight: "500",
+  },
+  sparePartDescription: {
+    ...Typography.body,
+    marginBottom: Spacing.sm,
+  },
+  specsContainer: {
+    marginTop: Spacing.xs,
+    marginBottom: Spacing.sm,
+  },
+  specsLabel: {
+    ...Typography.caption,
+    fontWeight: "600",
+    marginBottom: Spacing.xs,
+  },
+  specRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: Spacing.sm,
+    marginBottom: 4,
+  },
+  specBullet: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    marginTop: 8,
+  },
+  specText: {
+    ...Typography.caption,
+    flex: 1,
+  },
+  compatibilityContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.xs,
+    marginBottom: Spacing.sm,
+  },
+  compatibilityText: {
+    ...Typography.caption,
+    flex: 1,
+  },
+  notesContainer: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: Spacing.sm,
+    padding: Spacing.sm,
+    borderRadius: BorderRadius.sm,
+    marginBottom: Spacing.sm,
+  },
+  notesText: {
+    ...Typography.caption,
+    flex: 1,
+  },
+  overlayLinkContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.xs,
+    marginTop: Spacing.xs,
+  },
+  overlayLinkText: {
+    ...Typography.small,
+    fontWeight: "500",
   },
 });

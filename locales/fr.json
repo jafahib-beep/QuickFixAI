@@ -250,6 +250,14 @@
     "recommendation": "Recommandation",
     "noRisksIdentified": "Aucun risque significatif identifié"
   },
+  "spareParts": {
+    "title": "Pièces de rechange suggérées",
+    "subtitle": "Pièces dont vous pourriez avoir besoin pour cette réparation",
+    "primary": "Principal",
+    "optional": "Optionnel",
+    "specs": "Spécifications",
+    "shownOnImage": "Affiché sur l'image"
+  },
   "community": {
     "title": "Communauté",
     "askCommunity": "Demandez à la communauté",

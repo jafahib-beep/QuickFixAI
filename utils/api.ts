@@ -662,6 +662,19 @@ export interface RiskOverlay {
   severity: RiskSeverity;
 }
 
+export type SparePartPriority = 'primary' | 'optional';
+
+export interface SparePart {
+  name: string;
+  category: string;
+  description: string;
+  specs: string[];
+  compatibility: string;
+  priority: SparePartPriority;
+  notes: string;
+  overlayIndex: number | null;
+}
+
 export interface LiveAssistResponse {
   success: boolean;
   analysis: {
@@ -674,6 +687,7 @@ export interface LiveAssistResponse {
     riskSummary?: string;
     risks?: RiskEntry[];
     riskOverlays?: RiskOverlay[];
+    spareParts?: SparePart[];
     rawResponse: string;
   };
   error?: string;

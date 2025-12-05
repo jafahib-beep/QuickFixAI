@@ -250,6 +250,14 @@
     "recommendation": "التوصية",
     "noRisksIdentified": "لم يتم تحديد مخاطر كبيرة"
   },
+  "spareParts": {
+    "title": "قطع الغيار المقترحة",
+    "subtitle": "القطع التي قد تحتاجها لهذا الإصلاح",
+    "primary": "أساسي",
+    "optional": "اختياري",
+    "specs": "المواصفات",
+    "shownOnImage": "موضح في الصورة"
+  },
   "community": {
     "title": "المجتمع",
     "askCommunity": "اسأل المجتمع",

@@ -1,0 +1,77 @@
+LiveAssist v2 + RiskScanner AI are working well:
+- The user takes or selects a photo.
+- The backend uses GPT-4o Vision.
+- The app displays:
+  - "What I See"
+  - "Likely Issue"
+  - "Steps to Fix"
+  - "Safety / Risk Assessment" with overlays.
+
+Now I want to add a new feature on top of this: Auto Spare-Part Finder.
+
+Goal:
+For each LiveAssist analysis, the AI should also:
+- Identify the most relevant mechanical/technical part(s) visible in the image that are involved in the problem (e.g. valve, faucet cartridge, O-ring, connector, hose, pipe fitting, filter, switch, etc.).
+- Suggest one or more suitable replacement parts.
+- Provide enough specification detail so the user can find or buy the correct replacement (type, size, material, compatibility, typical use).
+- Optionally link the suggested parts to specific regions on the image via overlays.
+
+Implementation approach:
+
+1. Backend – extend /api/ai/liveassist response for Spare-Part Finder:
+   - Keep all current fields (summary, possible_issue, steps, safety_note, overlays, risk_* fields).
+   - Add a new field `spareParts`, which is an array of structured objects like:
+
+     {
+       "name": string,              // e.g. "Standard 1/2\" ball valve"
+       "category": string,          // e.g. "valve", "faucet cartridge", "O-ring", "pipe fitting"
+       "description": string,       // short explanation of what this part does in the system
+       "specs": string[],           // list of key specs like size, thread type, material, temperature/pressure range
+       "compatibility": string,     // description of what it fits (e.g. "Fits most standard EU kitchen faucets with 35mm ceramic cartridge")
+       "priority": "primary" | "optional",  // mark which part is the main one to replace
+       "notes": string,             // any extra helpful hints
+       "overlayIndex": number | null // optional index referencing an overlay or riskOverlay region, if applicable
+     }
+
+   - Update the system prompt / instructions for the vision model so that:
+     - In addition to diagnosing the issue and scanning for risks, it also:
+       - Identifies the key part(s) involved in the failure.
+       - Proposes 1–3 replacement part suggestions.
+       - Fills the `spareParts` array in a structured way.
+     - Make sure the model does not invent real store links or prices for now; we only want generic part descriptions and specifications, not live pricing or URLs.
+
+   - If no clear part can be identified, `spareParts` can be an empty array, but the system should try to provide something whenever possible.
+
+2. Frontend – new "Spare Parts" section in the LiveAssist result UI:
+   - On the LiveAssist result screen, add a new section under the existing diagnosis and risk assessment, titled something like:
+     - "Spare Parts" / "Recommended Replacement Parts".
+   - For each `spareParts` item, render:
+     - Part name (bold).
+     - Category.
+     - Short description (what the part does).
+     - Specs list (bulleted).
+     - Compatibility.
+     - Priority (e.g. show "Main part to replace" if priority == "primary").
+     - Notes.
+   - If `overlayIndex` is provided and matches an overlay or riskOverlay region, you may optionally:
+     - Highlight that region when the user taps on the part in the list.
+     - Or show a small icon indicating that this part is visually marked on the image.
+
+3. Behavior & UX:
+   - The Spare-Part Finder section should only appear if `spareParts` is non-empty.
+   - If there are no spareParts, omit the section without breaking the layout.
+   - Keep everything localized (titles like "Spare Parts", "Specs", "Compatibility", "Main part to replace" should go through the existing i18n system).
+
+4. Code quality:
+   - Update TypeScript types/interfaces for the response on both client and server to include the `spareParts` array.
+   - Consider extracting a dedicated `SparePartsSection` / `SparePartsList` component to keep the LiveAssist screen clean.
+   - Make sure the new logic does not break the existing LiveAssist or RiskScanner behavior.
+
+Please:
+- Scan the current LiveAssist backend and frontend implementation.
+- Add the spareParts structure to the backend response and adjust the AI prompt accordingly.
+- Implement the Spare-Part Finder UI section on the frontend.
+- Show the key code changes.
+- Test with at least one example image (e.g. a leaking faucet, a pipe fitting, or a damaged valve) and verify that:
+  - One or more replacement parts are suggested.
+  - The information is specific enough (category, basic specs, compatibility) to be useful in selecting the right part from a hardware store.

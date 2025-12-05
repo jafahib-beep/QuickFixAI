@@ -250,6 +250,14 @@
     "recommendation": "Rekommendation",
     "noRisksIdentified": "Inga betydande risker identifierade"
   },
+  "spareParts": {
+    "title": "Föreslagna reservdelar",
+    "subtitle": "Delar du kan behöva för denna reparation",
+    "primary": "Primär",
+    "optional": "Valfri",
+    "specs": "Specifikationer",
+    "shownOnImage": "Visas på bilden"
+  },
   "community": {
     "title": "Community",
     "askCommunity": "Fråga communityn",

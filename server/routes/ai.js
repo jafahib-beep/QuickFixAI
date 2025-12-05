@@ -325,6 +325,18 @@ When you see an image, respond with EXACTLY this JSON format. Return ONLY valid 
       "riskLabel": "Brief label for danger zone",
       "severity": "high"
     }
+  ],
+  "spareParts": [
+    {
+      "name": "Standard 1/2 inch ball valve",
+      "category": "valve",
+      "description": "Controls water flow in the supply line",
+      "specs": ["1/2 inch diameter", "Brass construction", "Quarter-turn operation", "Rated for hot and cold water"],
+      "compatibility": "Fits standard residential water supply lines",
+      "priority": "primary",
+      "notes": "Bring old valve to store for exact match",
+      "overlayIndex": null
+    }
   ]
 }
 
@@ -359,12 +371,28 @@ When you see an image, respond with EXACTLY this JSON format. Return ONLY valid 
   - Use these to show WHERE the risks are in the image
   - If you cannot determine specific coordinates, return an empty array []
 
+## Spare Parts Finder Guidelines:
+- spareParts: Array of replacement parts that may be needed for the repair
+- Identify 1-3 key mechanical/technical parts visible in the image that are involved in the problem
+- For each part, provide:
+  - name: Specific name with size if visible (e.g. "Standard 1/2 inch ball valve")
+  - category: Type of part (valve, faucet cartridge, O-ring, connector, hose, pipe fitting, filter, switch, gasket, seal, washer, etc.)
+  - description: Brief explanation of what this part does in the system
+  - specs: Array of key specifications (size, thread type, material, pressure/temperature rating if relevant)
+  - compatibility: What it fits or works with
+  - priority: "primary" for the main part to replace, "optional" for secondary parts
+  - notes: Helpful hints for finding/buying the right part
+  - overlayIndex: Index of the repair overlay that shows this part (1-indexed), or null if not shown
+- Focus on generic part descriptions and specifications, NOT specific brands or prices
+- If no clear parts can be identified, return an empty spareParts array []
+
 ## Guidelines:
 - Be specific based on what you actually see in the image
 - Keep steps practical and actionable (3-6 steps total)
 - If you can't clearly identify the problem, say what you need to see better
 - If the repair is dangerous or complex, recommend a professional
 - ALWAYS assess risks even if they seem minor - users need to know
+- ALWAYS try to identify spare parts when a mechanical/plumbing/electrical component is visible
 - Respond in ${languageName}
 - IMPORTANT: Return ONLY the JSON object, no additional text or markdown`;
 
@@ -389,7 +417,7 @@ When you see an image, respond with EXACTLY this JSON format. Return ONLY valid 
         }
       ],
       temperature: 0.7,
-      max_tokens: 1000
+      max_tokens: 1500
     });
     
     const answer = completion.choices[0]?.message?.content?.trim();
@@ -409,6 +437,8 @@ When you see an image, respond with EXACTLY this JSON format. Return ONLY valid 
     let riskSummary = '';
     let risks = [];
     let riskOverlays = [];
+    // Spare Parts Finder fields
+    let spareParts = [];
     
     try {
       // Try to extract JSON from the response (handle cases where AI adds markdown)
@@ -490,6 +520,39 @@ When you see an image, respond with EXACTLY this JSON format. Return ONLY valid 
           }));
       }
       
+      // Parse spare parts with validation
+      // overlayIndex is 1-based (matches the displayed marker numbers in the UI)
+      if (Array.isArray(parsed.spareParts)) {
+        const maxOverlayIndex = overlays.length; // Max valid 1-based index
+        spareParts = parsed.spareParts
+          .filter(p => p.name)
+          .map(p => {
+            // Coerce and validate overlayIndex to finite positive integer or null
+            // overlayIndex is 1-based to match UI display (marker #1, #2, etc.)
+            let validOverlayIndex = null;
+            if (p.overlayIndex !== null && p.overlayIndex !== undefined) {
+              const parsedIdx = typeof p.overlayIndex === 'number' ? p.overlayIndex : Number(p.overlayIndex);
+              // Must be a positive integer within valid range (1 to number of overlays)
+              if (Number.isFinite(parsedIdx) && parsedIdx >= 1 && parsedIdx <= maxOverlayIndex) {
+                validOverlayIndex = Math.floor(parsedIdx);
+              }
+            }
+            
+            return {
+              name: p.name || '',
+              category: p.category || 'part',
+              description: p.description || '',
+              specs: Array.isArray(p.specs) ? p.specs.filter(s => typeof s === 'string') : [],
+              compatibility: p.compatibility || '',
+              priority: ['primary', 'optional'].includes(p.priority?.toLowerCase()) 
+                ? p.priority.toLowerCase() 
+                : 'optional',
+              notes: p.notes || '',
+              overlayIndex: validOverlayIndex
+            };
+          });
+      }
+      
       console.log('[LiveAssist] Parsed JSON response successfully');
     } catch (parseError) {
       console.log('[LiveAssist] JSON parse failed, falling back to text parsing:', parseError.message);
@@ -520,12 +583,13 @@ When you see an image, respond with EXACTLY this JSON format. Return ONLY valid 
         safetyNote = safetyMatch[1].trim();
       }
       
-      // No overlays or risk data in fallback mode
+      // No overlays, risk data, or spare parts in fallback mode
       overlays = [];
       riskLevel = 'low';
       riskSummary = '';
       risks = [];
       riskOverlays = [];
+      spareParts = [];
     }
     
     console.log('[LiveAssist] Analysis complete:', { 
@@ -535,7 +599,8 @@ When you see an image, respond with EXACTLY this JSON format. Return ONLY valid 
       overlaysCount: overlays.length,
       riskLevel,
       risksCount: risks.length,
-      riskOverlaysCount: riskOverlays.length
+      riskOverlaysCount: riskOverlays.length,
+      sparePartsCount: spareParts.length
     });
     
     res.json({
@@ -550,6 +615,7 @@ When you see an image, respond with EXACTLY this JSON format. Return ONLY valid 
         riskSummary,
         risks,
         riskOverlays,
+        spareParts,
         rawResponse: answer
       }
     });
