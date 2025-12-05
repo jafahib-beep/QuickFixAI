@@ -1,0 +1,105 @@
+I want to add a very simple XP system for QuickFix V1.
+
+Goal:
+- Users earn XP for a few core actions:
+  - Sending a message in AI Chat
+  - Running a LiveAssist scan (image analysis)
+  - Watching a video from the Video Library
+- XP is stored per user in the backend.
+- A simple "level" is derived from XP (for example Level 1–5 for V1).
+- On the Profile screen, the user can see:
+  - Their current level
+  - Their total XP
+  - How much XP is needed to reach the next level
+  - A simple progress bar (no leaderboards or ranks yet)
+
+This should be minimal and robust, not over-engineered.
+
+Implementation details:
+
+1. Backend – data model:
+
+   - Extend the User model (in the existing database) with:
+     - `xp` (integer, default 0)
+     - `level` (integer, default 1)
+
+   - Add a simple leveling rule, for example:
+     - Level 1: 0–99 XP
+     - Level 2: 100–249 XP
+     - Level 3: 250–499 XP
+     - Level 4: 500–999 XP
+     - Level 5: 1000+ XP
+   - Implement a small helper function, e.g. `calculateLevelFromXp(xp: number): number`, so we can reuse it everywhere.
+
+2. Backend – XP rewards logic:
+
+   - Create a small service/helper, e.g. `awardXp(userId, actionType)` where `actionType` is something like:
+     - `"ai_chat_message"`
+     - `"liveassist_scan"`
+     - `"video_watch"`
+   - Inside this helper, define constants for XP rewards, for example:
+     - `AI_CHAT_XP = 5`
+     - `LIVEASSIST_XP = 10`
+     - `VIDEO_WATCH_XP = 3`
+   - The helper should:
+     - Load the user
+     - Add the correct XP amount
+     - Recompute the level using `calculateLevelFromXp`
+     - Save the user
+
+   - Hook this helper into existing flows:
+     - When a user successfully sends an AI Chat message and receives a valid AI response, call `awardXp(userId, "ai_chat_message")`.
+     - When a LiveAssist scan completes successfully (image analyzed and response returned), call `awardXp(userId, "liveassist_scan")`.
+     - When a video is watched (for V1 it is enough to call it when the user opens the video player screen), call `awardXp(userId, "video_watch")`.
+
+3. Backend – API for profile / XP info:
+
+   - Make sure the `me`/profile endpoint (or similar) returns:
+     - `xp`
+     - `level`
+     - Optionally `nextLevelXp` (how much XP is needed for the next level) so the frontend can show a progress bar easily.
+   - Example structure:
+     ```json
+     {
+       "id": "...",
+       "name": "...",
+       "xp": 135,
+       "level": 2,
+       "nextLevelXp": 200
+     }
+     ```
+
+4. Frontend – Profile screen XP UI:
+
+   - On the Profile screen, add a simple XP/Level section near the top.
+   - Show:
+     - A label like "Level 2"
+     - A sublabel like "135 / 200 XP"
+     - A horizontal progress bar that fills based on `xp / nextLevelXp`.
+   - For now, keep the design minimal but clean (no badges, no rank icons, no leaderboards).
+
+   - Also:
+     - Ensure texts such as "Level", "XP", "Next level" and any small descriptions use the existing i18n / localization system (at least Swedish and English).
+
+5. Behavior:
+
+   - XP should only be awarded for successful actions (not for failed calls).
+   - Make sure the XP update is not blocking the main functionality; if the XP update fails, the core feature (chat, scan, video) should still work.
+   - No need for history of every XP event in V1; only the cumulative XP is needed.
+
+6. Code quality:
+
+   - Update TypeScript types/interfaces for the user where relevant (both frontend and backend).
+   - Keep the XP/level logic isolated in a helper/service so it can be extended later (for ranks, badges, etc.).
+   - Add a couple of basic checks or logs to avoid XP exploding due to repeated calls.
+
+Please:
+- Scan the current user model and auth/profile API.
+- Implement the xp + level fields, the `awardXp` helper, and integrate it into AI Chat, LiveAssist, and Video Library flows.
+- Implement the Profile UI section for XP and Level.
+- Show the key code changes.
+- Test with a real user flow:
+  - Send a chat message → XP increases.
+  - Run a LiveAssist scan → XP increases.
+  - Open a video → XP increases.
+  - Refresh the Profile screen and verify that the level and XP/progress bar update correctly.

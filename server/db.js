@@ -18,6 +18,8 @@ const initializeDatabase = async () => {
         expertise_categories TEXT[] DEFAULT '{}',
         followers_count INTEGER DEFAULT 0,
         following_count INTEGER DEFAULT 0,
+        xp INTEGER DEFAULT 0,
+        level INTEGER DEFAULT 1,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
       );
