@@ -9,7 +9,7 @@ import sv from "@/locales/sv.json";
 import ar from "@/locales/ar.json";
 import de from "@/locales/de.json";
 import fr from "@/locales/fr.json";
-import ru from "@/locales/ru.json";
+import es from "@/locales/es.json";
 
 const LANGUAGE_KEY = "@quickfix_language";
 
@@ -19,7 +19,7 @@ export const languages = [
   { code: "ar", name: "Arabic", nativeName: "العربية", rtl: true },
   { code: "de", name: "German", nativeName: "Deutsch" },
   { code: "fr", name: "French", nativeName: "Français" },
-  { code: "ru", name: "Russian", nativeName: "Русский" },
+  { code: "es", name: "Spanish", nativeName: "Español" },
 ] as const;
 
 export type LanguageCode = (typeof languages)[number]["code"];
@@ -30,7 +30,7 @@ const resources = {
   ar: { translation: ar },
   de: { translation: de },
   fr: { translation: fr },
-  ru: { translation: ru },
+  es: { translation: es },
 };
 
 const getDeviceLanguage = (): LanguageCode => {
