@@ -188,6 +188,35 @@ export default function ProfileScreen() {
           </View>
         </View>
 
+        {/* XP / Level Section */}
+        <View style={[styles.xpSection, { backgroundColor: theme.backgroundSecondary }]}>
+          <View style={styles.xpHeader}>
+            <View style={styles.xpLevelBadge}>
+              <Feather name="award" size={18} color={theme.link} />
+              <ThemedText type="h3" style={[styles.xpLevelText, { color: theme.link }]}>
+                {t("xp.level")} {user?.level || 1}
+              </ThemedText>
+            </View>
+            <ThemedText type="small" style={{ color: theme.textSecondary }}>
+              {user?.xp || 0} / {user?.nextLevelXp || 100} {t("xp.xp")}
+            </ThemedText>
+          </View>
+          <View style={[styles.xpProgressBar, { backgroundColor: theme.border }]}>
+            <View 
+              style={[
+                styles.xpProgressFill, 
+                { 
+                  backgroundColor: theme.link,
+                  width: `${Math.min(100, ((user?.xp || 0) - (user?.currentLevelXp || 0)) / ((user?.nextLevelXp || 100) - (user?.currentLevelXp || 0)) * 100)}%`
+                }
+              ]} 
+            />
+          </View>
+          <ThemedText type="small" style={[styles.xpHint, { color: theme.textSecondary }]}>
+            {((user?.nextLevelXp || 100) - (user?.xp || 0))} {t("xp.toNextLevel")}
+          </ThemedText>
+        </View>
+
         <Pressable
           onPress={() => navigation.navigate("EditProfile")}
           style={({ pressed }) => [
@@ -388,5 +417,39 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginBottom: Spacing.lg,
+  },
+  xpSection: {
+    width: "100%",
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.lg,
+    borderRadius: BorderRadius.lg,
+    marginBottom: Spacing.lg,
+  },
+  xpHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: Spacing.sm,
+  },
+  xpLevelBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.xs,
+  },
+  xpLevelText: {
+    fontWeight: "700",
+  },
+  xpProgressBar: {
+    height: 8,
+    borderRadius: BorderRadius.full,
+    overflow: "hidden",
+    marginBottom: Spacing.xs,
+  },
+  xpProgressFill: {
+    height: "100%",
+    borderRadius: BorderRadius.full,
+  },
+  xpHint: {
+    textAlign: "center",
   },
 });
