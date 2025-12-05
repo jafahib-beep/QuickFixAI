@@ -5,29 +5,30 @@ QuickFix is a mobile-first video troubleshooting app for 30-60 second fix-it vid
 
 ## Current State
 - **Frontend**: Complete MVP with all screens, multi-language support (English, Swedish, Arabic with RTL, German, French, Russian), and all core features
-- **Backend**: Express server with PostgreSQL database (requires production deployment - Reserved VM or serverless)
-- **Mode**: Frontend operates in offline-first mode with local storage fallback when backend is unavailable
-- **AI Chat**: UI always visible and functional; shows error message if backend unavailable
+- **Backend**: Express server with PostgreSQL database, running alongside frontend via Metro proxy
+- **Mode**: Full-stack mode with backend API accessible through Metro proxy
+- **AI Chat**: Fully functional with GPT-4o-mini for text responses and GPT-4o for image analysis
 
-## Backend Deployment Requirements
+## Architecture
 
-The Express backend (`server/index.js`) requires persistent hosting to function. In Replit's Expo development environment, the backend cannot run alongside the Expo frontend due to environment constraints.
+### Development Mode (Full Stack)
+- Run `npm run dev` to start both backend and frontend automatically
+- **Backend**: Express server on port 5000
+- **Frontend**: Expo/Metro on port 8081
+- **API Routing**: Metro config proxies `/api/*` requests from web to backend on localhost:5000
+- Web clients use relative URLs (`/api`) which go through the Metro proxy
+- Mobile/Expo Go clients use direct backend URLs
 
-### Development Mode (Frontend Only)
-- Run `npm run dev` to start the Expo frontend
-- AI Chat UI is always visible - users can type messages and send them
-- If backend is unavailable, chat shows a friendly error message asking to try again
-- Videos, Community, and other features work with sample data fallback
+### Key Files
+- `start-dev.js` - Starts both backend and Expo servers concurrently
+- `metro.config.js` - Custom Metro config with API proxy middleware (http-proxy-middleware)
+- `utils/api.ts` - API client with platform-specific URL handling
+- `server/index.js` - Express backend entry point
 
-### Production Deployment (Full Stack)
-To enable AI Chat and full backend functionality:
-1. **Reserved VM Deployment**: Deploy the backend to a Replit Reserved VM or serverless platform
-2. **Environment Variables Required**:
-   - `DATABASE_URL` - PostgreSQL connection string
-   - `SESSION_SECRET` - JWT secret for authentication
-   - `OPENAI_API_KEY` - Required for AI chat, tag suggestions, description generation, visual guides
-3. **Update API URL**: Configure `utils/api.ts` with production backend URL
-4. **Backend Endpoints**: `/api/ai/chat` uses GPT-4o-mini for text, GPT-4o for image analysis
+### Environment Variables Required
+- `DATABASE_URL` - PostgreSQL connection string
+- `SESSION_SECRET` - JWT secret for authentication
+- `OPENAI_API_KEY` - Required for AI chat, tag suggestions, description generation, visual guides
 
 ## Project Structure
 
@@ -80,7 +81,7 @@ Just press the **Run** button or run:
 npm run dev
 ```
 This automatically starts **both**:
-- Express backend server on port 3001
+- Express backend server on port 5000
 - Expo frontend on port 8081
 
 The `npm run dev` command runs `start-dev.js` which uses Node's child_process to spawn both servers concurrently.

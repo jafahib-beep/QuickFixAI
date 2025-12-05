@@ -2,57 +2,29 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Platform } from "react-native";
 import Constants from "expo-constants";
 
-const BACKEND_PORT = 3001;
+const BACKEND_PORT = 5000;
 
-const getBaseUrl = () => {
-  if (Platform.OS === "web") {
-    const hostname = window.location.hostname;
-    if (hostname.includes("replit")) {
-      const parts = hostname.split(".");
-      if (parts[0].includes("-")) {
-        const subParts = parts[0].split("-");
-        const lastPart = subParts[subParts.length - 1];
-        if (/^\d+$/.test(lastPart)) {
-          subParts[subParts.length - 1] = String(BACKEND_PORT);
-        } else {
-          subParts.push(String(BACKEND_PORT));
-        }
-        parts[0] = subParts.join("-");
-      } else {
-        parts[0] = parts[0] + "-" + BACKEND_PORT;
-      }
-      const url = `https://${parts.join(".")}`;
-      console.log("[API] Web base URL:", url);
-      return url;
-    }
-    return `${window.location.protocol}//${window.location.hostname}:${BACKEND_PORT}`;
+function getApiBaseUrl(): string {
+  if (Platform.OS === 'web' && typeof window !== 'undefined') {
+    return '/api';
   }
-
+  
   const replitDevDomain = Constants.expoConfig?.extra?.REPLIT_DEV_DOMAIN;
   if (replitDevDomain) {
-    const parts = replitDevDomain.split(".");
-    if (parts[0].includes("-")) {
-      const subParts = parts[0].split("-");
-      const lastPart = subParts[subParts.length - 1];
-      if (/^\d+$/.test(lastPart)) {
-        subParts[subParts.length - 1] = String(BACKEND_PORT);
-      } else {
-        subParts.push(String(BACKEND_PORT));
-      }
-      parts[0] = subParts.join("-");
-    } else {
-      parts[0] = parts[0] + "-" + BACKEND_PORT;
+    if (replitDevDomain.includes('.riker.replit.dev')) {
+      const parts = replitDevDomain.split('.riker.replit.dev')[0];
+      return `https://${parts}-${BACKEND_PORT}.riker.replit.dev/api`;
     }
-    const url = `https://${parts.join(".")}`;
-    console.log("[API] Native base URL:", url);
-    return url;
+    const parts = replitDevDomain.split('.replit.dev')[0];
+    return `https://${parts}-${BACKEND_PORT}.replit.dev/api`;
   }
+  
+  return `http://localhost:${BACKEND_PORT}/api`;
+}
 
-  return "https://quickfix-app.replit.app";
-};
+const API_BASE_URL = getApiBaseUrl();
 
-const API_BASE_URL = getBaseUrl() + "/api";
-console.log("[API] Full API URL:", API_BASE_URL);
+console.log("[API] FULL API URL:", API_BASE_URL);
 
 interface ApiOptions {
   method?: "GET" | "POST" | "PUT" | "DELETE";
@@ -431,12 +403,12 @@ class ApiClient {
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
-      
+
       const response = await fetch(`${API_BASE_URL}/health`, {
         method: "GET",
         signal: controller.signal,
       });
-      
+
       clearTimeout(timeoutId);
       return response.ok;
     } catch (error) {
