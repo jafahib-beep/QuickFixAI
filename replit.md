@@ -143,6 +143,13 @@ When running without the backend, the app operates in offline-first mode using s
 - OPENAI_API_KEY - For AI features (optional)
 
 ## Recent Changes (Dec 2024)
+- **Smart Question Flow**: AI chat now behaves like a real technician
+  - AI asks 1-2 targeted follow-up questions before giving solutions
+  - Questions help diagnose the exact problem (location, symptoms, faucet type, tools available)
+  - Only provides step-by-step solutions after gathering enough context
+  - Can request photos when visual diagnosis would help
+  - Example flow: "leaky faucet" → AI asks where leak is → user describes → AI asks faucet type → user answers → AI gives numbered repair steps
+  - System prompt updated in server/routes/ai.js with conversational technician personality
 - **Health Check Integration**: AI Chat screen now checks backend availability on mount
   - GET /api/health endpoint for connection status
   - Offline banner with retry button when backend is unavailable
