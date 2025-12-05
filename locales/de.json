@@ -207,7 +207,15 @@
     "checkingService": "Verbindung zum AI-Dienst...",
     "retryConnection": "Erneut versuchen",
     "offlineMessage": "Ich habe gerade Verbindungsprobleme. Bitte überprüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.",
-    "offlineBanner": "Offline - Tippen zum erneut versuchen"
+    "offlineBanner": "Offline - Tippen zum erneut versuchen",
+    "liveAssist": "LiveAssist",
+    "liveAssistHint": "Foto machen für sofortige Diagnose",
+    "analyzingPhoto": "Analysiere dein Foto...",
+    "whatISee": "Was ich sehe",
+    "likelyIssue": "Wahrscheinliches Problem",
+    "stepsToFix": "Reparaturschritte",
+    "safetyNote": "Sicherheitshinweis",
+    "liveAssistError": "Bild konnte nicht analysiert werden. Bitte erneut versuchen."
   },
   "errors": {
     "networkError": "Netzwerkfehler. Bitte überprüfen Sie Ihre Verbindung.",

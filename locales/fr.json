@@ -207,7 +207,15 @@
     "checkingService": "Connexion au service AI...",
     "retryConnection": "Réessayer la connexion",
     "offlineMessage": "J'ai du mal à me connecter en ce moment. Veuillez vérifier votre connexion internet et réessayer.",
-    "offlineBanner": "Hors ligne - Appuyez pour réessayer"
+    "offlineBanner": "Hors ligne - Appuyez pour réessayer",
+    "liveAssist": "LiveAssist",
+    "liveAssistHint": "Prenez une photo pour un diagnostic instantané",
+    "analyzingPhoto": "Analyse de votre photo...",
+    "whatISee": "Ce que je vois",
+    "likelyIssue": "Problème probable",
+    "stepsToFix": "Étapes de réparation",
+    "safetyNote": "Note de sécurité",
+    "liveAssistError": "Impossible d'analyser l'image. Veuillez réessayer."
   },
   "errors": {
     "networkError": "Erreur réseau. Veuillez vérifier votre connexion.",

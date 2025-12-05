@@ -21,7 +21,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { useTheme } from "@/hooks/useTheme";
-import { api } from "@/utils/api";
+import { api, LiveAssistResponse } from "@/utils/api";
 
 export interface ChatMessage {
   id: string;
@@ -48,6 +48,7 @@ export default function AIChatScreen() {
   const [selectedVideo, setSelectedVideo] = useState<{ uri: string; name: string } | null>(null);
   const [isOffline, setIsOffline] = useState(false);
   const [isCheckingHealth, setIsCheckingHealth] = useState(true);
+  const [isLiveAssistLoading, setIsLiveAssistLoading] = useState(false);
 
   const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
@@ -155,6 +156,98 @@ export default function AIChatScreen() {
   const clearAttachment = () => {
     setSelectedImage(null);
     setSelectedVideo(null);
+  };
+
+  const handleLiveAssist = async () => {
+    const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+    if (!permissionResult.granted) {
+      Alert.alert(t("chat.permissionRequired"), t("chat.cameraPermission"));
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      quality: 0.7,
+      base64: true,
+    });
+
+    if (result.canceled || !result.assets[0]?.base64) {
+      return;
+    }
+
+    const asset = result.assets[0];
+    const imageBase64 = asset.base64 as string;
+    const imageUri = asset.uri;
+
+    const userMessage: ChatMessage = {
+      id: generateId(),
+      role: "user",
+      content: t("chat.liveAssistHint"),
+      imageUri: imageUri,
+      timestamp: new Date(),
+    };
+    setMessages((prev) => [...prev, userMessage]);
+    setIsLiveAssistLoading(true);
+
+    try {
+      console.log("[AIChatScreen] Calling LiveAssist API");
+      const response = await api.liveAssist(imageBase64, language);
+      setIsOffline(false);
+
+      let formattedResponse = "";
+      
+      if (response.success && response.analysis) {
+        const { summary, possibleIssue, steps, safetyNote } = response.analysis;
+        
+        if (summary) {
+          formattedResponse += `**${t("chat.whatISee")}:**\n${summary}\n\n`;
+        }
+        if (possibleIssue) {
+          formattedResponse += `**${t("chat.likelyIssue")}:**\n${possibleIssue}\n\n`;
+        }
+        if (steps && steps.length > 0) {
+          formattedResponse += `**${t("chat.stepsToFix")}:**\n`;
+          steps.forEach((step) => {
+            formattedResponse += `${step.stepNumber}. ${step.text}\n`;
+          });
+          formattedResponse += "\n";
+        }
+        if (safetyNote) {
+          formattedResponse += `**${t("chat.safetyNote")}:** ${safetyNote}`;
+        }
+      } else {
+        formattedResponse = response.analysis?.rawResponse || t("chat.liveAssistError");
+      }
+
+      const assistantMessage: ChatMessage = {
+        id: generateId(),
+        role: "assistant",
+        content: formattedResponse.trim(),
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, assistantMessage]);
+    } catch (error: any) {
+      console.log("[AIChatScreen] LiveAssist error:", error?.message || error);
+      
+      const isNetworkError = 
+        error?.message?.includes("Network") || 
+        error?.message?.includes("fetch") ||
+        error?.name === "TypeError";
+      
+      if (isNetworkError) {
+        setIsOffline(true);
+      }
+
+      const errorMessage: ChatMessage = {
+        id: generateId(),
+        role: "assistant",
+        content: isNetworkError ? t("chat.offlineMessage") : t("chat.liveAssistError"),
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
+      setIsLiveAssistLoading(false);
+    }
   };
 
   const sendMessage = async () => {
@@ -380,11 +473,11 @@ export default function AIChatScreen() {
           showsVerticalScrollIndicator={false}
         />
 
-        {isLoading && (
+        {(isLoading || isLiveAssistLoading) && (
           <View style={[styles.typingIndicator, { backgroundColor: theme.backgroundSecondary }]}>
             <ActivityIndicator size="small" color={theme.link} />
             <ThemedText type="small" style={{ color: theme.textSecondary, marginLeft: Spacing.sm }}>
-              {t("chat.thinking")}
+              {isLiveAssistLoading ? t("chat.analyzingPhoto") : t("chat.thinking")}
             </ThemedText>
           </View>
         )}
@@ -419,32 +512,56 @@ export default function AIChatScreen() {
         >
           <View style={styles.attachmentButtons}>
             <Pressable
-              onPress={pickImage}
+              onPress={handleLiveAssist}
+              disabled={isLiveAssistLoading || isLoading}
               style={({ pressed }) => [
-                styles.attachButton,
-                { backgroundColor: theme.backgroundTertiary, opacity: pressed ? 0.7 : 1 },
+                styles.liveAssistButton,
+                { 
+                  backgroundColor: theme.link, 
+                  opacity: (pressed || isLiveAssistLoading || isLoading) ? 0.7 : 1 
+                },
               ]}
             >
-              <Feather name="image" size={20} color={theme.textSecondary} />
+              {isLiveAssistLoading ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <>
+                  <Feather name="zap" size={16} color="#FFFFFF" />
+                  <ThemedText type="small" style={styles.liveAssistText}>
+                    {t("chat.liveAssist")}
+                  </ThemedText>
+                </>
+              )}
             </Pressable>
-            <Pressable
-              onPress={takePhoto}
-              style={({ pressed }) => [
-                styles.attachButton,
-                { backgroundColor: theme.backgroundTertiary, opacity: pressed ? 0.7 : 1 },
-              ]}
-            >
-              <Feather name="camera" size={20} color={theme.textSecondary} />
-            </Pressable>
-            <Pressable
-              onPress={pickVideo}
-              style={({ pressed }) => [
-                styles.attachButton,
-                { backgroundColor: theme.backgroundTertiary, opacity: pressed ? 0.7 : 1 },
-              ]}
-            >
-              <Feather name="video" size={20} color={theme.textSecondary} />
-            </Pressable>
+            <View style={styles.attachButtonGroup}>
+              <Pressable
+                onPress={pickImage}
+                style={({ pressed }) => [
+                  styles.attachButton,
+                  { backgroundColor: theme.backgroundTertiary, opacity: pressed ? 0.7 : 1 },
+                ]}
+              >
+                <Feather name="image" size={20} color={theme.textSecondary} />
+              </Pressable>
+              <Pressable
+                onPress={takePhoto}
+                style={({ pressed }) => [
+                  styles.attachButton,
+                  { backgroundColor: theme.backgroundTertiary, opacity: pressed ? 0.7 : 1 },
+                ]}
+              >
+                <Feather name="camera" size={20} color={theme.textSecondary} />
+              </Pressable>
+              <Pressable
+                onPress={pickVideo}
+                style={({ pressed }) => [
+                  styles.attachButton,
+                  { backgroundColor: theme.backgroundTertiary, opacity: pressed ? 0.7 : 1 },
+                ]}
+              >
+                <Feather name="video" size={20} color={theme.textSecondary} />
+              </Pressable>
+            </View>
           </View>
 
           <View style={styles.inputRow}>
@@ -641,7 +758,26 @@ const styles = StyleSheet.create({
   },
   attachmentButtons: {
     flexDirection: "row",
+    alignItems: "center",
     marginBottom: Spacing.sm,
+    justifyContent: "space-between",
+  },
+  attachButtonGroup: {
+    flexDirection: "row",
+  },
+  liveAssistButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    minWidth: 100,
+    justifyContent: "center",
+  },
+  liveAssistText: {
+    color: "#FFFFFF",
+    fontWeight: "600",
+    marginLeft: Spacing.xs,
   },
   attachButton: {
     width: 40,

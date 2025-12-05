@@ -207,7 +207,15 @@
     "checkingService": "Ansluter till AI-tjänst...",
     "retryConnection": "Försök igen",
     "offlineMessage": "Jag har problem att ansluta just nu. Kontrollera din internetanslutning och försök igen.",
-    "offlineBanner": "Offline - Tryck för att försöka igen"
+    "offlineBanner": "Offline - Tryck för att försöka igen",
+    "liveAssist": "LiveAssist",
+    "liveAssistHint": "Ta ett foto för omedelbar diagnos",
+    "analyzingPhoto": "Analyserar ditt foto...",
+    "whatISee": "Vad jag ser",
+    "likelyIssue": "Troligt problem",
+    "stepsToFix": "Steg för att fixa",
+    "safetyNote": "Säkerhetsanmärkning",
+    "liveAssistError": "Kunde inte analysera bilden. Försök igen."
   },
   "errors": {
     "networkError": "Nätverksfel. Kontrollera din anslutning.",

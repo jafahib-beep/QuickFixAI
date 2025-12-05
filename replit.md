@@ -118,6 +118,7 @@ When running without the backend, the app operates in offline-first mode using s
 - POST /api/ai/generate-guide - Generate visual step-by-step guide with AI images
 - POST /api/ai/ask-ai - Single-turn AI responses: {question, language} -> {answer}
 - POST /api/ai/chat - Multi-turn chat with vision: {messages, language, imageBase64?, videoFileName?} -> {answer}
+- POST /api/ai/liveassist - Instant visual troubleshooting: {imageBase64, language} -> {success, analysis: {summary, possibleIssue, steps[], safetyNote}}
 - GET /api/community/posts - Get community posts
 - POST /api/community/posts - Create new community post
 - GET /api/community/posts/:id/comments - Get post comments
@@ -143,6 +144,14 @@ When running without the backend, the app operates in offline-first mode using s
 - OPENAI_API_KEY - For AI features (optional)
 
 ## Recent Changes (Dec 2024)
+- **LiveAssist AI v1**: New instant photo analysis feature for visual troubleshooting
+  - Prominent blue "LiveAssist" button with lightning bolt icon in AI Chat screen
+  - Tap button → camera opens → photo sent to GPT-4o vision → AI returns structured diagnosis
+  - Backend POST /api/ai/liveassist with structured response format
+  - Response includes: summary (what AI sees), possible issue, numbered steps to fix, safety note
+  - Full i18n support with translations in all 6 languages
+  - Loading state with "Analyzing your photo..." indicator
+  - Positioned separately from standard attachment buttons for easy access
 - **Smart Question Flow**: AI chat now behaves like a real technician
   - AI asks 1-2 targeted follow-up questions before giving solutions
   - Questions help diagnose the exact problem (location, symptoms, faucet type, tools available)

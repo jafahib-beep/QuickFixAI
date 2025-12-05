@@ -207,7 +207,15 @@
     "checkingService": "Connecting to AI service...",
     "retryConnection": "Retry Connection",
     "offlineMessage": "I'm having trouble connecting right now. Please check your internet connection and try again.",
-    "offlineBanner": "Offline - Tap to retry"
+    "offlineBanner": "Offline - Tap to retry",
+    "liveAssist": "LiveAssist",
+    "liveAssistHint": "Take a photo for instant diagnosis",
+    "analyzingPhoto": "Analyzing your photo...",
+    "whatISee": "What I See",
+    "likelyIssue": "Likely Issue",
+    "stepsToFix": "Steps to Fix",
+    "safetyNote": "Safety Note",
+    "liveAssistError": "Could not analyze the image. Please try again."
   },
   "errors": {
     "networkError": "Network error. Please check your connection.",

@@ -1,0 +1,50 @@
+We now have the Smart Question Flow working in the AI chat. Next, I want to implement "LiveAssist AI v1" as its own button with image analysis.
+
+Goal for LiveAssist v1:
+- In the AI Chat screen, the user can tap a "LiveAssist" button.
+- This opens the camera or image picker so the user can take or select a photo of their problem.
+- The photo is sent to the backend.
+- The backend uses the existing AI integration (with vision) to:
+  - Describe what is visible in the image.
+  - Guess what the most likely technical or home-repair issue is.
+  - Return a clear 3–6 step troubleshooting / repair guide.
+- The response is shown as a normal AI message in the chat, with the text formatted nicely (summary + steps).
+
+Implementation requirements:
+
+1. Frontend (React Native / Expo):
+   - In the AI Chat screen component, add a visible "LiveAssist" button near the input bar (for example next to the existing camera / image icons).
+   - When the user taps "LiveAssist":
+     - Open the camera or image picker (reuse any existing image upload logic if present; if not, integrate expo-image-picker).
+     - After the user selects or captures an image, send it to a new backend endpoint for LiveAssist.
+     - While waiting, show a loading state in the chat (e.g., a temporary "Analyzing your photo..." message).
+     - When the backend responds, render the returned summary + steps as a single AI message bubble in the chat.
+
+2. Backend (Node / Express):
+   - Add a new endpoint: POST /api/ai/liveassist
+   - Accept an image upload in the same way other uploads are handled in this project (reuse existing middleware where possible).
+   - Call the AI client with a vision-capable model and a prompt that instructs it to:
+     - Identify what is in the image.
+     - Infer the most likely problem.
+     - Return:
+       - A short summary of the situation.
+       - A field "possible_issue".
+       - A numbered list of 3–6 steps to troubleshoot or repair the issue.
+   - Return a JSON response with this structure so the frontend can display it cleanly.
+
+3. AI behavior:
+   - The AI should speak like a helpful technician.
+   - First, briefly explain what it sees.
+   - Then explain the likely issue.
+   - Then list the steps in a numbered format (1., 2., 3., ...).
+
+4. Integration and safety:
+   - Do not break the existing text chat behavior or Smart Question Flow.
+   - LiveAssist responses should appear in the same conversation as normal chat messages.
+   - Keep the UI layout mostly unchanged; only add the new button and the necessary logic.
+
+Please:
+- Scan the current codebase to find the AI Chat screen and the existing AI routes.
+- Explain which files you change.
+- Show the important code snippets you add or modify.
+- Run a simple manual test (for example, using a sample image) and describe the result.

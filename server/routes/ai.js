@@ -246,6 +246,158 @@ Remember: A real technician asks questions first, diagnoses second, and fixes la
   }
 });
 
+/**
+ * LiveAssist endpoint - Visual troubleshooting with AI
+ * Accepts an image and returns a structured repair guide
+ */
+router.post('/liveassist', async (req, res) => {
+  try {
+    const { imageBase64, language = 'en' } = req.body;
+    
+    if (!imageBase64) {
+      return res.status(400).json({ error: 'Image is required' });
+    }
+    
+    if (!openai) {
+      return res.status(503).json({ 
+        error: 'AI service is not configured. Please check your OpenAI API key.' 
+      });
+    }
+    
+    const languageNames = {
+      en: 'English',
+      sv: 'Swedish',
+      ar: 'Arabic',
+      de: 'German',
+      fr: 'French',
+      ru: 'Russian'
+    };
+    const languageName = languageNames[language] || 'English';
+    
+    const systemPrompt = `You are LiveAssist, an expert visual troubleshooting assistant for the QuickFix app.
+
+Your job is to analyze images of home repair problems and provide instant, actionable guidance.
+
+## Your Personality:
+- You're a friendly, experienced technician who can diagnose problems from photos
+- Confident but not condescending - you explain things clearly
+- Safety-conscious - always mention if something is dangerous
+
+## Response Structure (MUST FOLLOW):
+When you see an image, respond with EXACTLY this format:
+
+**What I See:**
+[1-2 sentences describing what's visible in the image]
+
+**Likely Issue:**
+[1 sentence identifying the most probable problem]
+
+**Steps to Fix:**
+1. [First step]
+2. [Second step]
+3. [Third step]
+[Continue with 3-6 total steps]
+
+**Safety Note:** [Optional - only include if there's a safety concern]
+
+## Guidelines:
+- Be specific based on what you actually see in the image
+- Keep steps practical and actionable
+- If you can't clearly identify the problem, say what you need to see better
+- If the repair is dangerous or complex, recommend a professional
+- Respond in ${languageName}`;
+
+    console.log('[LiveAssist] Processing image analysis request');
+    
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { 
+          role: 'user', 
+          content: [
+            { type: 'text', text: 'Please analyze this image and help me fix the problem.' },
+            { 
+              type: 'image_url', 
+              image_url: { 
+                url: `data:image/jpeg;base64,${imageBase64}`,
+                detail: 'high'
+              } 
+            }
+          ]
+        }
+      ],
+      temperature: 0.7,
+      max_tokens: 1000
+    });
+    
+    const answer = completion.choices[0]?.message?.content?.trim();
+    
+    if (!answer) {
+      return res.status(500).json({ error: 'No response from AI' });
+    }
+    
+    // Parse the response into structured format
+    let summary = '';
+    let possibleIssue = '';
+    let steps = [];
+    let safetyNote = '';
+    
+    // Extract "What I See:" section
+    const seeMatch = answer.match(/\*\*What I See:\*\*\s*\n?([\s\S]*?)(?=\n\*\*|$)/i);
+    if (seeMatch) {
+      summary = seeMatch[1].trim();
+    }
+    
+    // Extract "Likely Issue:" section
+    const issueMatch = answer.match(/\*\*Likely Issue:\*\*\s*\n?([\s\S]*?)(?=\n\*\*|$)/i);
+    if (issueMatch) {
+      possibleIssue = issueMatch[1].trim();
+    }
+    
+    // Extract "Steps to Fix:" section
+    const stepsMatch = answer.match(/\*\*Steps to Fix:\*\*\s*\n?([\s\S]*?)(?=\n\*\*Safety|$)/i);
+    if (stepsMatch) {
+      const stepsText = stepsMatch[1].trim();
+      const stepLines = stepsText.split('\n').filter(line => line.match(/^\d+\./));
+      steps = stepLines.map((line, idx) => ({
+        stepNumber: idx + 1,
+        text: line.replace(/^\d+\.\s*/, '').trim()
+      }));
+    }
+    
+    // Extract "Safety Note:" if present
+    const safetyMatch = answer.match(/\*\*Safety Note:\*\*\s*\n?([\s\S]*?)$/i);
+    if (safetyMatch) {
+      safetyNote = safetyMatch[1].trim();
+    }
+    
+    console.log('[LiveAssist] Analysis complete:', { 
+      hasSummary: !!summary, 
+      hasIssue: !!possibleIssue, 
+      stepsCount: steps.length 
+    });
+    
+    res.json({
+      success: true,
+      analysis: {
+        summary,
+        possibleIssue,
+        steps,
+        safetyNote,
+        rawResponse: answer
+      }
+    });
+    
+  } catch (error) {
+    console.error('LiveAssist error:', error.message || error);
+    const errorMessage = error.message?.includes('API key') 
+      ? 'OpenAI API key is invalid or expired'
+      : 'Failed to analyze image. Please try again.';
+    res.status(500).json({ error: errorMessage });
+  }
+});
+
 router.post('/suggest-tags', authMiddleware, async (req, res) => {
   try {
     const { title, description, category } = req.body;

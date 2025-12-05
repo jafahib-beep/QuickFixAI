@@ -399,6 +399,13 @@ class ApiClient {
     });
   }
 
+  async liveAssist(imageBase64: string, language: string = "en") {
+    return this.request<LiveAssistResponse>("/ai/liveassist", {
+      method: "POST",
+      body: { imageBase64, language },
+    });
+  }
+
   async checkAIServiceHealth(): Promise<boolean> {
     try {
       const controller = new AbortController();
@@ -622,6 +629,23 @@ export interface CommunityComment {
   linkedVideoTitle?: string;
   linkedVideoThumbnail?: string;
   createdAt: string;
+}
+
+export interface LiveAssistStep {
+  stepNumber: number;
+  text: string;
+}
+
+export interface LiveAssistResponse {
+  success: boolean;
+  analysis: {
+    summary: string;
+    possibleIssue: string;
+    steps: LiveAssistStep[];
+    safetyNote?: string;
+    rawResponse: string;
+  };
+  error?: string;
 }
 
 export const api = new ApiClient();
