@@ -131,6 +131,11 @@ Backend requires DATABASE_URL environment variable.
 - OPENAI_API_KEY - For AI features (optional)
 
 ## Recent Changes (Dec 2024)
+- **Health Check Integration**: AI Chat screen now checks backend availability on mount
+  - GET /api/health endpoint for connection status
+  - Offline banner with retry button when backend is unavailable
+  - Banner auto-clears when chat messages succeed
+  - checkAIServiceHealth() function in utils/api.ts
 - **AI Chat Always Visible**: Removed service availability fallback - chat UI is always displayed
   - Users can type and send messages immediately
   - If backend is unavailable, shows friendly error message in chat
