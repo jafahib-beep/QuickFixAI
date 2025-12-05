@@ -303,6 +303,25 @@
     "alternatives": "البدائل",
     "partNumber": "رقم القطعة"
   },
+  "videoLibrary": {
+    "title": "مكتبة الفيديو",
+    "allVideos": "جميع الفيديوهات",
+    "featured": "مميز",
+    "realTutorials": "دروس حقيقية",
+    "quickFixes": "إصلاحات سريعة",
+    "watchVideo": "شاهد الفيديو",
+    "recommended": "موصى به",
+    "trending": "رائج",
+    "newest": "الأحدث",
+    "mostViewed": "الأكثر مشاهدة",
+    "filterByCategory": "تصفية حسب الفئة",
+    "noVideos": "لم يتم العثور على فيديوهات",
+    "noVideosHint": "جرب فئة أو مصطلح بحث مختلف",
+    "duration": "{{minutes}} دقيقة",
+    "views": "{{count}} مشاهدة",
+    "youtubeVideo": "درس يوتيوب",
+    "professionalGuide": "دليل احترافي"
+  },
   "community": {
     "title": "المجتمع",
     "askCommunity": "اسأل المجتمع",

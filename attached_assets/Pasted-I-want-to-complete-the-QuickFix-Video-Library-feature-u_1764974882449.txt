@@ -1,0 +1,96 @@
+I want to complete the QuickFix "Video Library" feature using a hybrid approach:
+- 20 professional-looking dummy tutorial videos
+- 5 real tutorials (YouTube videos that are legal to embed)
+
+GOAL:
+The Video Library must look full, professional, and ready for real users at launch.
+
+TASKS:
+
+1. DATA STRUCTURE
+Create or update `src/data/videos.ts` to export an array of ~25 videos with:
+{
+  id: string,
+  title: string,
+  category: string,
+  thumbnail: string,
+  url: string, // YouTube or placeholder MP4
+  isReal: boolean
+}
+
+2. DUMMY VIDEOS (ABOUT 20 ITEMS)
+Create well-written dummy entries with:
+- High-quality thumbnails (placeholder URLs)
+- Professional titles
+- Diverse categories:
+  - Plumbing
+  - Electrical
+  - Kitchen
+  - Bathroom
+  - DIY Basics
+  - Maintenance
+  - Safety
+- Make the list feel rich and varied.
+
+3. REAL VIDEOS (5 ITEMS)
+Add 5 real YouTube tutorials that are allowed to embed. Use common home-repair tutorials, such as:
+- Fix a leaking faucet
+- Replace a shower hose
+- Reset a tripped breaker safely
+- Unclog a sink
+- Repairing wall cracks
+
+These should have:
+- Real thumbnails from YouTube
+- Real URLs
+- Category + description
+
+4. FRONTEND – VIDEO LIBRARY
+Update the VideoLibraryScreen:
+- Display videos grouped by categories
+- Show thumbnails in a clean grid
+- Support English, Swedish, and Arabic (RTL)
+- Add a filter or tab bar for categories
+- Make the screen visually appealing and not empty
+
+5. VIDEO PLAYER SCREEN
+Update or create `VideoPlayerScreen`:
+- Show title, category, and the video player
+- If it's YouTube: embed the YouTube player
+- If it's dummy MP4: use Expo AV player
+- Award XP via `awardXp(userId, "video_watch")`
+
+6. HOME FEED INTEGRATION
+On the Home screen:
+- Add a "Recommended Videos" section that pulls from the library
+- Add 4–8 random videos each load
+
+7. MULTI-LANGUAGE POLISH
+Add translations for:
+- "Videos"
+- Category names
+- "Watch video"
+- "Recommended"
+- "Trending"
+- "Real tutorial"
+- "Dummy tutorial"
+Ensure AR layout is correct.
+
+8. UI QUALITY
+Make the video library look PROFESSIONAL:
+- Uniform card sizes
+- Clean spacing
+- Rounded corners
+- Category labels
+- Good padding and margins
+
+9. FINAL TEST
+Verify:
+- All 25 videos show up correctly
+- Categories filter works
+- Video opens and awards XP
+- Translations work for EN, SV, AR
+- RTL layout for Arabic
+- No missing keys
+
+Please implement all of the above and show the key code changes.

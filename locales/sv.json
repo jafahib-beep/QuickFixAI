@@ -303,6 +303,25 @@
     "alternatives": "Alternativ",
     "partNumber": "Artikelnr"
   },
+  "videoLibrary": {
+    "title": "Videobibliotek",
+    "allVideos": "Alla videor",
+    "featured": "Utvalda",
+    "realTutorials": "Riktiga guider",
+    "quickFixes": "Snabba fixar",
+    "watchVideo": "Titta på video",
+    "recommended": "Rekommenderade",
+    "trending": "Trendande",
+    "newest": "Nyaste",
+    "mostViewed": "Mest sedda",
+    "filterByCategory": "Filtrera efter kategori",
+    "noVideos": "Inga videor hittades",
+    "noVideosHint": "Prova en annan kategori eller sökterm",
+    "duration": "{{minutes}} min",
+    "views": "{{count}} visningar",
+    "youtubeVideo": "YouTube-guide",
+    "professionalGuide": "Professionell guide"
+  },
   "community": {
     "title": "Community",
     "askCommunity": "Fråga communityn",

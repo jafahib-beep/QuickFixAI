@@ -550,6 +550,8 @@ export interface Video {
   isLiked: boolean;
   isSaved: boolean;
   createdAt: string;
+  isYouTube?: boolean;
+  youtubeId?: string;
 }
 
 export interface CreateVideoData {

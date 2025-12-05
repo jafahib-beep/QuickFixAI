@@ -16,6 +16,7 @@ import TagFeedScreen from "@/screens/TagFeedScreen";
 import CategoriesScreen from "@/screens/CategoriesScreen";
 import CommunityPostDetailScreen from "@/screens/CommunityPostDetailScreen";
 import CreatePostScreen from "@/screens/CreatePostScreen";
+import VideoLibraryScreen from "@/screens/VideoLibraryScreen";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/hooks/useTheme";
 import { getCommonScreenOptions } from "./screenOptions";
@@ -37,6 +38,7 @@ export type RootStackParamList = {
   Categories: undefined;
   CommunityPostDetail: { postId: string };
   CreatePost: undefined;
+  VideoLibrary: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -175,6 +177,15 @@ export default function RootNavigator() {
             component={CreatePostScreen}
             options={{
               presentation: "modal",
+              ...getCommonScreenOptions({ theme, isDark, transparent: false }),
+              headerShown: true,
+              title: "",
+            }}
+          />
+          <Stack.Screen
+            name="VideoLibrary"
+            component={VideoLibraryScreen}
+            options={{
               ...getCommonScreenOptions({ theme, isDark, transparent: false }),
               headerShown: true,
               title: "",

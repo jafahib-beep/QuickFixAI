@@ -10,6 +10,7 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useTranslation } from "react-i18next";
+import { Feather } from "@expo/vector-icons";
 
 import { ThemedText } from "@/components/ThemedText";
 import { VideoCard } from "@/components/VideoCard";
@@ -56,15 +57,27 @@ export default function HomeScreen() {
     });
   }, [navigation]);
 
-  const renderSection = (title: string, data: Video[]) => (
+  const renderSection = (title: string, data: Video[], showViewAll = false) => (
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
         <ThemedText type="h3" style={styles.sectionTitle}>
           {title}
         </ThemedText>
-        <ThemedText type="small" style={{ color: theme.textSecondary }}>
-          {data.length} {data.length === 1 ? 'video' : 'videos'}
-        </ThemedText>
+        {showViewAll ? (
+          <Pressable 
+            onPress={() => navigation.navigate("VideoLibrary")}
+            style={({ pressed }) => [styles.viewAllButton, { opacity: pressed ? 0.7 : 1 }]}
+          >
+            <ThemedText type="small" style={{ color: theme.link }}>
+              {t("videoLibrary.allVideos")}
+            </ThemedText>
+            <Feather name="chevron-right" size={14} color={theme.link} />
+          </Pressable>
+        ) : (
+          <ThemedText type="small" style={{ color: theme.textSecondary }}>
+            {data.length} {data.length === 1 ? 'video' : 'videos'}
+          </ThemedText>
+        )}
       </View>
       <FlatList
         data={data}
@@ -126,7 +139,7 @@ export default function HomeScreen() {
       ) : hasFilteredContent ? (
         <>
           {filteredFeed.recommended.length > 0
-            ? renderSection(t("home.recommended"), filteredFeed.recommended)
+            ? renderSection(t("home.recommended"), filteredFeed.recommended, true)
             : null}
           {filteredFeed.new.length > 0
             ? renderSection(t("home.new"), filteredFeed.new)
@@ -195,5 +208,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: Spacing["5xl"],
+  },
+  viewAllButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 2,
   },
 });

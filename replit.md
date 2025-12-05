@@ -26,6 +26,13 @@ The frontend is built with Expo/React Native, supporting multi-language (English
     - **LiveAssist**: Dedicated visual troubleshooting with AI-generated step-by-step guides, including risk assessment and visual overlays highlighting problem areas. Promoted to its own main tab.
     - **Content Generation**: AI-powered tag suggestions, description generation, and visual step-by-step guides with DALL-E 3 images.
 - **Community**: A dedicated tab for users to post problems, share images, comment, and mark solutions.
+- **Video Library**: Comprehensive video library with 25+ videos including:
+    - 5 real YouTube tutorial videos (plumbing, electrical, bathroom, DIY)
+    - 20+ dummy QuickFix videos across all categories
+    - YouTube videos open in external YouTube app/browser
+    - Category filtering and sorting (Trending, Newest, Most Viewed)
+    - "All Videos" link from HomeScreen's Recommended section
+    - YouTube badge on tutorial videos with distinct red styling
 - **XP System**: Gamification with 5 levels to encourage engagement. Users earn XP for:
     - AI Chat messages: +5 XP per message
     - LiveAssist scans: +10 XP per scan

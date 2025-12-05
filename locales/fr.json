@@ -303,6 +303,25 @@
     "alternatives": "Alternatives",
     "partNumber": "Réf."
   },
+  "videoLibrary": {
+    "title": "Vidéothèque",
+    "allVideos": "Toutes les vidéos",
+    "featured": "À la une",
+    "realTutorials": "Vrais tutoriels",
+    "quickFixes": "Réparations rapides",
+    "watchVideo": "Regarder la vidéo",
+    "recommended": "Recommandé",
+    "trending": "Tendance",
+    "newest": "Plus récentes",
+    "mostViewed": "Plus vues",
+    "filterByCategory": "Filtrer par catégorie",
+    "noVideos": "Aucune vidéo trouvée",
+    "noVideosHint": "Essayez une autre catégorie ou terme de recherche",
+    "duration": "{{minutes}} min",
+    "views": "{{count}} vues",
+    "youtubeVideo": "Tutoriel YouTube",
+    "professionalGuide": "Guide professionnel"
+  },
   "community": {
     "title": "Communauté",
     "askCommunity": "Demandez à la communauté",
