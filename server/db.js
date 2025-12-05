@@ -145,6 +145,20 @@ const initializeDatabase = async () => {
       CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id);
       CREATE INDEX IF NOT EXISTS idx_videos_search ON videos USING gin(search_text);
     `);
+    
+    // Migration: Add xp and level columns if they don't exist (for existing databases)
+    await client.query(`
+      DO $$ 
+      BEGIN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'xp') THEN
+          ALTER TABLE users ADD COLUMN xp INTEGER DEFAULT 0;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'level') THEN
+          ALTER TABLE users ADD COLUMN level INTEGER DEFAULT 1;
+        END IF;
+      END $$;
+    `);
+    
     console.log('Database initialized successfully');
   } catch (error) {
     console.error('Database initialization error:', error);

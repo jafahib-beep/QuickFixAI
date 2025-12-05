@@ -2,6 +2,7 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const { pool } = require('../db');
 const { generateToken, authMiddleware } = require('../middleware/auth');
+const { getNextLevelXp, getCurrentLevelXp } = require('../services/xp');
 
 const router = express.Router();
 
@@ -31,12 +32,14 @@ router.post('/register', async (req, res) => {
     const result = await pool.query(
       `INSERT INTO users (email, password_hash, display_name)
        VALUES ($1, $2, $3)
-       RETURNING id, email, display_name, bio, avatar_url, expertise_categories, followers_count, following_count, created_at`,
+       RETURNING id, email, display_name, bio, avatar_url, expertise_categories, followers_count, following_count, xp, level, created_at`,
       [email.toLowerCase(), passwordHash, displayName]
     );
     
     const user = result.rows[0];
     const token = generateToken(user.id);
+    const xp = user.xp || 0;
+    const level = user.level || 1;
     
     res.status(201).json({
       user: {
@@ -48,6 +51,10 @@ router.post('/register', async (req, res) => {
         expertiseCategories: user.expertise_categories,
         followersCount: user.followers_count,
         followingCount: user.following_count,
+        xp,
+        level,
+        nextLevelXp: getNextLevelXp(level),
+        currentLevelXp: getCurrentLevelXp(level),
         createdAt: user.created_at
       },
       token
@@ -83,6 +90,8 @@ router.post('/login', async (req, res) => {
     }
     
     const token = generateToken(user.id);
+    const xp = user.xp || 0;
+    const level = user.level || 1;
     
     res.json({
       user: {
@@ -94,6 +103,10 @@ router.post('/login', async (req, res) => {
         expertiseCategories: user.expertise_categories,
         followersCount: user.followers_count,
         followingCount: user.following_count,
+        xp,
+        level,
+        nextLevelXp: getNextLevelXp(level),
+        currentLevelXp: getCurrentLevelXp(level),
         createdAt: user.created_at
       },
       token
@@ -108,7 +121,7 @@ router.get('/me', authMiddleware, async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT id, email, display_name, bio, avatar_url, expertise_categories, 
-              followers_count, following_count, created_at
+              followers_count, following_count, xp, level, created_at
        FROM users WHERE id = $1`,
       [req.userId]
     );
@@ -118,6 +131,9 @@ router.get('/me', authMiddleware, async (req, res) => {
     }
     
     const user = result.rows[0];
+    const xp = user.xp || 0;
+    const level = user.level || 1;
+    
     res.json({
       id: user.id,
       email: user.email,
@@ -127,6 +143,10 @@ router.get('/me', authMiddleware, async (req, res) => {
       expertiseCategories: user.expertise_categories,
       followersCount: user.followers_count,
       followingCount: user.following_count,
+      xp,
+      level,
+      nextLevelXp: getNextLevelXp(level),
+      currentLevelXp: getCurrentLevelXp(level),
       createdAt: user.created_at
     });
   } catch (error) {
