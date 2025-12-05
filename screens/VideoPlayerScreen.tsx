@@ -24,7 +24,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
 import { useVideos } from "@/contexts/VideosContext";
 import { RootStackParamList } from "@/navigation/RootNavigator";
-import { Comment, Video as VideoType } from "@/utils/api";
+import { Comment, Video as VideoType, api } from "@/utils/api";
 import { getCategoryByKey } from "@/constants/categories";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
@@ -71,6 +71,15 @@ export default function VideoPlayerScreen() {
     }, 1500);
     return () => clearTimeout(timer);
   }, []);
+
+  // Record video watch for XP (non-blocking, fires once per video)
+  useEffect(() => {
+    if (user && video.id) {
+      api.recordVideoWatch(video.id).catch(err => {
+        console.log('[XP] Video watch record failed:', err.message);
+      });
+    }
+  }, [video.id, user?.id]);
 
   const handleCategoryPress = () => {
     if (category) {

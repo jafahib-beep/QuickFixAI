@@ -212,6 +212,18 @@ class ApiClient {
     });
   }
 
+  async recordVideoWatch(id: string) {
+    return this.request<{ 
+      success: boolean; 
+      xpAwarded: number;
+      totalXp?: number;
+      level?: number;
+    }>(`/videos/${id}/watch`, {
+      method: "POST",
+      requireAuth: true,
+    });
+  }
+
   async getComments(videoId: string) {
     return this.request<Comment[]>(`/videos/${videoId}/comments`);
   }
@@ -503,6 +515,10 @@ export interface User {
   expertiseCategories?: string[];
   followersCount: number;
   followingCount: number;
+  xp: number;
+  level: number;
+  nextLevelXp: number;
+  currentLevelXp: number;
   createdAt?: string;
 }
 
