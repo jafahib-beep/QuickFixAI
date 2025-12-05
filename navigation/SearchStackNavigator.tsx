@@ -1,12 +1,12 @@
 import React from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
-import SearchScreen from "@/screens/SearchScreen";
+import AIChatScreen from "@/screens/AIChatScreen";
 import { useTheme } from "@/hooks/useTheme";
 import { getCommonScreenOptions } from "./screenOptions";
 
 export type SearchStackParamList = {
-  Search: undefined;
+  AIChat: undefined;
 };
 
 const Stack = createNativeStackNavigator<SearchStackParamList>();
@@ -21,8 +21,8 @@ export default function SearchStackNavigator() {
       }}
     >
       <Stack.Screen
-        name="Search"
-        component={SearchScreen}
+        name="AIChat"
+        component={AIChatScreen}
         options={{
           headerShown: false,
         }}

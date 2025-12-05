@@ -184,6 +184,23 @@
     "other": "Autre",
     "browseAll": "Parcourir toutes les catégories"
   },
+  "chat": {
+    "title": "QuickFix AI",
+    "placeholder": "Décrivez votre problème...",
+    "welcomeTitle": "Comment puis-je vous aider à réparer quelque chose ?",
+    "welcomeSubtitle": "Décrivez votre problème ou joignez une photo, et je vous aiderai à trouver une solution.",
+    "suggestion1": "Mon robinet fuit",
+    "suggestion2": "Le lave-vaisselle ne démarre pas",
+    "suggestion3": "Ma voiture fait un bruit étrange",
+    "thinking": "QuickFix AI réfléchit...",
+    "sentImage": "Image envoyée",
+    "sentVideo": "Vidéo envoyée",
+    "noResponse": "Je n'ai pas pu générer de réponse. Veuillez réessayer.",
+    "errorMessage": "Quelque chose s'est mal passé. Veuillez réessayer.",
+    "permissionRequired": "Autorisation requise",
+    "photoLibraryPermission": "Veuillez autoriser l'accès à votre photothèque pour sélectionner des images.",
+    "cameraPermission": "Veuillez autoriser l'accès à la caméra pour prendre des photos."
+  },
   "errors": {
     "networkError": "Erreur réseau. Veuillez vérifier votre connexion.",
     "somethingWentWrong": "Quelque chose s'est mal passé. Veuillez réessayer.",

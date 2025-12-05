@@ -184,6 +184,23 @@
     "other": "أخرى",
     "browseAll": "تصفح جميع الفئات"
   },
+  "chat": {
+    "title": "QuickFix AI",
+    "placeholder": "صف مشكلتك...",
+    "welcomeTitle": "كيف يمكنني مساعدتك في إصلاح شيء ما؟",
+    "welcomeSubtitle": "صف مشكلتك أو أرفق صورة، وسأساعدك في إيجاد حل.",
+    "suggestion1": "صنبوري يسرب الماء",
+    "suggestion2": "غسالة الصحون لا تعمل",
+    "suggestion3": "سيارتي تصدر صوتاً غريباً",
+    "thinking": "QuickFix AI يفكر...",
+    "sentImage": "تم إرسال صورة",
+    "sentVideo": "تم إرسال فيديو",
+    "noResponse": "لم أتمكن من توليد رد. يرجى المحاولة مرة أخرى.",
+    "errorMessage": "حدث خطأ ما. يرجى المحاولة مرة أخرى.",
+    "permissionRequired": "الإذن مطلوب",
+    "photoLibraryPermission": "يرجى السماح بالوصول إلى مكتبة الصور لاختيار الصور.",
+    "cameraPermission": "يرجى السماح بالوصول إلى الكاميرا لالتقاط الصور."
+  },
   "errors": {
     "networkError": "خطأ في الشبكة. يرجى التحقق من اتصالك.",
     "somethingWentWrong": "حدث خطأ ما. يرجى المحاولة مرة أخرى.",

@@ -81,6 +81,90 @@ Respond in ${languageName}.`;
   }
 });
 
+router.post('/chat', async (req, res) => {
+  try {
+    const { messages, language = 'en', imageBase64, videoFileName } = req.body;
+    
+    if (!messages || !Array.isArray(messages) || messages.length === 0) {
+      return res.status(400).json({ error: 'Messages array is required' });
+    }
+    
+    if (!openai) {
+      return res.json({ 
+        answer: 'AI service is not configured. Please check your OpenAI API key.' 
+      });
+    }
+    
+    const languageNames = {
+      en: 'English',
+      sv: 'Swedish',
+      ar: 'Arabic',
+      de: 'German',
+      fr: 'French',
+      ru: 'Russian'
+    };
+    const languageName = languageNames[language] || 'English';
+    
+    const systemPrompt = `You are QuickFix AI, a helpful DIY and home repair assistant for a mobile app.
+You help users fix common household problems, appliances, cars, electronics, and more.
+Keep responses concise but helpful (under 400 words).
+Be friendly, encouraging, and practical.
+If a problem seems dangerous or requires professional help, clearly say so.
+When the user shares an image, analyze it carefully and provide specific advice based on what you see.
+Respond in ${languageName}.`;
+
+    const formattedMessages = [
+      { role: 'system', content: systemPrompt }
+    ];
+
+    for (let i = 0; i < messages.length; i++) {
+      const msg = messages[i];
+      const isLastUserMessage = i === messages.length - 1 && msg.role === 'user';
+      
+      if (isLastUserMessage && imageBase64) {
+        formattedMessages.push({
+          role: 'user',
+          content: [
+            { type: 'text', text: msg.content || 'What can you see in this image? Please help me fix this problem.' },
+            { 
+              type: 'image_url', 
+              image_url: { 
+                url: `data:image/jpeg;base64,${imageBase64}`,
+                detail: 'auto'
+              } 
+            }
+          ]
+        });
+      } else if (isLastUserMessage && videoFileName) {
+        const videoMessage = `${msg.content}\n\n[Note: The user has uploaded a video file named "${videoFileName}". Since I cannot watch videos directly, please ask the user to describe what's shown in the video, or suggest they take a screenshot of the key moment showing the problem.]`;
+        formattedMessages.push({
+          role: msg.role,
+          content: videoMessage
+        });
+      } else {
+        formattedMessages.push({
+          role: msg.role,
+          content: msg.content
+        });
+      }
+    }
+
+    const completion = await openai.chat.completions.create({
+      model: imageBase64 ? 'gpt-4o' : 'gpt-4o-mini',
+      messages: formattedMessages,
+      temperature: 0.7,
+      max_tokens: 800
+    });
+    
+    const answer = completion.choices[0].message.content.trim();
+    
+    res.json({ answer });
+  } catch (error) {
+    console.error('Chat error:', error);
+    res.status(500).json({ error: 'Failed to get AI response' });
+  }
+});
+
 router.post('/suggest-tags', authMiddleware, async (req, res) => {
   try {
     const { title, description, category } = req.body;

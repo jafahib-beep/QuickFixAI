@@ -184,6 +184,23 @@
     "other": "Other",
     "browseAll": "Browse All Categories"
   },
+  "chat": {
+    "title": "QuickFix AI",
+    "placeholder": "Describe your problem...",
+    "welcomeTitle": "How can I help you fix something?",
+    "welcomeSubtitle": "Describe your problem or attach a photo, and I'll help you find a solution.",
+    "suggestion1": "My faucet is dripping",
+    "suggestion2": "The dishwasher won't start",
+    "suggestion3": "My car makes a strange noise",
+    "thinking": "QuickFix AI is thinking...",
+    "sentImage": "Sent an image",
+    "sentVideo": "Sent a video",
+    "noResponse": "I couldn't generate a response. Please try again.",
+    "errorMessage": "Something went wrong. Please try again.",
+    "permissionRequired": "Permission Required",
+    "photoLibraryPermission": "Please allow access to your photo library to select images.",
+    "cameraPermission": "Please allow camera access to take photos."
+  },
   "errors": {
     "networkError": "Network error. Please check your connection.",
     "somethingWentWrong": "Something went wrong. Please try again.",

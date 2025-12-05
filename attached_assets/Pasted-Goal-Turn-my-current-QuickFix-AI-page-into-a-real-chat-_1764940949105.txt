@@ -1,0 +1,62 @@
+Goal:
+Turn my current QuickFix AI page into a real chat with conversation history, and add support for sending images (and basic video upload) to the AI.
+
+Requirements:
+
+1) Chat UI (frontend)
+- Replace the single-answer layout with a conversation view.
+- Add a chat interface with:
+  - A scrollable list of messages (user and AI).
+  - A text input for the user.
+  - A send button.
+- Each message should show:
+  - Who sent it (user or AI).
+  - The message text.
+  - (Later: small thumbnail if it has an image/video attached).
+- When I send a message:
+  - It should be added to the chat immediately.
+  - Then the app calls my backend API with the whole conversation history.
+
+2) Conversation handling (frontend + backend)
+- Keep a messages array on the frontend (state) with role: "user" | "assistant" and content.
+- When calling the backend:
+  - Send the full conversation history, not just the last message.
+- On the backend:
+  - Accept the history and send it to OpenAI as a normal chat history so the AI can answer in context.
+- The AI response should be appended to the history and returned to the frontend.
+
+3) Image upload (frontend)
+- Add a file input that allows uploading 1 image along with the text message.
+- Show the selected image name or a small preview before sending.
+- When I click send:
+  - If there is an image, send it to the backend together with the message and the history.
+
+4) Image handling (backend)
+- Update the backend endpoint to accept an image (for example via multipart/form-data or base64).
+- Use OpenAI's vision/chat endpoint so the model can "see" the image.
+- The prompt you send to OpenAI should include both:
+  - The text message from the user.
+  - The image as image input.
+- The AI should respond based on both the description and the image (for example: “describe the problem in this image and help fix it”).
+
+5) Video upload (basic)
+- Add support to upload a video file in the same UI (separate from image or combined, your choice).
+- For now:
+  - Only upload the video file and make it available on the server (no heavy processing needed).
+  - The backend should include a note in the prompt like:
+    "The user has uploaded a video file named X.mp4 describing the problem. Ask the user follow-up questions to clarify what's in the video."
+  - This way the AI can at least react to the fact that a video exists and ask the user what is happening in the video.
+
+6) Error handling and UX
+- Show a loading state while the AI is thinking.
+- Handle errors and show a simple message if something goes wrong.
+- Keep the chat history on the page as long as I don't reload (no need for database yet).
+
+IMPORTANT:
+- Do NOT break the existing API key or OpenAI config.
+- Reuse my current AI call setup, just extend it for chat history and image input.
+- When you're done, explain briefly:
+  - Which files you changed.
+  - How I can test the chat with text only.
+  - How I can test sending an image.
+  - How I can test uploading a video.

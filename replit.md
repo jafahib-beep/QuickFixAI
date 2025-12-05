@@ -83,7 +83,8 @@ Backend requires DATABASE_URL environment variable.
 - POST /api/ai/suggest-tags - AI tag suggestions
 - POST /api/ai/generate-description - AI description generation
 - POST /api/ai/generate-guide - Generate visual step-by-step guide with AI images
-- POST /api/ai/ask-ai - Conversational AI responses: {question, language} -> {answer}
+- POST /api/ai/ask-ai - Single-turn AI responses: {question, language} -> {answer}
+- POST /api/ai/chat - Multi-turn chat with vision: {messages, language, imageBase64?, videoFileName?} -> {answer}
 - GET /api/community/posts - Get community posts
 - POST /api/community/posts - Create new community post
 - GET /api/community/posts/:id/comments - Get post comments
@@ -109,21 +110,29 @@ Backend requires DATABASE_URL environment variable.
 - OPENAI_API_KEY - For AI features (optional)
 
 ## Recent Changes (Dec 2024)
-- **AI-First Search Experience**: Redesigned Search screen with problem-solving focus
-  - Prominent AI entry area with "What do you want to fix today?" prompt
-  - Multiline text input for describing problems in natural language
-  - "Ask AI" button inside input container for quick access
-  - Keyboard return key submits the query (returnKeyType="search")
-  - Category filter chips for narrowing search scope
-  - "Find Solution" button with loading state ("Searching...") triggers video search + AI guide + conversational AI
-  - Combined results view: Recommended QuickFix video + Other videos + AI Quick Guide
-  - "No videos yet" message shown when no matching videos exist, with AI guide fallback
-- **AI Conversational Responses**: New `/ask-ai` endpoint for natural language troubleshooting
-  - Uses GPT-4o-mini for helpful, detailed responses
-  - Supports all 6 languages (responds in user's selected language)
-  - SearchScreen shows real AI response in "AI snabbguide" card instead of generic fallback steps
-  - Fallback: If AI returns generic content (like "Search for tutorials"), shows conversational answer instead
-  - Demo login fallback: When API unavailable, creates demo user for testing
+- **AI Chat Interface**: Replaced Search screen with full-featured AI chat interface (AIChatScreen)
+  - Real-time chat UI with scrollable message list (user and AI messages)
+  - Text input with send button and attachment buttons
+  - Image picker: Select from gallery to send photos for AI analysis (OpenAI Vision)
+  - Video picker: Upload videos (AI asks follow-up questions about video content)
+  - Image preview before sending with remove button
+  - Welcome screen with suggested queries ("My faucet is dripping", etc.)
+  - Loading states with "QuickFix AI is thinking..." indicator
+  - Conversation history maintained during session
+  - Tab navigation updated: "AI Chat" with message-circle icon
+- **AI Chat Backend**: New `/api/ai/chat` endpoint for conversational AI
+  - Accepts messages array for conversation history
+  - Supports imageBase64 for vision analysis (uses GPT-4o with vision)
+  - Supports videoFileName for video context (asks user to describe video)
+  - Responds in user's selected language (6 languages supported)
+  - Uses GPT-4o-mini for text, GPT-4o for image analysis
+- **i18n Chat Translations**: Added chat.* translations in all 6 languages
+  - title, placeholder, welcomeTitle, welcomeSubtitle, suggestions, thinking, sentImage, sentVideo, errors
+- **Previous AI Features** (still available):
+  - POST /api/ai/ask-ai - Single-turn conversational AI responses
+  - POST /api/ai/suggest-tags - AI tag suggestions for uploads
+  - POST /api/ai/generate-description - AI description generation
+  - POST /api/ai/generate-guide - Visual step-by-step guides with DALL-E images
 - **AI Visual Guides**: Generate step-by-step troubleshooting guides with AI-generated images
   - Generates 3-5 actionable steps using GPT-4o-mini
   - Creates illustrative images for key steps using DALL-E 3

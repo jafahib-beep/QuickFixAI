@@ -184,6 +184,23 @@
     "other": "Övrigt",
     "browseAll": "Bläddra bland alla kategorier"
   },
+  "chat": {
+    "title": "QuickFix AI",
+    "placeholder": "Beskriv ditt problem...",
+    "welcomeTitle": "Hur kan jag hjälpa dig fixa något?",
+    "welcomeSubtitle": "Beskriv ditt problem eller bifoga ett foto, så hjälper jag dig hitta en lösning.",
+    "suggestion1": "Min kran droppar",
+    "suggestion2": "Diskmaskinen startar inte",
+    "suggestion3": "Min bil låter konstigt",
+    "thinking": "QuickFix AI tänker...",
+    "sentImage": "Skickade en bild",
+    "sentVideo": "Skickade en video",
+    "noResponse": "Jag kunde inte generera ett svar. Försök igen.",
+    "errorMessage": "Något gick fel. Försök igen.",
+    "permissionRequired": "Behörighet krävs",
+    "photoLibraryPermission": "Tillåt åtkomst till ditt fotobibliotek för att välja bilder.",
+    "cameraPermission": "Tillåt kameraåtkomst för att ta foton."
+  },
   "errors": {
     "networkError": "Nätverksfel. Kontrollera din anslutning.",
     "somethingWentWrong": "Något gick fel. Försök igen.",

@@ -92,9 +92,9 @@ export default function MainTabNavigator() {
         name="SearchTab"
         component={SearchStackNavigator}
         options={{
-          title: "Search",
+          title: "AI Chat",
           tabBarIcon: ({ color, size }) => (
-            <Feather name="search" size={size} color={color} />
+            <Feather name="message-circle" size={size} color={color} />
           ),
         }}
       />

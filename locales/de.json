@@ -184,6 +184,23 @@
     "other": "Sonstiges",
     "browseAll": "Alle Kategorien durchsuchen"
   },
+  "chat": {
+    "title": "QuickFix AI",
+    "placeholder": "Beschreiben Sie Ihr Problem...",
+    "welcomeTitle": "Wie kann ich Ihnen helfen etwas zu reparieren?",
+    "welcomeSubtitle": "Beschreiben Sie Ihr Problem oder fügen Sie ein Foto bei, und ich helfe Ihnen eine Lösung zu finden.",
+    "suggestion1": "Mein Wasserhahn tropft",
+    "suggestion2": "Die Spülmaschine startet nicht",
+    "suggestion3": "Mein Auto macht ein seltsames Geräusch",
+    "thinking": "QuickFix AI denkt nach...",
+    "sentImage": "Ein Bild gesendet",
+    "sentVideo": "Ein Video gesendet",
+    "noResponse": "Ich konnte keine Antwort generieren. Bitte versuchen Sie es erneut.",
+    "errorMessage": "Etwas ist schief gelaufen. Bitte versuchen Sie es erneut.",
+    "permissionRequired": "Berechtigung erforderlich",
+    "photoLibraryPermission": "Bitte erlauben Sie den Zugriff auf Ihre Fotobibliothek um Bilder auszuwählen.",
+    "cameraPermission": "Bitte erlauben Sie den Kamerazugriff um Fotos aufzunehmen."
+  },
   "errors": {
     "networkError": "Netzwerkfehler. Bitte überprüfen Sie Ihre Verbindung.",
     "somethingWentWrong": "Etwas ist schief gelaufen. Bitte versuchen Sie es erneut.",

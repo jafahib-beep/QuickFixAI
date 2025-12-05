@@ -27,7 +27,7 @@ const getBaseUrl = () => {
     }
     return `${window.location.protocol}//${window.location.hostname}:${BACKEND_PORT}`;
   }
-  
+
   const replitDevDomain = Constants.expoConfig?.extra?.REPLIT_DEV_DOMAIN;
   if (replitDevDomain) {
     const parts = replitDevDomain.split(".");
@@ -47,11 +47,12 @@ const getBaseUrl = () => {
     console.log("[API] Native base URL:", url);
     return url;
   }
-  
+
   return "https://quickfix-app.replit.app";
 };
 
-const API_BASE_URL = `${getBaseUrl()}/api`;
+const API_BASE_URL =
+  "https://2185aef7-8c7d-4229-b7af-f871e5ca81dc-00-2tts9ks91qr3q.riker.replit.dev:3001/api";
 console.log("[API] Full API URL:", API_BASE_URL);
 
 interface ApiOptions {
@@ -107,9 +108,15 @@ class ApiClient {
       const response = await fetch(url, config);
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: "Request failed" }));
-        console.log(`[API] Error ${response.status}: ${JSON.stringify(errorData)}`);
-        throw new Error(errorData.error || `Request failed with status ${response.status}`);
+        const errorData = await response
+          .json()
+          .catch(() => ({ error: "Request failed" }));
+        console.log(
+          `[API] Error ${response.status}: ${JSON.stringify(errorData)}`,
+        );
+        throw new Error(
+          errorData.error || `Request failed with status ${response.status}`,
+        );
       }
 
       return response.json();
@@ -118,24 +125,30 @@ class ApiClient {
         throw error;
       }
       console.log(`[API] Network error for ${url}:`, error.message || error);
-      throw new Error(`Network error: ${error.message || 'Connection failed'}`);
+      throw new Error(`Network error: ${error.message || "Connection failed"}`);
     }
   }
 
   async register(email: string, password: string, displayName: string) {
-    const result = await this.request<{ user: User; token: string }>("/auth/register", {
-      method: "POST",
-      body: { email, password, displayName },
-    });
+    const result = await this.request<{ user: User; token: string }>(
+      "/auth/register",
+      {
+        method: "POST",
+        body: { email, password, displayName },
+      },
+    );
     await this.setToken(result.token);
     return result;
   }
 
   async login(email: string, password: string) {
-    const result = await this.request<{ user: User; token: string }>("/auth/login", {
-      method: "POST",
-      body: { email, password },
-    });
+    const result = await this.request<{ user: User; token: string }>(
+      "/auth/login",
+      {
+        method: "POST",
+        body: { email, password },
+      },
+    );
     await this.setToken(result.token);
     return result;
   }
@@ -172,16 +185,23 @@ class ApiClient {
     }>("/videos/feed", { requireAuth: true });
   }
 
-  async getVideos(params?: { category?: string; search?: string; sort?: string }) {
+  async getVideos(params?: {
+    category?: string;
+    search?: string;
+    sort?: string;
+  }) {
     const query = new URLSearchParams();
     if (params?.category) query.set("category", params.category);
     if (params?.search) query.set("search", params.search);
     if (params?.sort) query.set("sort", params.sort);
-    
+
     const queryString = query.toString();
-    return this.request<Video[]>(`/videos${queryString ? `?${queryString}` : ""}`, {
-      requireAuth: true,
-    });
+    return this.request<Video[]>(
+      `/videos${queryString ? `?${queryString}` : ""}`,
+      {
+        requireAuth: true,
+      },
+    );
   }
 
   async getVideo(id: string) {
@@ -204,10 +224,13 @@ class ApiClient {
   }
 
   async likeVideo(id: string) {
-    return this.request<{ liked: boolean; likesCount: number }>(`/videos/${id}/like`, {
-      method: "POST",
-      requireAuth: true,
-    });
+    return this.request<{ liked: boolean; likesCount: number }>(
+      `/videos/${id}/like`,
+      {
+        method: "POST",
+        requireAuth: true,
+      },
+    );
   }
 
   async saveVideo(id: string, folderId?: string) {
@@ -243,7 +266,9 @@ class ApiClient {
   }
 
   async getUserVideos(userId: string) {
-    return this.request<Video[]>(`/users/${userId}/videos`, { requireAuth: true });
+    return this.request<Video[]>(`/users/${userId}/videos`, {
+      requireAuth: true,
+    });
   }
 
   async followUser(id: string) {
@@ -263,13 +288,18 @@ class ApiClient {
 
   async getSavedVideos(folderId?: string) {
     const query = folderId ? `?folderId=${folderId}` : "";
-    return this.request<Video[]>(`/toolbox/saved${query}`, { requireAuth: true });
+    return this.request<Video[]>(`/toolbox/saved${query}`, {
+      requireAuth: true,
+    });
   }
 
   async getFolders() {
-    return this.request<{ folders: Folder[]; uncategorizedCount: number }>("/toolbox/folders", {
-      requireAuth: true,
-    });
+    return this.request<{ folders: Folder[]; uncategorizedCount: number }>(
+      "/toolbox/folders",
+      {
+        requireAuth: true,
+      },
+    );
   }
 
   async createFolder(name: string) {
@@ -296,15 +326,20 @@ class ApiClient {
   }
 
   async moveVideoToFolder(videoId: string, folderId: string | null) {
-    return this.request<{ message: string }>(`/toolbox/saved/${videoId}/folder`, {
-      method: "PUT",
-      body: { folderId },
-      requireAuth: true,
-    });
+    return this.request<{ message: string }>(
+      `/toolbox/saved/${videoId}/folder`,
+      {
+        method: "PUT",
+        body: { folderId },
+        requireAuth: true,
+      },
+    );
   }
 
   async getNotifications() {
-    return this.request<Notification[]>("/notifications", { requireAuth: true });
+    return this.request<Notification[]>("/notifications", {
+      requireAuth: true,
+    });
   }
 
   async getUnreadCount() {
@@ -344,11 +379,14 @@ class ApiClient {
   }
 
   async moderateContent(title: string, description?: string, tags?: string[]) {
-    return this.request<{ approved: boolean; reason: string | null }>("/ai/moderate-content", {
-      method: "POST",
-      body: { title, description, tags },
-      requireAuth: true,
-    });
+    return this.request<{ approved: boolean; reason: string | null }>(
+      "/ai/moderate-content",
+      {
+        method: "POST",
+        body: { title, description, tags },
+        requireAuth: true,
+      },
+    );
   }
 
   async semanticSearch(query: string, category?: string) {
@@ -359,7 +397,11 @@ class ApiClient {
     });
   }
 
-  async generateGuide(query: string, language: string = 'en', includeImages: boolean = true) {
+  async generateGuide(
+    query: string,
+    language: string = "en",
+    includeImages: boolean = true,
+  ) {
     return this.request<AIGuide>("/ai/generate-guide", {
       method: "POST",
       body: { query, language, includeImages },
@@ -367,26 +409,45 @@ class ApiClient {
     });
   }
 
-  async askAI(question: string, language: string = 'en') {
+  async askAI(question: string, language: string = "en") {
     return this.request<{ answer: string }>("/ai/ask-ai", {
       method: "POST",
       body: { question, language },
     });
   }
 
-  async getCommunityPosts(params?: { category?: string; status?: string }) {
-    const query = new URLSearchParams();
-    if (params?.category && params.category !== 'all') query.set("category", params.category);
-    if (params?.status && params.status !== 'all') query.set("status", params.status);
-    
-    const queryString = query.toString();
-    return this.request<CommunityPost[]>(`/community${queryString ? `?${queryString}` : ""}`, {
-      requireAuth: true,
+  async chat(data: {
+    messages: { role: string; content: string }[];
+    language?: string;
+    imageBase64?: string;
+    videoFileName?: string;
+  }) {
+    return this.request<{ answer: string }>("/ai/chat", {
+      method: "POST",
+      body: data,
     });
   }
 
+  async getCommunityPosts(params?: { category?: string; status?: string }) {
+    const query = new URLSearchParams();
+    if (params?.category && params.category !== "all")
+      query.set("category", params.category);
+    if (params?.status && params.status !== "all")
+      query.set("status", params.status);
+
+    const queryString = query.toString();
+    return this.request<CommunityPost[]>(
+      `/community${queryString ? `?${queryString}` : ""}`,
+      {
+        requireAuth: true,
+      },
+    );
+  }
+
   async getCommunityPost(id: string) {
-    return this.request<CommunityPost>(`/community/${id}`, { requireAuth: true });
+    return this.request<CommunityPost>(`/community/${id}`, {
+      requireAuth: true,
+    });
   }
 
   async createCommunityPost(data: CreatePostData) {
@@ -397,7 +458,10 @@ class ApiClient {
     });
   }
 
-  async updatePostStatus(postId: string, status: 'open' | 'answered' | 'solved') {
+  async updatePostStatus(
+    postId: string,
+    status: "open" | "answered" | "solved",
+  ) {
     return this.request<{ success: boolean }>(`/community/${postId}/status`, {
       method: "PUT",
       body: { status },
@@ -411,7 +475,11 @@ class ApiClient {
     });
   }
 
-  async addPostComment(postId: string, content: string, linkedVideoId?: string) {
+  async addPostComment(
+    postId: string,
+    content: string,
+    linkedVideoId?: string,
+  ) {
     return this.request<CommunityComment>(`/community/${postId}/comments`, {
       method: "POST",
       body: { content, linkedVideoId },
@@ -420,10 +488,13 @@ class ApiClient {
   }
 
   async markCommentAsSolution(postId: string, commentId: string) {
-    return this.request<{ success: boolean }>(`/community/${postId}/comments/${commentId}/solution`, {
-      method: "PUT",
-      requireAuth: true,
-    });
+    return this.request<{ success: boolean }>(
+      `/community/${postId}/comments/${commentId}/solution`,
+      {
+        method: "PUT",
+        requireAuth: true,
+      },
+    );
   }
 }
 
@@ -535,7 +606,7 @@ export interface CommunityPost {
   description: string;
   category: string;
   imageUrl?: string;
-  status: 'open' | 'answered' | 'solved';
+  status: "open" | "answered" | "solved";
   commentsCount: number;
   authorId: string;
   authorName: string;
