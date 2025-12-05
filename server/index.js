@@ -1,3 +1,35 @@
+/**
+ * QuickFix Backend Server
+ * =======================
+ * 
+ * HOW TO RUN:
+ *   node server/index.js
+ * 
+ * The server runs on port 3001 by default (configurable via BACKEND_PORT env var).
+ * It connects to the PostgreSQL database using DATABASE_URL environment variable.
+ * 
+ * MAIN ENDPOINTS:
+ * 
+ *   GET /api/health
+ *     - Returns { status: "ok", timestamp: "..." } if server is running
+ *     - Use this to check if the backend is available
+ * 
+ *   POST /api/ai/chat
+ *     - Main AI chat endpoint
+ *     - Body: { messages: [{role, content}...], language?, imageBase64?, videoFileName? }
+ *     - Uses GPT-4o for image analysis, GPT-4o-mini for text-only
+ *     - Returns: { answer: "..." }
+ * 
+ *   Other endpoints: /api/auth/*, /api/videos/*, /api/users/*, /api/toolbox/*,
+ *                    /api/notifications/*, /api/community/*
+ * 
+ * ENVIRONMENT VARIABLES:
+ *   - DATABASE_URL: PostgreSQL connection string (required)
+ *   - OPENAI_API_KEY: OpenAI API key for AI features (optional but required for AI)
+ *   - SESSION_SECRET: JWT secret for authentication
+ *   - BACKEND_PORT: Server port (default: 3001)
+ */
+
 const express = require('express');
 const cors = require('cors');
 const path = require('path');

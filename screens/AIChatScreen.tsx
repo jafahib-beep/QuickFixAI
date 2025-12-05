@@ -47,8 +47,28 @@ export default function AIChatScreen() {
   const [selectedImage, setSelectedImage] = useState<{ uri: string; base64: string } | null>(null);
   const [selectedVideo, setSelectedVideo] = useState<{ uri: string; name: string } | null>(null);
   const [isOffline, setIsOffline] = useState(false);
+  const [isCheckingHealth, setIsCheckingHealth] = useState(true);
 
   const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+  const checkHealth = useCallback(async () => {
+    try {
+      const healthy = await api.checkAIServiceHealth();
+      console.log("[AIChatScreen] Health check result:", healthy);
+      setIsOffline(!healthy);
+      return healthy;
+    } catch (error) {
+      console.log("[AIChatScreen] Health check error:", error);
+      setIsOffline(true);
+      return false;
+    } finally {
+      setIsCheckingHealth(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    checkHealth();
+  }, [checkHealth]);
 
   const scrollToBottom = useCallback(() => {
     if (flatListRef.current && messages.length > 0) {
@@ -313,6 +333,8 @@ export default function AIChatScreen() {
   );
 
   const retryConnection = async () => {
+    setIsCheckingHealth(true);
+    await checkHealth();
   };
 
   return (
@@ -334,7 +356,7 @@ export default function AIChatScreen() {
         {isOffline ? (
           <Pressable
             onPress={retryConnection}
-            style={[styles.offlineBanner, { backgroundColor: theme.warning || "#FF9500" }]}
+            style={[styles.offlineBanner, { backgroundColor: "#FF9500" }]}
           >
             <Feather name="wifi-off" size={16} color="#FFFFFF" />
             <ThemedText type="small" style={styles.offlineBannerText}>
