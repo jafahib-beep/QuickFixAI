@@ -51,8 +51,7 @@ const getBaseUrl = () => {
   return "https://quickfix-app.replit.app";
 };
 
-const API_BASE_URL =
-  "https://2185aef7-8c7d-4229-b7af-f871e5ca81dc-00-2tts9ks91qr3q.riker.replit.dev:3001/api";
+const API_BASE_URL = getBaseUrl() + "/api";
 console.log("[API] Full API URL:", API_BASE_URL);
 
 interface ApiOptions {
