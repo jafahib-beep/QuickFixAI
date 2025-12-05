@@ -194,11 +194,11 @@ export default function ProfileScreen() {
             <View style={styles.xpLevelBadge}>
               <Feather name="award" size={18} color={theme.link} />
               <ThemedText type="h3" style={[styles.xpLevelText, { color: theme.link }]}>
-                {t("xp.level")} {user?.level || 1}
+                Level {user?.level || 1}
               </ThemedText>
             </View>
             <ThemedText type="small" style={{ color: theme.textSecondary }}>
-              {user?.xp || 0} / {user?.nextLevelXp || 100} {t("xp.xp")}
+              {user?.xp || 0} / {user?.nextLevelXp || 100} XP
             </ThemedText>
           </View>
           <View style={[styles.xpProgressBar, { backgroundColor: theme.border }]}>
@@ -213,7 +213,7 @@ export default function ProfileScreen() {
             />
           </View>
           <ThemedText type="small" style={[styles.xpHint, { color: theme.textSecondary }]}>
-            {((user?.nextLevelXp || 100) - (user?.xp || 0))} {t("xp.toNextLevel")}
+            {((user?.nextLevelXp || 100) - (user?.xp || 0))} XP to next level
           </ThemedText>
         </View>
 

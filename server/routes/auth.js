@@ -167,11 +167,14 @@ router.put('/me', authMiddleware, async (req, res) => {
            expertise_categories = COALESCE($4, expertise_categories),
            updated_at = NOW()
        WHERE id = $5
-       RETURNING id, email, display_name, bio, avatar_url, expertise_categories, followers_count, following_count`,
+       RETURNING id, email, display_name, bio, avatar_url, expertise_categories, followers_count, following_count, xp, level`,
       [displayName, bio, avatarUrl, expertiseCategories, req.userId]
     );
     
     const user = result.rows[0];
+    const xp = user.xp || 0;
+    const level = user.level || 1;
+    
     res.json({
       id: user.id,
       email: user.email,
@@ -180,7 +183,11 @@ router.put('/me', authMiddleware, async (req, res) => {
       avatarUrl: user.avatar_url,
       expertiseCategories: user.expertise_categories,
       followersCount: user.followers_count,
-      followingCount: user.following_count
+      followingCount: user.following_count,
+      xp,
+      level,
+      nextLevelXp: getNextLevelXp(level),
+      currentLevelXp: getCurrentLevelXp(level)
     });
   } catch (error) {
     console.error('Update user error:', error);
