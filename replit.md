@@ -5,8 +5,28 @@ QuickFix is a mobile-first video troubleshooting app for 30-60 second fix-it vid
 
 ## Current State
 - **Frontend**: Complete MVP with all screens, multi-language support (English, Swedish, Arabic with RTL, German, French, Russian), and all core features
-- **Backend**: Express server with PostgreSQL database (requires separate deployment for production)
+- **Backend**: Express server with PostgreSQL database (requires production deployment - Reserved VM)
 - **Mode**: Frontend operates in offline-first mode with local storage fallback when backend is unavailable
+- **AI Chat**: Fully implemented with graceful service unavailability fallback; requires backend deployment to function
+
+## Backend Deployment Requirements
+
+The Express backend (`server/index.js`) requires persistent hosting to function. In Replit's Expo development environment, the backend cannot run alongside the Expo frontend due to environment constraints.
+
+### Development Mode (Frontend Only)
+- Run `npm run dev` to start the Expo frontend
+- AI Chat shows a "Coming Soon" message with navigation to alternative features (videos, community)
+- Videos, Community, and other features work with sample data fallback
+
+### Production Deployment (Full Stack)
+To enable AI Chat and full backend functionality:
+1. **Reserved VM Deployment**: Deploy the backend to a Replit Reserved VM
+2. **Environment Variables Required**:
+   - `DATABASE_URL` - PostgreSQL connection string
+   - `SESSION_SECRET` - JWT secret for authentication
+   - `OPENAI_API_KEY` - Required for AI chat, tag suggestions, description generation, visual guides
+3. **Update API URL**: Configure `utils/api.ts` with production backend URL
+4. **Health Check**: Backend exposes `/api/health` for service availability detection
 
 ## Project Structure
 
@@ -110,6 +130,12 @@ Backend requires DATABASE_URL environment variable.
 - OPENAI_API_KEY - For AI features (optional)
 
 ## Recent Changes (Dec 2024)
+- **AI Chat Service Availability**: Added graceful handling when backend is unavailable
+  - Service health check on AIChatScreen mount
+  - "Coming Soon" fallback screen with helpful alternatives
+  - Navigation buttons to browse videos or ask community
+  - Retry connection button
+  - All 6 languages supported for fallback messages
 - **AI Chat Interface**: Replaced Search screen with full-featured AI chat interface (AIChatScreen)
   - Real-time chat UI with scrollable message list (user and AI messages)
   - Text input with send button and attachment buttons

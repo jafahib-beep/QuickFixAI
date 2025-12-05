@@ -199,7 +199,13 @@
     "errorMessage": "Något gick fel. Försök igen.",
     "permissionRequired": "Behörighet krävs",
     "photoLibraryPermission": "Tillåt åtkomst till ditt fotobibliotek för att välja bilder.",
-    "cameraPermission": "Tillåt kameraåtkomst för att ta foton."
+    "cameraPermission": "Tillåt kameraåtkomst för att ta foton.",
+    "serviceUnavailableTitle": "AI-chatt kommer snart",
+    "serviceUnavailableMessage": "AI-assistenten håller på att konfigureras. Under tiden, utforska vårt videobibliotek eller be communityn om hjälp!",
+    "browseVideos": "Bläddra videor",
+    "askCommunity": "Fråga community",
+    "checkingService": "Ansluter till AI-tjänst...",
+    "retryConnection": "Försök igen"
   },
   "errors": {
     "networkError": "Nätverksfel. Kontrollera din anslutning.",

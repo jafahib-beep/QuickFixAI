@@ -199,7 +199,13 @@
     "errorMessage": "Quelque chose s'est mal passé. Veuillez réessayer.",
     "permissionRequired": "Autorisation requise",
     "photoLibraryPermission": "Veuillez autoriser l'accès à votre photothèque pour sélectionner des images.",
-    "cameraPermission": "Veuillez autoriser l'accès à la caméra pour prendre des photos."
+    "cameraPermission": "Veuillez autoriser l'accès à la caméra pour prendre des photos.",
+    "serviceUnavailableTitle": "Chat AI bientôt disponible",
+    "serviceUnavailableMessage": "L'assistant AI est en cours de configuration. En attendant, parcourez notre bibliothèque de vidéos ou demandez de l'aide à la communauté !",
+    "browseVideos": "Parcourir les vidéos",
+    "askCommunity": "Demander à la communauté",
+    "checkingService": "Connexion au service AI...",
+    "retryConnection": "Réessayer la connexion"
   },
   "errors": {
     "networkError": "Erreur réseau. Veuillez vérifier votre connexion.",

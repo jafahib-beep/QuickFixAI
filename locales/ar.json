@@ -199,7 +199,13 @@
     "errorMessage": "حدث خطأ ما. يرجى المحاولة مرة أخرى.",
     "permissionRequired": "الإذن مطلوب",
     "photoLibraryPermission": "يرجى السماح بالوصول إلى مكتبة الصور لاختيار الصور.",
-    "cameraPermission": "يرجى السماح بالوصول إلى الكاميرا لالتقاط الصور."
+    "cameraPermission": "يرجى السماح بالوصول إلى الكاميرا لالتقاط الصور.",
+    "serviceUnavailableTitle": "محادثة AI قريباً",
+    "serviceUnavailableMessage": "يتم إعداد مساعد AI حالياً. في غضون ذلك، تصفح مكتبة الفيديو أو اطلب المساعدة من المجتمع!",
+    "browseVideos": "تصفح الفيديوهات",
+    "askCommunity": "اسأل المجتمع",
+    "checkingService": "جاري الاتصال بخدمة AI...",
+    "retryConnection": "أعد المحاولة"
   },
   "errors": {
     "networkError": "خطأ في الشبكة. يرجى التحقق من اتصالك.",

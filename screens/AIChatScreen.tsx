@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
+import { useNavigation } from "@react-navigation/native";
 import { useTranslation } from "react-i18next";
 import { Feather } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
@@ -38,6 +39,7 @@ export default function AIChatScreen() {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const tabBarHeight = useBottomTabBarHeight();
+  const navigation = useNavigation<any>();
   const language = i18n.language;
   const flatListRef = useRef<FlatList>(null);
 
@@ -46,8 +48,19 @@ export default function AIChatScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedImage, setSelectedImage] = useState<{ uri: string; base64: string } | null>(null);
   const [selectedVideo, setSelectedVideo] = useState<{ uri: string; name: string } | null>(null);
+  const [serviceStatus, setServiceStatus] = useState<"checking" | "available" | "unavailable">("checking");
 
   const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+  useEffect(() => {
+    checkServiceAvailability();
+  }, []);
+
+  const checkServiceAvailability = async () => {
+    setServiceStatus("checking");
+    const isAvailable = await api.checkAIServiceHealth();
+    setServiceStatus(isAvailable ? "available" : "unavailable");
+  };
 
   const scrollToBottom = useCallback(() => {
     if (flatListRef.current && messages.length > 0) {
@@ -290,6 +303,96 @@ export default function AIChatScreen() {
       </View>
     </View>
   );
+
+  const renderServiceUnavailable = () => (
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      <View style={[styles.header, { paddingTop: Spacing.sm }]}>
+        <View style={[styles.headerIcon, { backgroundColor: theme.link }]}>
+          <Feather name="cpu" size={20} color="#FFFFFF" />
+        </View>
+        <ThemedText type="h3" style={{ color: theme.text }}>
+          {t("chat.title")}
+        </ThemedText>
+      </View>
+      <View style={styles.unavailableContainer}>
+        <View style={[styles.unavailableIcon, { backgroundColor: theme.backgroundSecondary }]}>
+          <Feather name="cloud-off" size={48} color={theme.textSecondary} />
+        </View>
+        <ThemedText type="h3" style={[styles.unavailableTitle, { color: theme.text }]}>
+          {t("chat.serviceUnavailableTitle")}
+        </ThemedText>
+        <ThemedText type="body" style={[styles.unavailableMessage, { color: theme.textSecondary }]}>
+          {t("chat.serviceUnavailableMessage")}
+        </ThemedText>
+        <View style={styles.unavailableActions}>
+          <Pressable
+            onPress={() => navigation.navigate("HomeTab")}
+            style={({ pressed }) => [
+              styles.unavailableButton,
+              { backgroundColor: theme.link, opacity: pressed ? 0.8 : 1 },
+            ]}
+          >
+            <Feather name="play" size={18} color="#FFFFFF" />
+            <ThemedText type="body" style={styles.unavailableButtonText}>
+              {t("chat.browseVideos")}
+            </ThemedText>
+          </Pressable>
+          <Pressable
+            onPress={() => navigation.navigate("CommunityTab")}
+            style={({ pressed }) => [
+              styles.unavailableButton,
+              styles.unavailableButtonSecondary,
+              { backgroundColor: theme.backgroundSecondary, opacity: pressed ? 0.8 : 1 },
+            ]}
+          >
+            <Feather name="users" size={18} color={theme.text} />
+            <ThemedText type="body" style={[styles.unavailableButtonText, { color: theme.text }]}>
+              {t("chat.askCommunity")}
+            </ThemedText>
+          </Pressable>
+        </View>
+        <Pressable
+          onPress={checkServiceAvailability}
+          style={({ pressed }) => [
+            styles.retryButton,
+            { opacity: pressed ? 0.7 : 1 },
+          ]}
+        >
+          <Feather name="refresh-cw" size={16} color={theme.link} />
+          <ThemedText type="small" style={{ color: theme.link, marginLeft: Spacing.xs }}>
+            {t("chat.retryConnection")}
+          </ThemedText>
+        </Pressable>
+      </View>
+    </View>
+  );
+
+  const renderCheckingService = () => (
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      <View style={[styles.header, { paddingTop: Spacing.sm }]}>
+        <View style={[styles.headerIcon, { backgroundColor: theme.link }]}>
+          <Feather name="cpu" size={20} color="#FFFFFF" />
+        </View>
+        <ThemedText type="h3" style={{ color: theme.text }}>
+          {t("chat.title")}
+        </ThemedText>
+      </View>
+      <View style={styles.checkingContainer}>
+        <ActivityIndicator size="large" color={theme.link} />
+        <ThemedText type="body" style={{ color: theme.textSecondary, marginTop: Spacing.lg }}>
+          {t("chat.checkingService")}
+        </ThemedText>
+      </View>
+    </View>
+  );
+
+  if (serviceStatus === "checking") {
+    return <ThemedView style={styles.container}>{renderCheckingService()}</ThemedView>;
+  }
+
+  if (serviceStatus === "unavailable") {
+    return <ThemedView style={styles.container}>{renderServiceUnavailable()}</ThemedView>;
+  }
 
   return (
     <ThemedView style={styles.container}>
@@ -610,6 +713,62 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  unavailableContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: Spacing.xl,
+  },
+  unavailableIcon: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: Spacing.xl,
+  },
+  unavailableTitle: {
+    textAlign: "center",
+    marginBottom: Spacing.md,
+  },
+  unavailableMessage: {
+    textAlign: "center",
+    marginBottom: Spacing.xl,
+    lineHeight: 22,
+  },
+  unavailableActions: {
+    width: "100%",
+    marginBottom: Spacing.lg,
+  },
+  unavailableButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.xl,
+    borderRadius: BorderRadius.lg,
+    marginBottom: Spacing.sm,
+  },
+  unavailableButtonSecondary: {
+    borderWidth: 1,
+    borderColor: "transparent",
+  },
+  unavailableButtonText: {
+    color: "#FFFFFF",
+    marginLeft: Spacing.sm,
+    fontWeight: "600",
+  },
+  retryButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+  },
+  checkingContainer: {
+    flex: 1,
     justifyContent: "center",
     alignItems: "center",
   },

@@ -199,7 +199,13 @@
     "errorMessage": "Etwas ist schief gelaufen. Bitte versuchen Sie es erneut.",
     "permissionRequired": "Berechtigung erforderlich",
     "photoLibraryPermission": "Bitte erlauben Sie den Zugriff auf Ihre Fotobibliothek um Bilder auszuwählen.",
-    "cameraPermission": "Bitte erlauben Sie den Kamerazugriff um Fotos aufzunehmen."
+    "cameraPermission": "Bitte erlauben Sie den Kamerazugriff um Fotos aufzunehmen.",
+    "serviceUnavailableTitle": "AI-Chat kommt bald",
+    "serviceUnavailableMessage": "Der AI-Assistent wird gerade eingerichtet. In der Zwischenzeit, durchsuchen Sie unsere Videobibliothek oder bitten Sie die Community um Hilfe!",
+    "browseVideos": "Videos durchsuchen",
+    "askCommunity": "Community fragen",
+    "checkingService": "Verbindung zum AI-Dienst...",
+    "retryConnection": "Erneut versuchen"
   },
   "errors": {
     "networkError": "Netzwerkfehler. Bitte überprüfen Sie Ihre Verbindung.",

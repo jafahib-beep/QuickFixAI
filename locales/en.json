@@ -199,7 +199,13 @@
     "errorMessage": "Something went wrong. Please try again.",
     "permissionRequired": "Permission Required",
     "photoLibraryPermission": "Please allow access to your photo library to select images.",
-    "cameraPermission": "Please allow camera access to take photos."
+    "cameraPermission": "Please allow camera access to take photos.",
+    "serviceUnavailableTitle": "AI Chat Coming Soon",
+    "serviceUnavailableMessage": "The AI assistant is currently being set up. In the meantime, try browsing our video library or asking the community for help!",
+    "browseVideos": "Browse Videos",
+    "askCommunity": "Ask Community",
+    "checkingService": "Connecting to AI service...",
+    "retryConnection": "Retry Connection"
   },
   "errors": {
     "networkError": "Network error. Please check your connection.",
