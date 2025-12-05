@@ -74,16 +74,27 @@ To enable AI Chat and full backend functionality:
 
 ## Running the App
 
-### Frontend Only (Development)
+### Development (Full Stack)
+Just press the **Run** button or run:
 ```bash
 npm run dev
 ```
-The app runs in offline-first mode using sample data and local storage. When the API is unavailable, the app gracefully falls back to sample data without showing error screens.
+This automatically starts **both**:
+- Express backend server on port 3001
+- Expo frontend on port 8081
 
-### Full Stack (Production)
-1. Start backend: `node server/index.js`
-2. Start frontend: `npm run dev`
-Backend requires DATABASE_URL environment variable.
+The `npm run dev` command runs `start-dev.js` which uses Node's child_process to spawn both servers concurrently.
+
+### Backend Only
+```bash
+node server/index.js
+```
+
+### Frontend Only (Expo)
+```bash
+npx expo start
+```
+When running without the backend, the app operates in offline-first mode using sample data and local storage.
 
 ### Mobile Testing (Expo Go)
 - Scan QR code from Replit's URL bar menu to test on physical device
