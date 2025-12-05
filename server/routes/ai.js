@@ -81,6 +81,15 @@ Respond in ${languageName}.`;
   }
 });
 
+/**
+ * AI Chat endpoint - Fixed to properly handle:
+ * 1. Text-only messages with conversation history
+ * 2. Image uploads using OpenAI Vision (GPT-4o)
+ * 3. Video context (asks user to describe since we can't process video directly)
+ * 
+ * FIX: Ensured proper message formatting for OpenAI API and added
+ * better error handling with descriptive error messages.
+ */
 router.post('/chat', async (req, res) => {
   try {
     const { messages, language = 'en', imageBase64, videoFileName } = req.body;
@@ -119,13 +128,32 @@ Respond in ${languageName}.`;
 
     for (let i = 0; i < messages.length; i++) {
       const msg = messages[i];
+      if (!msg || !msg.role) continue;
+      
+      let messageContent = '';
+      if (typeof msg.content === 'string') {
+        messageContent = msg.content;
+      } else if (Array.isArray(msg.content)) {
+        messageContent = msg.content
+          .map(c => {
+            if (typeof c === 'string') return c;
+            if (c?.type === 'text' && c?.text) return c.text;
+            if (c?.type === 'output_text' && c?.text) return c.text;
+            return '';
+          })
+          .filter(Boolean)
+          .join(' ');
+      } else if (msg.content && typeof msg.content === 'object') {
+        messageContent = msg.content.text || msg.content.output || JSON.stringify(msg.content);
+      }
+      
       const isLastUserMessage = i === messages.length - 1 && msg.role === 'user';
       
       if (isLastUserMessage && imageBase64) {
         formattedMessages.push({
           role: 'user',
           content: [
-            { type: 'text', text: msg.content || 'What can you see in this image? Please help me fix this problem.' },
+            { type: 'text', text: messageContent || 'What can you see in this image? Please help me fix this problem.' },
             { 
               type: 'image_url', 
               image_url: { 
@@ -136,7 +164,7 @@ Respond in ${languageName}.`;
           ]
         });
       } else if (isLastUserMessage && videoFileName) {
-        const videoMessage = `${msg.content}\n\n[Note: The user has uploaded a video file named "${videoFileName}". Since I cannot watch videos directly, please ask the user to describe what's shown in the video, or suggest they take a screenshot of the key moment showing the problem.]`;
+        const videoMessage = `${messageContent}\n\n[Note: The user has uploaded a video file named "${videoFileName}". Since I cannot watch videos directly, please ask the user to describe what's shown in the video, or suggest they take a screenshot of the key moment showing the problem.]`;
         formattedMessages.push({
           role: msg.role,
           content: videoMessage
@@ -144,10 +172,17 @@ Respond in ${languageName}.`;
       } else {
         formattedMessages.push({
           role: msg.role,
-          content: msg.content
+          content: messageContent
         });
       }
     }
+
+    console.log('[AI Chat] Processing request:', {
+      messageCount: formattedMessages.length,
+      hasImage: !!imageBase64,
+      hasVideo: !!videoFileName,
+      model: imageBase64 ? 'gpt-4o' : 'gpt-4o-mini'
+    });
 
     const completion = await openai.chat.completions.create({
       model: imageBase64 ? 'gpt-4o' : 'gpt-4o-mini',
@@ -156,12 +191,19 @@ Respond in ${languageName}.`;
       max_tokens: 800
     });
     
-    const answer = completion.choices[0].message.content.trim();
+    const answer = completion.choices[0]?.message?.content?.trim();
+    
+    if (!answer) {
+      return res.status(500).json({ error: 'No response from AI' });
+    }
     
     res.json({ answer });
   } catch (error) {
-    console.error('Chat error:', error);
-    res.status(500).json({ error: 'Failed to get AI response' });
+    console.error('Chat error:', error.message || error);
+    const errorMessage = error.message?.includes('API key') 
+      ? 'OpenAI API key is invalid or expired'
+      : 'Failed to get AI response. Please try again.';
+    res.status(500).json({ error: errorMessage });
   }
 });
 

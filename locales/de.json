@@ -205,7 +205,9 @@
     "browseVideos": "Videos durchsuchen",
     "askCommunity": "Community fragen",
     "checkingService": "Verbindung zum AI-Dienst...",
-    "retryConnection": "Erneut versuchen"
+    "retryConnection": "Erneut versuchen",
+    "offlineMessage": "Ich habe gerade Verbindungsprobleme. Bitte überprüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.",
+    "offlineBanner": "Offline - Tippen zum erneut versuchen"
   },
   "errors": {
     "networkError": "Netzwerkfehler. Bitte überprüfen Sie Ihre Verbindung.",

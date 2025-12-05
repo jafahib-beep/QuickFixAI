@@ -205,7 +205,9 @@
     "browseVideos": "Parcourir les vidéos",
     "askCommunity": "Demander à la communauté",
     "checkingService": "Connexion au service AI...",
-    "retryConnection": "Réessayer la connexion"
+    "retryConnection": "Réessayer la connexion",
+    "offlineMessage": "J'ai du mal à me connecter en ce moment. Veuillez vérifier votre connexion internet et réessayer.",
+    "offlineBanner": "Hors ligne - Appuyez pour réessayer"
   },
   "errors": {
     "networkError": "Erreur réseau. Veuillez vérifier votre connexion.",

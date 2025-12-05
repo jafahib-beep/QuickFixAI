@@ -205,7 +205,9 @@
     "browseVideos": "Bläddra videor",
     "askCommunity": "Fråga community",
     "checkingService": "Ansluter till AI-tjänst...",
-    "retryConnection": "Försök igen"
+    "retryConnection": "Försök igen",
+    "offlineMessage": "Jag har problem att ansluta just nu. Kontrollera din internetanslutning och försök igen.",
+    "offlineBanner": "Offline - Tryck för att försöka igen"
   },
   "errors": {
     "networkError": "Nätverksfel. Kontrollera din anslutning.",

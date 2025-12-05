@@ -205,7 +205,9 @@
     "browseVideos": "تصفح الفيديوهات",
     "askCommunity": "اسأل المجتمع",
     "checkingService": "جاري الاتصال بخدمة AI...",
-    "retryConnection": "أعد المحاولة"
+    "retryConnection": "أعد المحاولة",
+    "offlineMessage": "أواجه صعوبة في الاتصال الآن. يرجى التحقق من اتصالك بالإنترنت والمحاولة مرة أخرى.",
+    "offlineBanner": "غير متصل - انقر لإعادة المحاولة"
   },
   "errors": {
     "networkError": "خطأ في الشبكة. يرجى التحقق من اتصالك.",
