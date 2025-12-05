@@ -197,7 +197,7 @@ export default function AIChatScreen() {
       let formattedResponse = "";
       
       if (response.success && response.analysis) {
-        const { summary, possibleIssue, steps, safetyNote } = response.analysis;
+        const { summary, possibleIssue, steps, safetyNote, rawResponse } = response.analysis;
         
         if (summary) {
           formattedResponse += `**${t("chat.whatISee")}:**\n${summary}\n\n`;
@@ -207,15 +207,22 @@ export default function AIChatScreen() {
         }
         if (steps && steps.length > 0) {
           formattedResponse += `**${t("chat.stepsToFix")}:**\n`;
-          steps.forEach((step) => {
-            formattedResponse += `${step.stepNumber}. ${step.text}\n`;
+          steps.forEach((step, index) => {
+            const stepNum = step.stepNumber || (index + 1);
+            formattedResponse += `${stepNum}. ${step.text}\n`;
           });
           formattedResponse += "\n";
         }
         if (safetyNote) {
           formattedResponse += `**${t("chat.safetyNote")}:** ${safetyNote}`;
         }
-      } else {
+        
+        if (!formattedResponse.trim() && rawResponse) {
+          formattedResponse = rawResponse;
+        }
+      }
+      
+      if (!formattedResponse.trim()) {
         formattedResponse = response.analysis?.rawResponse || t("chat.liveAssistError");
       }
 
