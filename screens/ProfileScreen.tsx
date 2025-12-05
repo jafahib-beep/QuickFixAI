@@ -355,9 +355,11 @@ const styles = StyleSheet.create({
   editButton: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
     paddingHorizontal: Spacing["3xl"],
-    paddingVertical: Spacing.md,
-    borderRadius: BorderRadius.md,
+    paddingVertical: Spacing.lg,
+    borderRadius: BorderRadius.lg,
+    minWidth: 180,
   },
   tabsContainer: {
     flexDirection: "row",
@@ -420,30 +422,30 @@ const styles = StyleSheet.create({
   },
   xpSection: {
     width: "100%",
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.lg,
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.xl,
     borderRadius: BorderRadius.lg,
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.xl,
   },
   xpHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.md,
   },
   xpLevelBadge: {
     flexDirection: "row",
     alignItems: "center",
-    gap: Spacing.xs,
+    gap: Spacing.sm,
   },
   xpLevelText: {
     fontWeight: "700",
   },
   xpProgressBar: {
-    height: 8,
+    height: 10,
     borderRadius: BorderRadius.full,
     overflow: "hidden",
-    marginBottom: Spacing.xs,
+    marginBottom: Spacing.sm,
   },
   xpProgressFill: {
     height: "100%",
@@ -451,5 +453,6 @@ const styles = StyleSheet.create({
   },
   xpHint: {
     textAlign: "center",
+    marginTop: Spacing.xs,
   },
 });

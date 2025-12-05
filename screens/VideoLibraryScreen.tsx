@@ -415,21 +415,22 @@ const styles = StyleSheet.create({
   gridContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
-    paddingHorizontal: Spacing.lg,
+    paddingHorizontal: Spacing.xl,
+    gap: Spacing.sm,
   },
   gridItem: {
-    width: "50%",
-    padding: Spacing.xs,
+    width: "48%",
+    marginBottom: Spacing.sm,
   },
   videoCard: {
-    borderRadius: BorderRadius.md,
+    borderRadius: BorderRadius.lg,
     overflow: "hidden",
   },
   thumbnailContainer: {
     position: "relative",
     aspectRatio: 16 / 9,
-    borderTopLeftRadius: BorderRadius.md,
-    borderTopRightRadius: BorderRadius.md,
+    borderTopLeftRadius: BorderRadius.lg,
+    borderTopRightRadius: BorderRadius.lg,
     overflow: "hidden",
   },
   thumbnail: {

@@ -842,20 +842,21 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   resultContainer: {
-    padding: Spacing.lg,
-    gap: Spacing.lg,
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.lg,
+    gap: Spacing["2xl"],
   },
   resultImage: {
     width: "100%",
-    height: 200,
+    height: 220,
     borderRadius: BorderRadius.lg,
   },
   analysisContainer: {
-    gap: Spacing.md,
+    gap: Spacing.lg,
   },
   resultCard: {
     borderRadius: BorderRadius.lg,
-    padding: Spacing.lg,
+    padding: Spacing.xl,
   },
   resultCardHeader: {
     flexDirection: "row",

@@ -1,0 +1,75 @@
+I want to do a final UI polish pass for QuickFix before V1 launch.
+
+Important:
+- Do NOT add new features.
+- Do NOT change core logic, API calls, or navigation structure.
+- Only improve visual layout, spacing, typography, and consistency.
+
+Goals:
+- Make the app look clean, modern, and consistent across all main screens:
+  • Home
+  • AI Chat
+  • LiveAssist (including risk and spare-part cards)
+  • Video Library (list + player)
+  • Profile
+  • Settings
+
+Concrete tasks:
+
+1. Bottom Tab Bar:
+   - Ensure icons are consistent in size and style.
+   - Align labels and use the same font size.
+   - Use a clear active state (e.g. highlighted icon + label).
+   - Order: Home, AI Chat, LiveAssist, Videos, Profile.
+
+2. LiveAssist / Diagnosis UI:
+   - Add consistent padding and margins around cards.
+   - Use the same corner radius and shadow style for all cards.
+   - Ensure sections (What I See, Likely Issue, Steps to Fix, Safety Note, RiskScanner, Spare Parts) have:
+     • Clear headings
+     • Consistent spacing between sections
+   - On the image overlay view, ensure the image has enough padding and does not touch the screen edges.
+
+3. Video Library:
+   - Make video cards a consistent size (thumbnail + text).
+   - Ensure category chips/tabs have consistent styling (padding, radius, active state).
+   - On the video player screen, align title, category, and description with proper spacing.
+
+4. Profile Screen:
+   - Polish the Level/XP card:
+     • Center content nicely
+     • Clear "Level X" label
+     • Progress bar aligned and not too tall
+   - Align “Followers / Following / Uploads” row with equal spacing.
+   - Make “Edit profile” button match the primary button style elsewhere.
+
+5. Typography & Buttons:
+   - Define a small set of font sizes (e.g. title, subtitle, body, caption) and apply them consistently.
+   - Ensure primary buttons (e.g. main actions) share the same style:
+     • Height
+     • Corner radius
+     • Font weight
+   - Ensure secondary buttons (less important actions) use a consistent, lighter style.
+
+6. Multilingual layout:
+   - Quickly verify that the UI still looks correct for:
+     • English (EN)
+     • Swedish (SV)
+     • Arabic (AR, RTL)
+   - For Arabic, make sure text alignment and padding do not break the layout.
+
+7. General spacing:
+   - Add a bit more vertical spacing between major sections on all main screens so nothing feels cramped.
+   - Avoid elements touching screen edges; keep a consistent horizontal margin.
+
+Testing:
+- Run the app in the preview.
+- Navigate through all main screens:
+  • Bottom tabs
+  • LiveAssist results
+  • Video Library
+  • Profile
+  • Settings
+- Verify there are no visual glitches, overlaps, or cut-off text.
+
+Please apply these UI/UX polish changes and show the main components you updated (screens and shared UI components).

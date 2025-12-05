@@ -16,6 +16,9 @@ import { useTheme } from "@/hooks/useTheme";
 import { RootStackParamList } from "./RootNavigator";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
+const TAB_ICON_SIZE = 22;
+const TAB_LABEL_SIZE = 11;
+
 export type MainTabParamList = {
   HomeTab: undefined;
   SearchTab: undefined;
@@ -68,6 +71,17 @@ export default function MainTabNavigator() {
           }),
           borderTopWidth: 0,
           elevation: 0,
+          height: Platform.select({ ios: 88, android: 64 }),
+          paddingBottom: Platform.select({ ios: 28, android: 8 }),
+          paddingTop: 8,
+        },
+        tabBarLabelStyle: {
+          fontSize: TAB_LABEL_SIZE,
+          fontWeight: "500",
+          marginTop: 2,
+        },
+        tabBarIconStyle: {
+          marginBottom: -2,
         },
         tabBarBackground: () =>
           Platform.OS === "ios" ? (
@@ -85,8 +99,8 @@ export default function MainTabNavigator() {
         component={HomeStackNavigator}
         options={{
           title: "Home",
-          tabBarIcon: ({ color, size }) => (
-            <Feather name="home" size={size} color={color} />
+          tabBarIcon: ({ color, focused }) => (
+            <Feather name="home" size={TAB_ICON_SIZE} color={color} />
           ),
         }}
       />
@@ -95,8 +109,8 @@ export default function MainTabNavigator() {
         component={SearchStackNavigator}
         options={{
           title: "AI Chat",
-          tabBarIcon: ({ color, size }) => (
-            <Feather name="message-circle" size={size} color={color} />
+          tabBarIcon: ({ color, focused }) => (
+            <Feather name="message-circle" size={TAB_ICON_SIZE} color={color} />
           ),
         }}
       />
@@ -105,8 +119,8 @@ export default function MainTabNavigator() {
         component={LiveAssistStackNavigator}
         options={{
           title: "LiveAssist",
-          tabBarIcon: ({ color, size }) => (
-            <Feather name="zap" size={size} color={color} />
+          tabBarIcon: ({ color, focused }) => (
+            <Feather name="zap" size={TAB_ICON_SIZE} color={color} />
           ),
         }}
       />
@@ -116,6 +130,7 @@ export default function MainTabNavigator() {
         options={{
           title: "",
           tabBarIcon: () => <UploadButton />,
+          tabBarLabel: () => null,
         }}
         listeners={{
           tabPress: (e) => {
@@ -128,8 +143,8 @@ export default function MainTabNavigator() {
         component={CommunityStackNavigator}
         options={{
           title: "Community",
-          tabBarIcon: ({ color, size }) => (
-            <Feather name="users" size={size} color={color} />
+          tabBarIcon: ({ color, focused }) => (
+            <Feather name="users" size={TAB_ICON_SIZE} color={color} />
           ),
         }}
       />
@@ -138,8 +153,8 @@ export default function MainTabNavigator() {
         component={ToolboxStackNavigator}
         options={{
           title: "Toolbox",
-          tabBarIcon: ({ color, size }) => (
-            <Feather name="bookmark" size={size} color={color} />
+          tabBarIcon: ({ color, focused }) => (
+            <Feather name="bookmark" size={TAB_ICON_SIZE} color={color} />
           ),
         }}
       />
@@ -148,8 +163,8 @@ export default function MainTabNavigator() {
         component={ProfileStackNavigator}
         options={{
           title: "Profile",
-          tabBarIcon: ({ color, size }) => (
-            <Feather name="user" size={size} color={color} />
+          tabBarIcon: ({ color, focused }) => (
+            <Feather name="user" size={TAB_ICON_SIZE} color={color} />
           ),
         }}
       />
