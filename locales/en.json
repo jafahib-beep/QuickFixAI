@@ -227,6 +227,16 @@
     "message": "Something unexpected happened. Let's get you back on track.",
     "button": "Restart QuickFix"
   },
+  "liveAssist": {
+    "title": "LiveAssist",
+    "subtitle": "Take a photo of any problem and get instant AI-powered diagnosis with step-by-step repair instructions.",
+    "takePhoto": "Take a Photo",
+    "chooseFromGallery": "Choose from Gallery",
+    "feature1": "Instant visual analysis",
+    "feature2": "Step-by-step repair guide",
+    "feature3": "Safety recommendations included",
+    "newScan": "Scan Another Problem"
+  },
   "community": {
     "title": "Community",
     "askCommunity": "Ask the Community",

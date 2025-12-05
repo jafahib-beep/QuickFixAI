@@ -227,6 +227,16 @@
     "message": "Etwas Unerwartetes ist passiert. Lassen Sie uns Sie wieder auf Kurs bringen.",
     "button": "QuickFix neu starten"
   },
+  "liveAssist": {
+    "title": "LiveAssist",
+    "subtitle": "Machen Sie ein Foto von jedem Problem und erhalten Sie eine sofortige KI-gestützte Diagnose mit Schritt-für-Schritt Reparaturanleitung.",
+    "takePhoto": "Foto aufnehmen",
+    "chooseFromGallery": "Aus Galerie wählen",
+    "feature1": "Sofortige visuelle Analyse",
+    "feature2": "Schritt-für-Schritt Reparaturanleitung",
+    "feature3": "Sicherheitsempfehlungen inklusive",
+    "newScan": "Weiteres Problem scannen"
+  },
   "community": {
     "title": "Community",
     "askCommunity": "Frag die Community",

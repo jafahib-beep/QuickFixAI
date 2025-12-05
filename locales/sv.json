@@ -227,6 +227,16 @@
     "message": "Något oväntat hände. Låt oss få dig tillbaka på rätt spår.",
     "button": "Starta om QuickFix"
   },
+  "liveAssist": {
+    "title": "LiveAssist",
+    "subtitle": "Ta ett foto av något problem och få omedelbar AI-driven diagnos med steg-för-steg reparationsinstruktioner.",
+    "takePhoto": "Ta ett foto",
+    "chooseFromGallery": "Välj från galleri",
+    "feature1": "Omedelbar visuell analys",
+    "feature2": "Steg-för-steg reparationsguide",
+    "feature3": "Säkerhetsrekommendationer inkluderade",
+    "newScan": "Skanna ett annat problem"
+  },
   "community": {
     "title": "Community",
     "askCommunity": "Fråga communityn",

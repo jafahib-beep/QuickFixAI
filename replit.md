@@ -144,14 +144,20 @@ When running without the backend, the app operates in offline-first mode using s
 - OPENAI_API_KEY - For AI features (optional)
 
 ## Recent Changes (Dec 2024)
-- **LiveAssist AI v1**: New instant photo analysis feature for visual troubleshooting
-  - Prominent blue "LiveAssist" button with lightning bolt icon in AI Chat screen
+- **LiveAssist Dedicated Tab**: Promoted LiveAssist to its own main tab in bottom navigation
+  - New "LiveAssist" tab with lightning bolt icon between AI Chat and Upload
+  - Dedicated LiveAssistScreen with prominent camera and gallery buttons
+  - Welcome screen with feature bullets explaining AI-powered visual diagnosis
+  - Structured result display with cards for: What I See, Likely Issue, Steps to Fix, Safety Note
+  - "Scan Another Problem" button to reset and take new photo
+  - Full i18n support with liveAssist.* translations in all 6 languages
+  - Files: screens/LiveAssistScreen.tsx, navigation/LiveAssistStackNavigator.tsx
+- **LiveAssist in AI Chat**: LiveAssist button also remains accessible in AI Chat screen
+  - Prominent blue "LiveAssist" button with lightning bolt icon in AI Chat input area
   - Tap button → camera opens → photo sent to GPT-4o vision → AI returns structured diagnosis
   - Backend POST /api/ai/liveassist with structured response format
   - Response includes: summary (what AI sees), possible issue, numbered steps to fix, safety note
-  - Full i18n support with translations in all 6 languages
   - Loading state with "Analyzing your photo..." indicator
-  - Positioned separately from standard attachment buttons for easy access
 - **Smart Question Flow**: AI chat now behaves like a real technician
   - AI asks 1-2 targeted follow-up questions before giving solutions
   - Questions help diagnose the exact problem (location, symptoms, faucet type, tools available)
@@ -216,7 +222,7 @@ When running without the backend, the app operates in offline-first mode using s
   - CommunityContext with sample data fallback pattern like VideosContext
   - Backend API routes for posts, comments, and solution marking
   - Full i18n support with 30+ new translation keys across all 6 languages
-  - 6-tab bottom navigation: Home, Search, Upload (FAB), Community, Toolbox, Profile
+  - 7-tab bottom navigation: Home, AI Chat, LiveAssist, Upload (FAB), Community, Toolbox, Profile
 
 ## Design Guidelines
 - Modern dark theme with blue accent (#0A84FF) - respects system color scheme
@@ -224,6 +230,6 @@ When running without the backend, the app operates in offline-first mode using s
 - Feather icons from @expo/vector-icons
 - Dark backgrounds (#0D0D0D root, #1A1A1A cards, #252525 secondary)
 - Polished UI with refined shadows, modern card designs, and pill-shaped chips
-- 6-tab bottom navigation with center FAB for upload (Home, Search, Upload, Community, Toolbox, Profile)
+- 7-tab bottom navigation with center FAB for upload (Home, AI Chat, LiveAssist, Upload, Community, Toolbox, Profile)
 - Safe area insets handled by helper components
 - See design_guidelines.md for complete style guide

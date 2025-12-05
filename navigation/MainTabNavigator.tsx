@@ -8,6 +8,7 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
 import HomeStackNavigator from "./HomeStackNavigator";
 import SearchStackNavigator from "./SearchStackNavigator";
+import LiveAssistStackNavigator from "./LiveAssistStackNavigator";
 import CommunityStackNavigator from "./CommunityStackNavigator";
 import ToolboxStackNavigator from "./ToolboxStackNavigator";
 import ProfileStackNavigator from "./ProfileStackNavigator";
@@ -18,6 +19,7 @@ import { Spacing, BorderRadius } from "@/constants/theme";
 export type MainTabParamList = {
   HomeTab: undefined;
   SearchTab: undefined;
+  LiveAssistTab: undefined;
   UploadTab: undefined;
   CommunityTab: undefined;
   ToolboxTab: undefined;
@@ -95,6 +97,16 @@ export default function MainTabNavigator() {
           title: "AI Chat",
           tabBarIcon: ({ color, size }) => (
             <Feather name="message-circle" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="LiveAssistTab"
+        component={LiveAssistStackNavigator}
+        options={{
+          title: "LiveAssist",
+          tabBarIcon: ({ color, size }) => (
+            <Feather name="zap" size={size} color={color} />
           ),
         }}
       />

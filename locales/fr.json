@@ -227,6 +227,16 @@
     "message": "Quelque chose d'inattendu s'est produit. Remettons-vous sur la bonne voie.",
     "button": "Redémarrer QuickFix"
   },
+  "liveAssist": {
+    "title": "LiveAssist",
+    "subtitle": "Prenez une photo de n'importe quel problème et obtenez un diagnostic instantané par IA avec des instructions de réparation étape par étape.",
+    "takePhoto": "Prendre une photo",
+    "chooseFromGallery": "Choisir dans la galerie",
+    "feature1": "Analyse visuelle instantanée",
+    "feature2": "Guide de réparation étape par étape",
+    "feature3": "Recommandations de sécurité incluses",
+    "newScan": "Scanner un autre problème"
+  },
   "community": {
     "title": "Communauté",
     "askCommunity": "Demandez à la communauté",

@@ -1,0 +1,39 @@
+The LiveAssist feature is working inside the AI Chat screen. Now I want to promote LiveAssist to its own main tab in the bottom navigation bar.
+
+Goal:
+- Add a dedicated "LiveAssist" tab in the bottom tab bar, alongside Home, AI Chat, Community, and Profile.
+- When the user taps "LiveAssist":
+  - Show a dedicated LiveAssist screen focused on image-based troubleshooting.
+  - The screen should prominently show a large camera button with text like "Take a photo for instant diagnosis".
+  - When the user takes or selects a photo, reuse the existing LiveAssist flow (the one that sends an image to the backend, calls the vision model, and returns summary + likely issue + steps to fix).
+  - Display the AI’s response in a clean, readable format (like the existing LiveAssist chat response).
+
+Implementation details:
+1. Navigation:
+   - Find the bottom tab navigator (for example MainTabNavigator or similar).
+   - Add a new tab called "LiveAssist" with an appropriate icon (e.g. a lightning bolt or camera).
+   - Route this tab to a new screen component, e.g. LiveAssistScreen.
+
+2. Frontend / LiveAssistScreen:
+   - Create a new LiveAssistScreen component that:
+     - Shows a big "LiveAssist" camera button in the center or near the bottom.
+     - When pressed, opens the camera or image picker.
+     - Sends the image to the existing /api/ai/liveassist endpoint.
+     - Shows a loading state.
+     - Displays the AI’s structured response (What I See, Likely Issue, Steps to Fix, Safety Note) in a scrollable view.
+   - Reuse as much of the existing LiveAssist logic as possible (do not duplicate more than needed).
+
+3. Integration with existing AI Chat:
+   - Do not break the existing AI Chat or its Smart Question Flow.
+   - The LiveAssist tab is a shortcut focused only on image-based diagnosis, but it can still reuse the same backend logic.
+
+4. Localization:
+   - Use the existing localization system so that the "LiveAssist" label, button text, loading text, and section titles are translated in all supported languages.
+
+Please:
+- Explain which files you modify (navigation, screens, components).
+- Show the important code changes.
+- Run the app and verify that:
+  - The LiveAssist tab appears in the bottom navigation.
+  - Tapping it opens the new LiveAssist screen.
+  - Taking a photo triggers the vision analysis and shows the result correctly.
