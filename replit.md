@@ -26,6 +26,12 @@ The frontend is built with Expo/React Native, supporting multi-language (English
     - **LiveAssist**: Dedicated visual troubleshooting with AI-generated step-by-step guides, including risk assessment and visual overlays highlighting problem areas. Promoted to its own main tab.
     - **Content Generation**: AI-powered tag suggestions, description generation, and visual step-by-step guides with DALL-E 3 images.
 - **Community**: A dedicated tab for users to post problems, share images, comment, and mark solutions.
+- **XP System**: Gamification with 5 levels to encourage engagement. Users earn XP for:
+    - AI Chat messages: +5 XP per message
+    - LiveAssist scans: +10 XP per scan
+    - Video watches: +3 XP per video (5-minute cooldown per video to prevent farming)
+    - Level thresholds: L1 (0-99 XP), L2 (100-249 XP), L3 (250-499 XP), L4 (500-999 XP), L5 (1000+ XP)
+    - XP/Level displayed on Profile screen with progress bar
 
 ### System Design Choices
 The project utilizes `start-dev.js` to manage concurrent execution of frontend and backend. `metro.config.js` includes `http-proxy-middleware` for API proxying. `utils/api.ts` handles platform-specific API client configurations. The backend's structure includes `routes`, `middleware`, and `db.js` for database interaction. The database schema includes tables for users, videos, likes, saves, comments, community posts, and notifications. Error handling prioritizes `console.log` for expected API fallbacks to prevent disruptive red overlays in Expo Go. The `expo-video` package is used for video playback.
