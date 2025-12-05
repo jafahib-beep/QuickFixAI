@@ -1,0 +1,50 @@
+The AI Chat UI is working, but the app is stuck in offline mode.
+
+Current behavior:
+- In the AI Chat screen I see an orange banner: "Offline – Tryck för att försöka igen".
+- When I type a message (for example "Min kran droppar"), the chat shows a reply like:
+  "Jag har problem att ansluta just nu. Kontrollera din internetanslutning och försök igen."
+- On my real device it also says something like "Något gick fel, försök igen" when trying to use AI.
+
+Your task:
+Make the AI chat fully functional in this Replit project, using a local backend.
+
+Requirements:
+
+1) Local backend server
+- Implement and/or fix a Node/Express backend inside this project (for example under /server).
+- Make sure the backend starts automatically when I run the project in Replit (no external deployment required).
+- The backend must expose at least:
+  - GET /api/health  -> returns 200 with a simple JSON like { status: "ok" }
+  - POST /api/ai/chat -> handles the AI chat
+
+2) AI chat endpoint
+- /api/ai/chat should:
+  - Accept a JSON body with conversation history (messages array with role + content).
+  - Optionally accept an image from the AI Chat screen (use OpenAI Vision / GPT-4o for images).
+  - Call OpenAI with my existing OPENAI_API_KEY and return the assistant's reply in a format the frontend already expects.
+- Make sure it works for:
+  - Text-only messages
+  - Text + image
+
+3) Health check integration
+- Update the AIChatService health check so that:
+  - It calls the local /api/health endpoint.
+  - If /api/health returns OK, the chat should be in "online" state (no orange offline bar).
+  - Only show the offline banner if the health check really fails.
+
+4) Remove the permanent offline mode
+- Right now the app is stuck in offline-first mode even when I'm running in Replit.
+- Keep the offline fallback logic, but:
+  - When the local backend is running and /api/health is OK, always show the full chat interface and allow sending messages.
+
+5) Testing
+- After your changes, test in the Replit Preview:
+  - Send a simple text message: the AI should respond with a meaningful answer.
+  - Upload an image from the AI Chat screen: the AI should comment on the image.
+- Do NOT change the navigation or hide the AI Chat screen again.
+
+Important:
+- Do not require an external Reserved VM or serverless deployment just to test AI chat.
+- Everything should work in this single Replit project in development mode.
+- Add a short comment in the backend code explaining how to run and how the /api/health and /api/ai/chat endpoints work.
