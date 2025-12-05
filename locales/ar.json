@@ -18,7 +18,31 @@
     "search": "بحث",
     "share": "مشاركة",
     "report": "إبلاغ",
-    "unknown": "مجهول"
+    "unknown": "مجهول",
+    "close": "إغلاق",
+    "confirm": "تأكيد",
+    "optional": "اختياري",
+    "required": "مطلوب"
+  },
+  "tabs": {
+    "home": "الرئيسية",
+    "aiChat": "محادثة AI",
+    "liveAssist": "المساعد المباشر",
+    "upload": "رفع",
+    "community": "المجتمع",
+    "toolbox": "صندوق الأدوات",
+    "profile": "الملف الشخصي"
+  },
+  "xp": {
+    "level": "المستوى",
+    "xp": "نقاط الخبرة",
+    "toNextLevel": "نقاط للمستوى التالي",
+    "levelUp": "ارتقيت مستوى!",
+    "earnedXp": "حصلت على {{amount}} نقطة خبرة",
+    "currentLevel": "المستوى الحالي",
+    "progress": "التقدم",
+    "maxLevel": "وصلت للمستوى الأقصى",
+    "keepGoing": "استمر!"
   },
   "auth": {
     "welcomeBack": "مرحباً بعودتك",
@@ -133,7 +157,9 @@
     "empty": "لا توجد فيديوهات محفوظة بعد",
     "emptyHint": "احفظ الفيديوهات لمشاهدتها لاحقاً",
     "saved": "تم الحفظ",
-    "unsaved": "تمت الإزالة من صندوق الأدوات"
+    "unsaved": "تمت الإزالة من صندوق الأدوات",
+    "guides": "الأدلة",
+    "videos": "الفيديوهات"
   },
   "profile": {
     "title": "الملف الشخصي",
@@ -148,7 +174,8 @@
     "expertise": "الخبرات",
     "changeAvatar": "تغيير الصورة",
     "follow": "متابعة",
-    "unfollow": "إلغاء المتابعة"
+    "unfollow": "إلغاء المتابعة",
+    "settings": "الإعدادات"
   },
   "settings": {
     "title": "الإعدادات",
@@ -215,12 +242,20 @@
     "likelyIssue": "المشكلة المحتملة",
     "stepsToFix": "خطوات الإصلاح",
     "safetyNote": "ملاحظة أمان",
-    "liveAssistError": "تعذر تحليل الصورة. حاول مرة أخرى."
+    "liveAssistError": "تعذر تحليل الصورة. حاول مرة أخرى.",
+    "attachPhoto": "إرفاق صورة",
+    "attachVideo": "إرفاق فيديو",
+    "takePhoto": "التقط صورة",
+    "chooseFromGallery": "اختر من المعرض"
   },
   "errors": {
     "networkError": "خطأ في الشبكة. يرجى التحقق من اتصالك.",
     "somethingWentWrong": "حدث خطأ ما. يرجى المحاولة مرة أخرى.",
-    "sessionExpired": "انتهت صلاحية جلستك. يرجى تسجيل الدخول مرة أخرى."
+    "sessionExpired": "انتهت صلاحية جلستك. يرجى تسجيل الدخول مرة أخرى.",
+    "serverError": "خطأ في الخادم. يرجى المحاولة لاحقاً.",
+    "notFound": "غير موجود",
+    "unauthorized": "وصول غير مصرح به",
+    "forbidden": "تم رفض الوصول"
   },
   "errorFallback": {
     "title": "عذراً! واجه QuickFix مشكلة",
@@ -235,7 +270,10 @@
     "feature1": "تحليل بصري فوري",
     "feature2": "دليل إصلاح خطوة بخطوة",
     "feature3": "توصيات السلامة مضمنة",
-    "newScan": "فحص مشكلة أخرى"
+    "newScan": "فحص مشكلة أخرى",
+    "analyzing": "جاري التحليل...",
+    "analysisComplete": "اكتمل التحليل",
+    "tryAnotherPhoto": "جرب صورة أخرى"
   },
   "riskScanner": {
     "title": "تقييم المخاطر",
@@ -248,7 +286,10 @@
     "highDescription": "يوصى بمختص",
     "identifiedRisks": "المخاطر المحددة",
     "recommendation": "التوصية",
-    "noRisksIdentified": "لم يتم تحديد مخاطر كبيرة"
+    "noRisksIdentified": "لم يتم تحديد مخاطر كبيرة",
+    "safetyFirst": "السلامة أولاً",
+    "proceedWithCaution": "تابع بحذر",
+    "seekProfessionalHelp": "اطلب مساعدة متخصص"
   },
   "spareParts": {
     "title": "قطع الغيار المقترحة",
@@ -256,7 +297,11 @@
     "primary": "أساسي",
     "optional": "اختياري",
     "specs": "المواصفات",
-    "shownOnImage": "موضح في الصورة"
+    "shownOnImage": "موضح في الصورة",
+    "estimatedCost": "التكلفة التقديرية",
+    "whereToFind": "أين تجدها",
+    "alternatives": "البدائل",
+    "partNumber": "رقم القطعة"
   },
   "community": {
     "title": "المجتمع",
@@ -291,6 +336,10 @@
       "open": "مفتوح",
       "answered": "تمت الإجابة",
       "solved": "تم الحل"
-    }
+    },
+    "sortBy": "ترتيب حسب",
+    "newest": "الأحدث",
+    "mostPopular": "الأكثر شعبية",
+    "unanswered": "بدون إجابة"
   }
 }

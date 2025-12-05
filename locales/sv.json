@@ -18,7 +18,31 @@
     "search": "Sök",
     "share": "Dela",
     "report": "Rapportera",
-    "unknown": "Okänd"
+    "unknown": "Okänd",
+    "close": "Stäng",
+    "confirm": "Bekräfta",
+    "optional": "Valfri",
+    "required": "Obligatorisk"
+  },
+  "tabs": {
+    "home": "Hem",
+    "aiChat": "AI-chatt",
+    "liveAssist": "LiveAssist",
+    "upload": "Ladda upp",
+    "community": "Community",
+    "toolbox": "Verktygslåda",
+    "profile": "Profil"
+  },
+  "xp": {
+    "level": "Nivå",
+    "xp": "XP",
+    "toNextLevel": "XP till nästa nivå",
+    "levelUp": "Nivå upp!",
+    "earnedXp": "Du fick {{amount}} XP",
+    "currentLevel": "Nuvarande nivå",
+    "progress": "Framsteg",
+    "maxLevel": "Max nivå uppnådd",
+    "keepGoing": "Fortsätt så!"
   },
   "auth": {
     "welcomeBack": "Välkommen tillbaka",
@@ -133,7 +157,9 @@
     "empty": "Inga sparade videor än",
     "emptyHint": "Spara videor för att titta på dem senare",
     "saved": "Sparad",
-    "unsaved": "Borttagen från verktygslådan"
+    "unsaved": "Borttagen från verktygslådan",
+    "guides": "Guider",
+    "videos": "Videor"
   },
   "profile": {
     "title": "Profil",
@@ -148,7 +174,8 @@
     "expertise": "Expertis",
     "changeAvatar": "Byt foto",
     "follow": "Följ",
-    "unfollow": "Sluta följa"
+    "unfollow": "Sluta följa",
+    "settings": "Inställningar"
   },
   "settings": {
     "title": "Inställningar",
@@ -215,12 +242,20 @@
     "likelyIssue": "Troligt problem",
     "stepsToFix": "Steg för att fixa",
     "safetyNote": "Säkerhetsanmärkning",
-    "liveAssistError": "Kunde inte analysera bilden. Försök igen."
+    "liveAssistError": "Kunde inte analysera bilden. Försök igen.",
+    "attachPhoto": "Bifoga foto",
+    "attachVideo": "Bifoga video",
+    "takePhoto": "Ta foto",
+    "chooseFromGallery": "Välj från galleri"
   },
   "errors": {
     "networkError": "Nätverksfel. Kontrollera din anslutning.",
     "somethingWentWrong": "Något gick fel. Försök igen.",
-    "sessionExpired": "Din session har gått ut. Logga in igen."
+    "sessionExpired": "Din session har gått ut. Logga in igen.",
+    "serverError": "Serverfel. Försök igen senare.",
+    "notFound": "Hittades inte",
+    "unauthorized": "Obehörig åtkomst",
+    "forbidden": "Åtkomst nekad"
   },
   "errorFallback": {
     "title": "Hoppsan! QuickFix stötte på ett problem",
@@ -235,7 +270,10 @@
     "feature1": "Omedelbar visuell analys",
     "feature2": "Steg-för-steg reparationsguide",
     "feature3": "Säkerhetsrekommendationer inkluderade",
-    "newScan": "Skanna ett annat problem"
+    "newScan": "Skanna ett annat problem",
+    "analyzing": "Analyserar...",
+    "analysisComplete": "Analys klar",
+    "tryAnotherPhoto": "Prova ett annat foto"
   },
   "riskScanner": {
     "title": "Riskbedömning",
@@ -248,7 +286,10 @@
     "highDescription": "Professionell rekommenderas",
     "identifiedRisks": "Identifierade risker",
     "recommendation": "Rekommendation",
-    "noRisksIdentified": "Inga betydande risker identifierade"
+    "noRisksIdentified": "Inga betydande risker identifierade",
+    "safetyFirst": "Säkerheten först",
+    "proceedWithCaution": "Fortsätt med försiktighet",
+    "seekProfessionalHelp": "Sök professionell hjälp"
   },
   "spareParts": {
     "title": "Föreslagna reservdelar",
@@ -256,7 +297,11 @@
     "primary": "Primär",
     "optional": "Valfri",
     "specs": "Specifikationer",
-    "shownOnImage": "Visas på bilden"
+    "shownOnImage": "Visas på bild",
+    "estimatedCost": "Uppskattad kostnad",
+    "whereToFind": "Var hittar man",
+    "alternatives": "Alternativ",
+    "partNumber": "Artikelnr"
   },
   "community": {
     "title": "Community",
@@ -291,6 +336,10 @@
       "open": "Öppen",
       "answered": "Besvarad",
       "solved": "Löst"
-    }
+    },
+    "sortBy": "Sortera efter",
+    "newest": "Nyast",
+    "mostPopular": "Mest populära",
+    "unanswered": "Obesvarade"
   }
 }

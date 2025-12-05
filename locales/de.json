@@ -18,7 +18,31 @@
     "search": "Suchen",
     "share": "Teilen",
     "report": "Melden",
-    "unknown": "Unbekannt"
+    "unknown": "Unbekannt",
+    "close": "Schließen",
+    "confirm": "Bestätigen",
+    "optional": "Optional",
+    "required": "Erforderlich"
+  },
+  "tabs": {
+    "home": "Start",
+    "aiChat": "KI-Chat",
+    "liveAssist": "LiveAssist",
+    "upload": "Hochladen",
+    "community": "Community",
+    "toolbox": "Werkzeugkasten",
+    "profile": "Profil"
+  },
+  "xp": {
+    "level": "Stufe",
+    "xp": "XP",
+    "toNextLevel": "XP zur nächsten Stufe",
+    "levelUp": "Aufgestiegen!",
+    "earnedXp": "Du hast {{amount}} XP verdient",
+    "currentLevel": "Aktuelle Stufe",
+    "progress": "Fortschritt",
+    "maxLevel": "Maximalstufe erreicht",
+    "keepGoing": "Weiter so!"
   },
   "auth": {
     "welcomeBack": "Willkommen zurück",
@@ -133,7 +157,9 @@
     "empty": "Noch keine gespeicherten Videos",
     "emptyHint": "Speichern Sie Videos, um sie später anzusehen",
     "saved": "Gespeichert",
-    "unsaved": "Aus Werkzeugkasten entfernt"
+    "unsaved": "Aus Werkzeugkasten entfernt",
+    "guides": "Anleitungen",
+    "videos": "Videos"
   },
   "profile": {
     "title": "Profil",
@@ -148,7 +174,8 @@
     "expertise": "Expertise",
     "changeAvatar": "Foto ändern",
     "follow": "Folgen",
-    "unfollow": "Entfolgen"
+    "unfollow": "Entfolgen",
+    "settings": "Einstellungen"
   },
   "settings": {
     "title": "Einstellungen",
@@ -215,12 +242,20 @@
     "likelyIssue": "Wahrscheinliches Problem",
     "stepsToFix": "Reparaturschritte",
     "safetyNote": "Sicherheitshinweis",
-    "liveAssistError": "Bild konnte nicht analysiert werden. Bitte erneut versuchen."
+    "liveAssistError": "Bild konnte nicht analysiert werden. Bitte erneut versuchen.",
+    "attachPhoto": "Foto anhängen",
+    "attachVideo": "Video anhängen",
+    "takePhoto": "Foto aufnehmen",
+    "chooseFromGallery": "Aus Galerie wählen"
   },
   "errors": {
     "networkError": "Netzwerkfehler. Bitte überprüfen Sie Ihre Verbindung.",
     "somethingWentWrong": "Etwas ist schief gelaufen. Bitte versuchen Sie es erneut.",
-    "sessionExpired": "Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an."
+    "sessionExpired": "Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.",
+    "serverError": "Serverfehler. Bitte versuchen Sie es später erneut.",
+    "notFound": "Nicht gefunden",
+    "unauthorized": "Nicht autorisiert",
+    "forbidden": "Zugriff verweigert"
   },
   "errorFallback": {
     "title": "Hoppla! QuickFix hatte ein Problem",
@@ -235,7 +270,10 @@
     "feature1": "Sofortige visuelle Analyse",
     "feature2": "Schritt-für-Schritt Reparaturanleitung",
     "feature3": "Sicherheitsempfehlungen inklusive",
-    "newScan": "Weiteres Problem scannen"
+    "newScan": "Weiteres Problem scannen",
+    "analyzing": "Analysiert...",
+    "analysisComplete": "Analyse abgeschlossen",
+    "tryAnotherPhoto": "Anderes Foto versuchen"
   },
   "riskScanner": {
     "title": "Risikobewertung",
@@ -248,7 +286,10 @@
     "highDescription": "Fachmann empfohlen",
     "identifiedRisks": "Erkannte Risiken",
     "recommendation": "Empfehlung",
-    "noRisksIdentified": "Keine signifikanten Risiken erkannt"
+    "noRisksIdentified": "Keine signifikanten Risiken erkannt",
+    "safetyFirst": "Sicherheit zuerst",
+    "proceedWithCaution": "Mit Vorsicht fortfahren",
+    "seekProfessionalHelp": "Professionelle Hilfe suchen"
   },
   "spareParts": {
     "title": "Empfohlene Ersatzteile",
@@ -256,7 +297,11 @@
     "primary": "Primär",
     "optional": "Optional",
     "specs": "Spezifikationen",
-    "shownOnImage": "Im Bild angezeigt"
+    "shownOnImage": "Im Bild gezeigt",
+    "estimatedCost": "Geschätzte Kosten",
+    "whereToFind": "Wo zu finden",
+    "alternatives": "Alternativen",
+    "partNumber": "Teilenr."
   },
   "community": {
     "title": "Community",
@@ -291,6 +336,10 @@
       "open": "Offen",
       "answered": "Beantwortet",
       "solved": "Gelöst"
-    }
+    },
+    "sortBy": "Sortieren nach",
+    "newest": "Neueste",
+    "mostPopular": "Beliebteste",
+    "unanswered": "Unbeantwortet"
   }
 }

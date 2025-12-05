@@ -18,7 +18,31 @@
     "search": "Rechercher",
     "share": "Partager",
     "report": "Signaler",
-    "unknown": "Inconnu"
+    "unknown": "Inconnu",
+    "close": "Fermer",
+    "confirm": "Confirmer",
+    "optional": "Facultatif",
+    "required": "Obligatoire"
+  },
+  "tabs": {
+    "home": "Accueil",
+    "aiChat": "Chat IA",
+    "liveAssist": "LiveAssist",
+    "upload": "Télécharger",
+    "community": "Communauté",
+    "toolbox": "Boîte à outils",
+    "profile": "Profil"
+  },
+  "xp": {
+    "level": "Niveau",
+    "xp": "XP",
+    "toNextLevel": "XP pour le prochain niveau",
+    "levelUp": "Niveau supérieur !",
+    "earnedXp": "Vous avez gagné {{amount}} XP",
+    "currentLevel": "Niveau actuel",
+    "progress": "Progression",
+    "maxLevel": "Niveau maximum atteint",
+    "keepGoing": "Continuez !"
   },
   "auth": {
     "welcomeBack": "Bon retour",
@@ -133,7 +157,9 @@
     "empty": "Pas encore de vidéos enregistrées",
     "emptyHint": "Enregistrez des vidéos pour les regarder plus tard",
     "saved": "Enregistré",
-    "unsaved": "Retiré de la boîte à outils"
+    "unsaved": "Retiré de la boîte à outils",
+    "guides": "Guides",
+    "videos": "Vidéos"
   },
   "profile": {
     "title": "Profil",
@@ -148,7 +174,8 @@
     "expertise": "Expertise",
     "changeAvatar": "Changer la photo",
     "follow": "Suivre",
-    "unfollow": "Ne plus suivre"
+    "unfollow": "Ne plus suivre",
+    "settings": "Paramètres"
   },
   "settings": {
     "title": "Paramètres",
@@ -215,12 +242,20 @@
     "likelyIssue": "Problème probable",
     "stepsToFix": "Étapes de réparation",
     "safetyNote": "Note de sécurité",
-    "liveAssistError": "Impossible d'analyser l'image. Veuillez réessayer."
+    "liveAssistError": "Impossible d'analyser l'image. Veuillez réessayer.",
+    "attachPhoto": "Joindre une photo",
+    "attachVideo": "Joindre une vidéo",
+    "takePhoto": "Prendre une photo",
+    "chooseFromGallery": "Choisir dans la galerie"
   },
   "errors": {
     "networkError": "Erreur réseau. Veuillez vérifier votre connexion.",
     "somethingWentWrong": "Quelque chose s'est mal passé. Veuillez réessayer.",
-    "sessionExpired": "Votre session a expiré. Veuillez vous reconnecter."
+    "sessionExpired": "Votre session a expiré. Veuillez vous reconnecter.",
+    "serverError": "Erreur serveur. Veuillez réessayer plus tard.",
+    "notFound": "Non trouvé",
+    "unauthorized": "Accès non autorisé",
+    "forbidden": "Accès refusé"
   },
   "errorFallback": {
     "title": "Oups ! QuickFix a rencontré un problème",
@@ -235,7 +270,10 @@
     "feature1": "Analyse visuelle instantanée",
     "feature2": "Guide de réparation étape par étape",
     "feature3": "Recommandations de sécurité incluses",
-    "newScan": "Scanner un autre problème"
+    "newScan": "Scanner un autre problème",
+    "analyzing": "Analyse en cours...",
+    "analysisComplete": "Analyse terminée",
+    "tryAnotherPhoto": "Essayer une autre photo"
   },
   "riskScanner": {
     "title": "Évaluation des risques",
@@ -248,7 +286,10 @@
     "highDescription": "Professionnel recommandé",
     "identifiedRisks": "Risques identifiés",
     "recommendation": "Recommandation",
-    "noRisksIdentified": "Aucun risque significatif identifié"
+    "noRisksIdentified": "Aucun risque significatif identifié",
+    "safetyFirst": "La sécurité d'abord",
+    "proceedWithCaution": "Procéder avec prudence",
+    "seekProfessionalHelp": "Chercher une aide professionnelle"
   },
   "spareParts": {
     "title": "Pièces de rechange suggérées",
@@ -256,7 +297,11 @@
     "primary": "Principal",
     "optional": "Optionnel",
     "specs": "Spécifications",
-    "shownOnImage": "Affiché sur l'image"
+    "shownOnImage": "Affiché sur l'image",
+    "estimatedCost": "Coût estimé",
+    "whereToFind": "Où trouver",
+    "alternatives": "Alternatives",
+    "partNumber": "Réf."
   },
   "community": {
     "title": "Communauté",
@@ -291,6 +336,10 @@
       "open": "Ouvert",
       "answered": "Répondu",
       "solved": "Résolu"
-    }
+    },
+    "sortBy": "Trier par",
+    "newest": "Plus récent",
+    "mostPopular": "Plus populaire",
+    "unanswered": "Sans réponse"
   }
 }

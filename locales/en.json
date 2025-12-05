@@ -18,7 +18,31 @@
     "search": "Search",
     "share": "Share",
     "report": "Report",
-    "unknown": "Unknown"
+    "unknown": "Unknown",
+    "close": "Close",
+    "confirm": "Confirm",
+    "optional": "Optional",
+    "required": "Required"
+  },
+  "tabs": {
+    "home": "Home",
+    "aiChat": "AI Chat",
+    "liveAssist": "LiveAssist",
+    "upload": "Upload",
+    "community": "Community",
+    "toolbox": "Toolbox",
+    "profile": "Profile"
+  },
+  "xp": {
+    "level": "Level",
+    "xp": "XP",
+    "toNextLevel": "XP to next level",
+    "levelUp": "Level Up!",
+    "earnedXp": "You earned {{amount}} XP",
+    "currentLevel": "Current Level",
+    "progress": "Progress",
+    "maxLevel": "Max Level Reached",
+    "keepGoing": "Keep going!"
   },
   "auth": {
     "welcomeBack": "Welcome back",
@@ -133,7 +157,9 @@
     "empty": "No saved videos yet",
     "emptyHint": "Save videos to watch them later",
     "saved": "Saved",
-    "unsaved": "Removed from Toolbox"
+    "unsaved": "Removed from Toolbox",
+    "guides": "Guides",
+    "videos": "Videos"
   },
   "profile": {
     "title": "Profile",
@@ -148,7 +174,8 @@
     "expertise": "Expertise",
     "changeAvatar": "Change photo",
     "follow": "Follow",
-    "unfollow": "Unfollow"
+    "unfollow": "Unfollow",
+    "settings": "Settings"
   },
   "settings": {
     "title": "Settings",
@@ -215,12 +242,20 @@
     "likelyIssue": "Likely Issue",
     "stepsToFix": "Steps to Fix",
     "safetyNote": "Safety Note",
-    "liveAssistError": "Could not analyze the image. Please try again."
+    "liveAssistError": "Could not analyze the image. Please try again.",
+    "attachPhoto": "Attach Photo",
+    "attachVideo": "Attach Video",
+    "takePhoto": "Take Photo",
+    "chooseFromGallery": "Choose from Gallery"
   },
   "errors": {
     "networkError": "Network error. Please check your connection.",
     "somethingWentWrong": "Something went wrong. Please try again.",
-    "sessionExpired": "Your session has expired. Please log in again."
+    "sessionExpired": "Your session has expired. Please log in again.",
+    "serverError": "Server error. Please try again later.",
+    "notFound": "Not found",
+    "unauthorized": "Unauthorized access",
+    "forbidden": "Access denied"
   },
   "errorFallback": {
     "title": "Oops! QuickFix hit a snag",
@@ -235,7 +270,10 @@
     "feature1": "Instant visual analysis",
     "feature2": "Step-by-step repair guide",
     "feature3": "Safety recommendations included",
-    "newScan": "Scan Another Problem"
+    "newScan": "Scan Another Problem",
+    "analyzing": "Analyzing...",
+    "analysisComplete": "Analysis Complete",
+    "tryAnotherPhoto": "Try Another Photo"
   },
   "riskScanner": {
     "title": "Risk Assessment",
@@ -248,7 +286,10 @@
     "highDescription": "Professional recommended",
     "identifiedRisks": "Identified Risks",
     "recommendation": "Recommendation",
-    "noRisksIdentified": "No significant risks identified"
+    "noRisksIdentified": "No significant risks identified",
+    "safetyFirst": "Safety First",
+    "proceedWithCaution": "Proceed with caution",
+    "seekProfessionalHelp": "Seek professional help"
   },
   "spareParts": {
     "title": "Suggested Spare Parts",
@@ -256,7 +297,11 @@
     "primary": "Primary",
     "optional": "Optional",
     "specs": "Specifications",
-    "shownOnImage": "Shown on image"
+    "shownOnImage": "Shown on image",
+    "estimatedCost": "Estimated cost",
+    "whereToFind": "Where to find",
+    "alternatives": "Alternatives",
+    "partNumber": "Part #"
   },
   "community": {
     "title": "Community",
@@ -291,6 +336,10 @@
       "open": "Open",
       "answered": "Answered",
       "solved": "Solved"
-    }
+    },
+    "sortBy": "Sort by",
+    "newest": "Newest",
+    "mostPopular": "Most Popular",
+    "unanswered": "Unanswered"
   }
 }
