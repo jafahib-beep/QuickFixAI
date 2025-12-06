@@ -175,6 +175,9 @@ const initializeDatabase = async () => {
         IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'level') THEN
           ALTER TABLE users ADD COLUMN level INTEGER DEFAULT 1;
         END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'blocked_user_ids') THEN
+          ALTER TABLE users ADD COLUMN blocked_user_ids UUID[] DEFAULT '{}';
+        END IF;
       END $$;
     `);
     

@@ -1,0 +1,124 @@
+Implement a basic "Block User" system for the QuickFix app, mobile-first.
+
+Important:
+- Do NOT break existing auth, report system, or XP logic.
+- Do NOT touch database initialization or global config more than necessary.
+- Do NOT change core business logic or AI features.
+- Web quirks can be ignored for now; focus on mobile (Expo) experience.
+
+Goals:
+1) A logged-in user can block another user from their profile.
+2) Blocked users' content should be hidden from the blocker (feed, videos, comments if applicable).
+3) Blocked users cannot follow or interact with the blocker anymore.
+4) All UI text must support i18n (EN, SV, AR at minimum).
+
+--- Backend ---
+
+1. Data model:
+   - Extend the User model to include:
+     blockedUserIds: string[]   // list of user IDs that this user has blocked
+
+   Make sure this is optional for existing users (initialize as empty array if missing).
+
+2. Routes:
+
+   Add the following authenticated endpoints:
+
+   POST /api/block
+     - Body: { targetUserId: string }
+     - Behavior:
+       • Get current authenticated user (request user).
+       • If targetUserId is the same as current user, return an error.
+       • If targetUserId is already in blockedUserIds, just return success.
+       • Otherwise, push targetUserId into blockedUserIds for the current user and save.
+       • Return { status: "ok" }.
+
+   POST /api/unblock
+     - Body: { targetUserId: string }
+     - Behavior:
+       • Remove targetUserId from blockedUserIds if present.
+       • Return { status: "ok" }.
+
+   GET /api/blocked
+     - Return the list of blocked user IDs for the current user:
+       { blockedUserIds: string[] }
+
+3. Content filtering:
+
+   Wherever feed / videos / profiles are fetched (e.g. video list, recommendations), apply a filter so that:
+   - If the current user has blocked another user, that blocked user's content is not included in the results.
+   - If feasible, also ensure that blocked users cannot see the blocker’s profile (e.g. by returning a generic “User not available” response when a blocked user tries to access it). Keep this part simple and safe.
+
+   Keep the logic minimal and localized:
+   - Prefer adding a helper like isBlocked(currentUser, targetUserId) and use it in the feed/profile endpoints.
+
+--- Frontend (mobile-first) ---
+
+4. Profile screen integration:
+
+   On the Profile screen for OTHER users (not the logged-in user):
+   - Add a "Block user" action with i18n text:
+     EN: "Block user"
+     SV: "Blockera användare"
+     AR: "حظر المستخدم"
+
+   - If the user is already blocked, show instead:
+     EN: "Unblock user"
+     SV: "Avblockera användare"
+     AR: "إلغاء الحظر"
+
+   - Tapping "Block user":
+     • Show a confirmation dialog (Alert):
+       EN: "Are you sure you want to block this user? You will no longer see their content."
+       SV: "Är du säker på att du vill blockera den här användaren? Du kommer inte längre att se deras innehåll."
+       AR: suitable Arabic translation.
+     • On confirm, call POST /api/block with targetUserId.
+     • On success, update local state so the button changes to "Unblock user".
+     • Optionally show a toast/alert: 
+       EN: "User blocked."
+       SV: "Användaren har blockerats."
+       AR: Arabic translation.
+
+   - Tapping "Unblock user":
+     • Similar flow, but calling POST /api/unblock.
+     • Update state to show "Block user" again.
+
+   Implement this using the existing API client in utils/api.ts so it stays consistent with the rest of the app.
+
+5. UI behavior when user is blocked:
+
+   - On a blocked profile:
+     • Optionally show a short note such as:
+       EN: "You have blocked this user."
+       SV: "Du har blockerat den här användaren."
+       AR: Arabic translation.
+     • You can keep the rest of the profile minimal; main point is that the relationship is clear.
+
+--- i18n ---
+
+6. Add new i18n keys for:
+   - Block user / Unblock user
+   - Confirmation text
+   - Success messages
+   - "You have blocked this user."
+
+   Ensure they are wired into the existing translation system (EN, SV, AR at minimum, others if already used).
+
+--- Testing ---
+
+7. Tests to perform (manually):
+
+   - Log in as User A and open User B’s profile:
+     • Tap "Block user" → confirm.
+     • Check that:
+       - User B’s content no longer appears in A’s feed.
+       - Profile shows that the user is blocked.
+     • Tap "Unblock user" → confirm.
+       - User B’s content can appear again (assuming it matches normal feed rules).
+
+   - Ensure the change does not break:
+     • Existing profile actions.
+     • XP/level display.
+     • Report system.
+
+Please keep the implementation clean, minimal and aligned with the current architecture (Node/Express backend and React Native/Expo frontend). Focus on mobile behavior; web-specific issues can be handled in a later iteration.
