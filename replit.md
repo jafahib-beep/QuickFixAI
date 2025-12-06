@@ -11,6 +11,12 @@ I prefer simple language and detailed explanations. I want iterative development
 ### UI/UX Decisions
 The application features a modern dark theme with a blue accent (#0A84FF), respecting system color schemes. It draws inspiration from iOS 26 Liquid Glass UI styling, utilizing Feather icons. The design incorporates dark backgrounds (#0D0D0D for root, #1A1A1A for cards, #252525 for secondary elements), polished UI with refined shadows, modern card designs, and pill-shaped chips. A 7-tab bottom navigation (Home, AI Chat, LiveAssist, Upload (FAB), Community, Toolbox, Profile) is implemented, with a central Floating Action Button (FAB) for video uploads. Safe area insets are handled by helper components.
 
+**Recent UI Polish (Dec 2024):**
+- Tab bar: Icon size 24px, label size 12px for improved visibility
+- HomeScreen: 4xl (48px) section spacing for visual breathing room
+- ProfileScreen: Centered stats row, polished XP card with 8px progress bar
+- SettingsScreen: New "Legal" section with Community Guidelines, Terms of Service, Privacy Policy; "About" section with version info
+
 ### Technical Implementations
 The frontend is built with Expo/React Native, supporting multi-language (English, Swedish, Arabic with RTL, German, French, Spanish). The backend is an Express server with a PostgreSQL database. Development runs in a full-stack mode where `npm run dev` concurrently starts both the Express server (port 5000) and Expo frontend (port 8081). Metro is configured to proxy `/api/*` requests from the web to the backend. Mobile/Expo Go clients use direct backend URLs. Platform-specific URL handling is managed by `utils/api.ts`. The application features an offline-first mode using sample data and local storage when the backend is unavailable.
 

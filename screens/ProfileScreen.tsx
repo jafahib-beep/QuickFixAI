@@ -342,24 +342,28 @@ const styles = StyleSheet.create({
   statsRow: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
     marginBottom: Spacing.xl,
+    width: "100%",
   },
   stat: {
+    flex: 1,
     alignItems: "center",
-    paddingHorizontal: Spacing["2xl"],
+    paddingVertical: Spacing.sm,
   },
   statDivider: {
     width: 1,
-    height: 36,
+    height: 32,
   },
   editButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: Spacing["3xl"],
-    paddingVertical: Spacing.lg,
-    borderRadius: BorderRadius.lg,
-    minWidth: 180,
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.md,
+    minWidth: 160,
+    height: Spacing.buttonHeight,
   },
   tabsContainer: {
     flexDirection: "row",
@@ -423,15 +427,17 @@ const styles = StyleSheet.create({
   xpSection: {
     width: "100%",
     paddingHorizontal: Spacing.xl,
-    paddingVertical: Spacing.xl,
+    paddingVertical: Spacing.lg,
     borderRadius: BorderRadius.lg,
     marginBottom: Spacing.xl,
+    alignItems: "center",
   },
   xpHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: Spacing.md,
+    width: "100%",
   },
   xpLevelBadge: {
     flexDirection: "row",
@@ -442,10 +448,11 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   xpProgressBar: {
-    height: 10,
+    height: 8,
     borderRadius: BorderRadius.full,
     overflow: "hidden",
     marginBottom: Spacing.sm,
+    width: "100%",
   },
   xpProgressFill: {
     height: "100%",

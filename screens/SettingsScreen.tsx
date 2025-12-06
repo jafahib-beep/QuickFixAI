@@ -201,6 +201,28 @@ export default function SettingsScreen() {
 
       <View style={styles.section}>
         <ThemedText type="caption" style={[styles.sectionTitle, { color: theme.textSecondary }]}>
+          {t("settings.legal", { defaultValue: "LEGAL" }).toUpperCase()}
+        </ThemedText>
+        <View style={[styles.sectionContent, { backgroundColor: theme.cardBackground }]}>
+          {renderSettingRow("book-open", t("settings.communityGuidelines", { defaultValue: "Community Guidelines" }), () => {
+            Alert.alert(
+              t("settings.communityGuidelines", { defaultValue: "Community Guidelines" }), 
+              "Be respectful, no harassment or hate speech, no spam or misleading content, no dangerous advice. Report violations to help keep QuickFix safe."
+            );
+          })}
+          <View style={[styles.divider, { backgroundColor: theme.border }]} />
+          {renderSettingRow("file-text", t("settings.termsOfService"), () => {
+            Alert.alert(t("settings.termsOfService"), "Terms of Service will be displayed here.");
+          })}
+          <View style={[styles.divider, { backgroundColor: theme.border }]} />
+          {renderSettingRow("shield", t("settings.privacyPolicy"), () => {
+            Alert.alert(t("settings.privacyPolicy"), "Privacy Policy will be displayed here.");
+          })}
+        </View>
+      </View>
+
+      <View style={styles.section}>
+        <ThemedText type="caption" style={[styles.sectionTitle, { color: theme.textSecondary }]}>
           {t("settings.about").toUpperCase()}
         </ThemedText>
         <View style={[styles.sectionContent, { backgroundColor: theme.cardBackground }]}>
@@ -212,14 +234,6 @@ export default function SettingsScreen() {
               1.0.0
             </ThemedText>
           )}
-          <View style={[styles.divider, { backgroundColor: theme.border }]} />
-          {renderSettingRow("file-text", t("settings.termsOfService"), () => {
-            Alert.alert(t("settings.termsOfService"), "Terms of Service will be displayed here.");
-          })}
-          <View style={[styles.divider, { backgroundColor: theme.border }]} />
-          {renderSettingRow("shield", t("settings.privacyPolicy"), () => {
-            Alert.alert(t("settings.privacyPolicy"), "Privacy Policy will be displayed here.");
-          })}
         </View>
       </View>
 

@@ -16,8 +16,8 @@ import { useTheme } from "@/hooks/useTheme";
 import { RootStackParamList } from "./RootNavigator";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
-const TAB_ICON_SIZE = 22;
-const TAB_LABEL_SIZE = 11;
+const TAB_ICON_SIZE = 24;
+const TAB_LABEL_SIZE = 12;
 
 export type MainTabParamList = {
   HomeTab: undefined;
@@ -81,7 +81,7 @@ export default function MainTabNavigator() {
           marginTop: 2,
         },
         tabBarIconStyle: {
-          marginBottom: -2,
+          marginBottom: 0,
         },
         tabBarBackground: () =>
           Platform.OS === "ios" ? (

@@ -1,0 +1,89 @@
+I want to do a focused UI cleanup pass for QuickFix, **mobile-first**.
+
+Important:
+- Do NOT change business logic, API calls, or database.
+- Do NOT touch the report system logic (only visual alignment if needed).
+- Web quirks (especially the report button on web) are out of scope for now. Prioritize mobile (Expo) experience.
+- Only adjust layout, spacing, typography, and visual consistency for the mobile app.
+
+Goals:
+- Make the app feel like a polished, production-ready mobile app.
+- Ensure all main screens look clean in English, Swedish, and Arabic (RTL).
+
+Please:
+
+1. Bottom Tab Bar
+   - Ensure icons are consistent in size and alignment.
+   - Labels use the same font size and padding.
+   - The active tab is clearly highlighted (icon + label).
+   - Confirm order: Home, AI Chat, LiveAssist, Videos/Community, Profile.
+
+2. Home / Feed Screen
+   - Check spacing between sections: “Recommended”, “New”, etc.
+   - Ensure video cards have consistent size, padding, and corner radius.
+   - Make sure text (titles, tags, durations) does not feel cramped.
+
+3. LiveAssist Screen
+   - Make the main layout look clean:
+     • Image area with enough padding.
+     • Sections: “What I See”, “Likely Issue”, “Steps to Fix”, “Safety Note”, “Risks”, “Spare Parts”.
+   - Use consistent card styles (radius, shadow, background).
+   - Ensure step numbers are aligned and easy to read.
+
+4. Video Library + Video Player
+   - Make the video cards in the library grid/list visually consistent:
+     • Same thumbnail aspect ratio.
+     • Same padding, radius, spacing.
+   - On the player screen:
+     • Align title, category, and action buttons (like/report).
+     • Make the report button visually consistent but do not change its logic.
+   - Ensure text does not overflow and is truncated nicely if too long.
+
+5. Profile Screen
+   - Polish the Level / XP card:
+     • Center the content.
+     • Clear Level label and XP progress bar.
+     • “XP to next level” text aligned properly.
+   - Align followers / following / uploads row with equal spacing.
+   - Make the “Edit profile” button use the same primary button style as elsewhere.
+
+6. Settings / Legal Screens
+   - Ensure links to:
+     • Community Guidelines
+     • Terms of Use
+     • Privacy Policy
+     are clearly visible, properly spaced and tappable.
+   - Make text blocks readable with proper line spacing and margins.
+
+7. Typography & Buttons
+   - Define and apply a small set of text styles:
+     • Title / Section header
+     • Subtitle
+     • Body text
+     • Caption / meta
+   - Ensure primary buttons (main actions) share the same:
+     • Height
+     • Corner radius
+     • Font weight
+     • Padding
+   - Ensure secondary buttons (less important actions) have a lighter, consistent style.
+
+8. Multi-language & RTL (mobile)
+   - Quickly test the key screens in:
+     • English
+     • Swedish
+     • Arabic (RTL)
+   - Fix any layout issues caused by RTL:
+     • Text alignment
+     • Padding/margins on the left/right
+   - Ensure nothing overlaps or gets cut off when switching languages.
+
+9. General polish
+   - Avoid elements touching screen edges – keep a consistent horizontal margin.
+   - Add a bit more vertical spacing between large sections if needed.
+   - Ensure scrolling works smoothly on all major screens.
+
+After implementing, please:
+- Run the app on mobile preview (Expo).
+- Navigate through: Home, AI Chat, LiveAssist, Videos, Profile, Settings.
+- Show me the key components/screens you changed (file names and a brief summary).

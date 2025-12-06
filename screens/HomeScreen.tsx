@@ -168,24 +168,24 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing["5xl"],
   },
   filterContainer: {
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.xl,
   },
   section: {
-    marginBottom: Spacing["3xl"],
+    marginBottom: Spacing["4xl"],
   },
   sectionHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: Spacing.xl,
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.md,
   },
   sectionTitle: {
     letterSpacing: -0.3,
   },
   horizontalList: {
     paddingHorizontal: Spacing.xl,
-    gap: Spacing.lg,
+    gap: Spacing.md,
   },
   cardWrapper: {
     width: 280,
