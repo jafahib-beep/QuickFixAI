@@ -2,12 +2,15 @@ const express = require('express');
 const { pool } = require('../db');
 const { authMiddleware, optionalAuth } = require('../middleware/auth');
 const { awardXp } = require('../services/xp');
+const { getBlockedUserIds } = require('./block');
 
 const router = express.Router();
 
 router.get('/', optionalAuth, async (req, res) => {
   try {
     const { category, search, sort = 'recent', limit = 20, offset = 0 } = req.query;
+    
+    const blockedUserIds = await getBlockedUserIds(req.userId);
     
     let query = `
       SELECT v.*, u.display_name as author_name, u.avatar_url as author_avatar,
@@ -20,6 +23,12 @@ router.get('/', optionalAuth, async (req, res) => {
     
     const params = [req.userId || null];
     let paramIndex = 2;
+    
+    if (blockedUserIds.length > 0) {
+      query += ` AND v.author_id != ALL($${paramIndex})`;
+      params.push(blockedUserIds);
+      paramIndex++;
+    }
     
     if (category && category !== 'all') {
       query += ` AND v.category = $${paramIndex}`;
@@ -81,6 +90,14 @@ router.get('/', optionalAuth, async (req, res) => {
 router.get('/feed', optionalAuth, async (req, res) => {
   try {
     const userId = req.userId || null;
+    const blockedUserIds = await getBlockedUserIds(userId);
+    
+    const blockedFilter = blockedUserIds.length > 0 
+      ? 'AND v.author_id != ALL($2)' 
+      : '';
+    const queryParams = blockedUserIds.length > 0 
+      ? [userId, blockedUserIds] 
+      : [userId];
     
     const [recommended, recent, popular] = await Promise.all([
       pool.query(`
@@ -89,30 +106,30 @@ router.get('/feed', optionalAuth, async (req, res) => {
                EXISTS(SELECT 1 FROM video_saves WHERE video_id = v.id AND user_id = $1) as is_saved
         FROM videos v
         JOIN users u ON v.author_id = u.id
-        WHERE v.is_flagged = false
+        WHERE v.is_flagged = false ${blockedFilter}
         ORDER BY v.likes_count DESC, v.created_at DESC
         LIMIT 10
-      `, [userId]),
+      `, queryParams),
       pool.query(`
         SELECT v.*, u.display_name as author_name, u.avatar_url as author_avatar,
                EXISTS(SELECT 1 FROM video_likes WHERE video_id = v.id AND user_id = $1) as is_liked,
                EXISTS(SELECT 1 FROM video_saves WHERE video_id = v.id AND user_id = $1) as is_saved
         FROM videos v
         JOIN users u ON v.author_id = u.id
-        WHERE v.is_flagged = false
+        WHERE v.is_flagged = false ${blockedFilter}
         ORDER BY v.created_at DESC
         LIMIT 10
-      `, [userId]),
+      `, queryParams),
       pool.query(`
         SELECT v.*, u.display_name as author_name, u.avatar_url as author_avatar,
                EXISTS(SELECT 1 FROM video_likes WHERE video_id = v.id AND user_id = $1) as is_liked,
                EXISTS(SELECT 1 FROM video_saves WHERE video_id = v.id AND user_id = $1) as is_saved
         FROM videos v
         JOIN users u ON v.author_id = u.id
-        WHERE v.is_flagged = false AND v.created_at > NOW() - INTERVAL '30 days'
+        WHERE v.is_flagged = false AND v.created_at > NOW() - INTERVAL '30 days' ${blockedFilter}
         ORDER BY v.likes_count DESC
         LIMIT 10
-      `, [userId])
+      `, queryParams)
     ]);
     
     const formatVideos = (rows) => rows.map(row => ({

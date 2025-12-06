@@ -1,6 +1,7 @@
 const express = require('express');
 const { pool } = require('../db');
 const { authMiddleware, optionalAuth } = require('../middleware/auth');
+const { isBlocked, getBlockedUserIds } = require('./block');
 
 const router = express.Router();
 
@@ -8,7 +9,7 @@ router.get('/:id', optionalAuth, async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT id, display_name, bio, avatar_url, expertise_categories, 
-             followers_count, following_count, created_at
+             followers_count, following_count, created_at, blocked_user_ids
       FROM users WHERE id = $1
     `, [req.params.id]);
     
@@ -18,13 +19,23 @@ router.get('/:id', optionalAuth, async (req, res) => {
     
     const user = result.rows[0];
     
+    const targetBlockedIds = user.blocked_user_ids || [];
+    if (req.userId && targetBlockedIds.includes(req.userId)) {
+      return res.status(403).json({ error: 'User not available', isBlockedByUser: true });
+    }
+    
     let isFollowing = false;
+    let userIsBlocked = false;
     if (req.userId) {
-      const followResult = await pool.query(
-        'SELECT id FROM follows WHERE follower_id = $1 AND following_id = $2',
-        [req.userId, req.params.id]
-      );
+      const [followResult, blockedCheck] = await Promise.all([
+        pool.query(
+          'SELECT id FROM follows WHERE follower_id = $1 AND following_id = $2',
+          [req.userId, req.params.id]
+        ),
+        isBlocked(req.userId, req.params.id)
+      ]);
       isFollowing = followResult.rows.length > 0;
+      userIsBlocked = blockedCheck;
     }
     
     res.json({
@@ -36,6 +47,7 @@ router.get('/:id', optionalAuth, async (req, res) => {
       followersCount: user.followers_count,
       followingCount: user.following_count,
       isFollowing,
+      isBlocked: userIsBlocked,
       createdAt: user.created_at
     });
   } catch (error) {
@@ -86,6 +98,15 @@ router.post('/:id/follow', authMiddleware, async (req, res) => {
   try {
     if (req.params.id === req.userId) {
       return res.status(400).json({ error: 'Cannot follow yourself' });
+    }
+    
+    const [userBlockedTarget, targetBlockedUser] = await Promise.all([
+      isBlocked(req.userId, req.params.id),
+      isBlocked(req.params.id, req.userId)
+    ]);
+    
+    if (userBlockedTarget || targetBlockedUser) {
+      return res.status(403).json({ error: 'Cannot follow this user' });
     }
     
     const existing = await pool.query(
