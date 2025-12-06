@@ -112,11 +112,16 @@ async function getBlockedUserIds(userId) {
   if (!userId) return [];
   
   try {
-    const result = await pool.query(
-      'SELECT blocked_user_ids FROM users WHERE id = $1',
-      [userId]
-    );
-    return result.rows[0]?.blocked_user_ids || [];
+    const [blockedByUser, blockedByOthers] = await Promise.all([
+      pool.query('SELECT blocked_user_ids FROM users WHERE id = $1', [userId]),
+      pool.query('SELECT id FROM users WHERE $1 = ANY(blocked_user_ids)', [userId])
+    ]);
+    
+    const blockedByUserIds = blockedByUser.rows[0]?.blocked_user_ids || [];
+    const blockedByOthersIds = blockedByOthers.rows.map(row => row.id);
+    
+    const allBlocked = [...new Set([...blockedByUserIds, ...blockedByOthersIds])];
+    return allBlocked;
   } catch (error) {
     console.error('getBlockedUserIds error:', error);
     return [];

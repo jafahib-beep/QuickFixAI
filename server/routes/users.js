@@ -58,6 +58,21 @@ router.get('/:id', optionalAuth, async (req, res) => {
 
 router.get('/:id/videos', optionalAuth, async (req, res) => {
   try {
+    if (req.userId) {
+      const targetUser = await pool.query('SELECT blocked_user_ids FROM users WHERE id = $1', [req.params.id]);
+      if (targetUser.rows.length > 0) {
+        const targetBlockedIds = targetUser.rows[0].blocked_user_ids || [];
+        if (targetBlockedIds.includes(req.userId)) {
+          return res.status(403).json({ error: 'User not available', isBlockedByUser: true });
+        }
+      }
+      
+      const userBlockedTarget = await isBlocked(req.userId, req.params.id);
+      if (userBlockedTarget) {
+        return res.json([]);
+      }
+    }
+    
     const result = await pool.query(`
       SELECT v.*, u.display_name as author_name, u.avatar_url as author_avatar,
              EXISTS(SELECT 1 FROM video_likes WHERE video_id = v.id AND user_id = $2) as is_liked,

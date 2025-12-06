@@ -166,6 +166,7 @@ router.get('/:id', optionalAuth, async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT v.*, u.display_name as author_name, u.avatar_url as author_avatar,
+             u.blocked_user_ids as author_blocked_ids,
              EXISTS(SELECT 1 FROM video_likes WHERE video_id = v.id AND user_id = $2) as is_liked,
              EXISTS(SELECT 1 FROM video_saves WHERE video_id = v.id AND user_id = $2) as is_saved
       FROM videos v
@@ -178,6 +179,19 @@ router.get('/:id', optionalAuth, async (req, res) => {
     }
     
     const row = result.rows[0];
+    
+    if (req.userId) {
+      const authorBlockedIds = row.author_blocked_ids || [];
+      if (authorBlockedIds.includes(req.userId)) {
+        return res.status(403).json({ error: 'Content not available', isBlockedByUser: true });
+      }
+      
+      const blockedUserIds = await getBlockedUserIds(req.userId);
+      if (blockedUserIds.includes(row.author_id)) {
+        return res.status(403).json({ error: 'Content not available', isBlocked: true });
+      }
+    }
+    
     res.json({
       id: row.id,
       title: row.title,
@@ -341,15 +355,24 @@ router.post('/:id/save', authMiddleware, async (req, res) => {
   }
 });
 
-router.get('/:id/comments', async (req, res) => {
+router.get('/:id/comments', optionalAuth, async (req, res) => {
   try {
+    const blockedUserIds = await getBlockedUserIds(req.userId);
+    
+    const blockedFilter = blockedUserIds.length > 0 
+      ? 'AND c.user_id != ALL($2)' 
+      : '';
+    const queryParams = blockedUserIds.length > 0 
+      ? [req.params.id, blockedUserIds] 
+      : [req.params.id];
+    
     const result = await pool.query(`
       SELECT c.*, u.display_name as author_name, u.avatar_url as author_avatar
       FROM comments c
       JOIN users u ON c.user_id = u.id
-      WHERE c.video_id = $1
+      WHERE c.video_id = $1 ${blockedFilter}
       ORDER BY c.created_at DESC
-    `, [req.params.id]);
+    `, queryParams);
     
     const comments = result.rows.map(row => ({
       id: row.id,
@@ -382,6 +405,11 @@ router.post('/:id/comments', authMiddleware, async (req, res) => {
     
     if (!video.rows[0].comments_enabled) {
       return res.status(403).json({ error: 'Comments are disabled for this video' });
+    }
+    
+    const blockedUserIds = await getBlockedUserIds(req.userId);
+    if (blockedUserIds.includes(video.rows[0].author_id)) {
+      return res.status(403).json({ error: 'Cannot comment on this video' });
     }
     
     const result = await pool.query(`
