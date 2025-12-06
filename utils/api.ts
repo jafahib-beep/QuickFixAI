@@ -521,6 +521,28 @@ class ApiClient {
       },
     );
   }
+
+  async blockUser(targetUserId: string) {
+    return this.request<{ status: string }>("/block", {
+      method: "POST",
+      body: { targetUserId },
+      requireAuth: true,
+    });
+  }
+
+  async unblockUser(targetUserId: string) {
+    return this.request<{ status: string }>("/unblock", {
+      method: "POST",
+      body: { targetUserId },
+      requireAuth: true,
+    });
+  }
+
+  async getBlockedUsers() {
+    return this.request<{ blockedUserIds: string[] }>("/blocked", {
+      requireAuth: true,
+    });
+  }
 }
 
 export interface User {
@@ -541,6 +563,7 @@ export interface User {
 
 export interface UserProfile extends User {
   isFollowing: boolean;
+  isBlocked?: boolean;
 }
 
 export interface UserPreview {
