@@ -175,7 +175,9 @@
     "changeAvatar": "Change photo",
     "follow": "Follow",
     "unfollow": "Unfollow",
-    "settings": "Settings"
+    "settings": "Settings",
+    "videos": "Videos",
+    "userNotFound": "User not found"
   },
   "settings": {
     "title": "Settings",
@@ -383,5 +385,20 @@
       "spam": "Spam",
       "other": "Other"
     }
+  },
+  "block": {
+    "blockUser": "Block User",
+    "unblockUser": "Unblock",
+    "confirmTitle": "Block User?",
+    "confirmMessage": "They won't be able to see your content or interact with you. You can unblock them anytime.",
+    "userBlocked": "User has been blocked",
+    "userUnblocked": "User has been unblocked",
+    "blockError": "Could not block user. Please try again.",
+    "unblockError": "Could not unblock user. Please try again.",
+    "youBlockedThisUser": "You blocked this user",
+    "userNotAvailable": "This user is not available",
+    "blockedUsers": "Blocked Users",
+    "noBlockedUsers": "You haven't blocked anyone",
+    "manageBlocked": "Manage Blocked Users"
   }
 }
