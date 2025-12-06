@@ -3,12 +3,14 @@ import {
   View,
   StyleSheet,
   Pressable,
+  TouchableOpacity,
   Dimensions,
   TextInput,
   FlatList,
   Share,
   Alert,
   ActivityIndicator,
+  Platform,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
@@ -19,6 +21,7 @@ import { useVideoPlayer, VideoView } from "expo-video";
 import { useEvent } from "expo";
 
 import { ThemedText } from "@/components/ThemedText";
+import ReportModal from "@/components/ReportModal";
 import { Spacing, BorderRadius, Colors } from "@/constants/theme";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
@@ -60,6 +63,7 @@ export default function VideoPlayerScreen() {
   const [comments, setComments] = useState<Comment[]>([]);
   const [commentText, setCommentText] = useState("");
   const [isLoadingComments, setIsLoadingComments] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
 
   const isSaved = video.isSaved ?? false;
   const isLiked = video.isLiked ?? false;
@@ -121,14 +125,8 @@ export default function VideoPlayerScreen() {
   };
 
   const handleReport = () => {
-    Alert.alert(
-      t("common.report"),
-      "Report this video for inappropriate content?",
-      [
-        { text: t("common.cancel"), style: "cancel" },
-        { text: t("common.yes"), style: "destructive", onPress: () => Alert.alert("Reported") },
-      ]
-    );
+    console.log("[VideoPlayerScreen] handleReport called, opening modal");
+    setShowReportModal(true);
   };
 
   const handleAddComment = async () => {
@@ -162,7 +160,7 @@ export default function VideoPlayerScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: "#000000" }]}>
-      <Pressable onPress={handleVideoPress} style={styles.videoContainer}>
+      <Pressable style={styles.videoContainer} onPress={handleVideoPress}>
         <VideoView
           style={styles.video}
           player={player}
@@ -188,6 +186,7 @@ export default function VideoPlayerScreen() {
         ) : null}
       </Pressable>
 
+
       {showUI ? (
         <>
           <View style={[styles.topBar, { paddingTop: insets.top + Spacing.sm }]}>
@@ -206,13 +205,42 @@ export default function VideoPlayerScreen() {
               >
                 <Feather name={isMuted ? "volume-x" : "volume-2"} size={22} color="#FFFFFF" />
               </Pressable>
-              <Pressable
-                onPress={handleReport}
-                style={({ pressed }) => [styles.topButton, { opacity: pressed ? 0.6 : 1 }]}
-                hitSlop={12}
-              >
-                <Feather name="flag" size={22} color="#FFFFFF" />
-              </Pressable>
+              {Platform.OS === 'web' ? (
+                <div
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    console.log('[VideoPlayerScreen] Report button clicked (web)');
+                    setShowReportModal(true);
+                  }}
+                  style={{
+                    width: 44,
+                    height: 44,
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    cursor: 'pointer',
+                    zIndex: 9999,
+                    position: 'relative',
+                  }}
+                >
+                  <Feather name="flag" size={22} color="#FFFFFF" />
+                </div>
+              ) : (
+                <Pressable
+                  onPress={() => handleReport()}
+                  style={({ pressed }) => [
+                    styles.topButton, 
+                    styles.reportButton,
+                    { opacity: pressed ? 0.6 : 1 }
+                  ]}
+                  hitSlop={12}
+                  accessibilityLabel="Report video"
+                  accessibilityRole="button"
+                >
+                  <Feather name="flag" size={22} color="#FFFFFF" />
+                </Pressable>
+              )}
             </View>
           </View>
 
@@ -386,6 +414,14 @@ export default function VideoPlayerScreen() {
           </View>
         </View>
       ) : null}
+
+      <ReportModal
+        visible={showReportModal}
+        onClose={() => setShowReportModal(false)}
+        contentType="video"
+        contentId={video.id}
+        targetUserId={video.authorId}
+      />
     </View>
   );
 }
@@ -426,6 +462,14 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+  touchOverlay: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    top: 80,
+    bottom: 200,
+    zIndex: 5,
+  },
   topBar: {
     position: "absolute",
     top: 0,
@@ -441,6 +485,15 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   topButton: {
+    width: 44,
+    height: 44,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  reportButton: {
+    zIndex: 999,
+  },
+  reportButtonInner: {
     width: 44,
     height: 44,
     justifyContent: "center",

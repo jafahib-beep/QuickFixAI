@@ -41,6 +41,7 @@ const toolboxRoutes = require("./routes/toolbox");
 const notificationRoutes = require("./routes/notifications");
 const aiRoutes = require("./routes/ai");
 const communityRoutes = require("./routes/community");
+const reportsRoutes = require("./routes/reports");
 
 const app = express();
 const PORT = process.env.BACKEND_PORT || 5000;
@@ -80,6 +81,7 @@ app.use("/api/toolbox", toolboxRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/community", communityRoutes);
+app.use("/api/reports", reportsRoutes);
 
 app.get("/api/categories", (req, res) => {
   res.json([

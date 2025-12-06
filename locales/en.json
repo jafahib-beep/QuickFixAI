@@ -360,5 +360,28 @@
     "newest": "Newest",
     "mostPopular": "Most Popular",
     "unanswered": "Unanswered"
+  },
+  "report": {
+    "reportVideo": "Report Video",
+    "reportUser": "Report User",
+    "reportContent": "Report Content",
+    "selectReason": "Select a reason",
+    "describeIssue": "Describe the issue",
+    "describePlaceholder": "Provide additional details about the issue...",
+    "submit": "Submit Report",
+    "thankYou": "Thank You",
+    "submittedForReview": "Your report has been submitted for review. We take all reports seriously and will investigate.",
+    "errorSubmitting": "Failed to submit report. Please try again.",
+    "alreadyReported": "You have already reported this content.",
+    "reasons": {
+      "harassment": "Harassment or Bullying",
+      "hate": "Hate or Racism",
+      "threats": "Threats or Violence",
+      "sexual": "Sexual or Nudity",
+      "scam": "Scam or Fraud",
+      "dangerous": "Dangerous or Harmful Advice",
+      "spam": "Spam",
+      "other": "Other"
+    }
   }
 }

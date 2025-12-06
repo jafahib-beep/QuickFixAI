@@ -105,6 +105,25 @@ const initializeDatabase = async () => {
         created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
       );
 
+      CREATE TABLE IF NOT EXISTS reports (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        reporter_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        target_user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+        content_id UUID,
+        content_type VARCHAR(20) NOT NULL CHECK (content_type IN ('video', 'profile', 'comment')),
+        reason VARCHAR(100) NOT NULL,
+        message TEXT,
+        status VARCHAR(20) DEFAULT 'open' CHECK (status IN ('open', 'reviewing', 'resolved', 'dismissed')),
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_reports_reporter ON reports(reporter_user_id);
+      CREATE INDEX IF NOT EXISTS idx_reports_target ON reports(target_user_id);
+      CREATE INDEX IF NOT EXISTS idx_reports_content ON reports(content_id);
+      CREATE INDEX IF NOT EXISTS idx_reports_status ON reports(status);
+      CREATE INDEX IF NOT EXISTS idx_reports_type ON reports(content_type);
+
       CREATE TABLE IF NOT EXISTS community_posts (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         author_id UUID REFERENCES users(id) ON DELETE CASCADE,

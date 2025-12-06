@@ -360,5 +360,28 @@
     "newest": "Nyast",
     "mostPopular": "Mest populära",
     "unanswered": "Obesvarade"
+  },
+  "report": {
+    "reportVideo": "Rapportera video",
+    "reportUser": "Rapportera användare",
+    "reportContent": "Rapportera innehåll",
+    "selectReason": "Välj en anledning",
+    "describeIssue": "Beskriv problemet",
+    "describePlaceholder": "Ange ytterligare detaljer om problemet...",
+    "submit": "Skicka rapport",
+    "thankYou": "Tack",
+    "submittedForReview": "Din rapport har skickats för granskning. Vi tar alla rapporter på allvar och kommer att utreda.",
+    "errorSubmitting": "Kunde inte skicka rapport. Försök igen.",
+    "alreadyReported": "Du har redan rapporterat detta innehåll.",
+    "reasons": {
+      "harassment": "Trakasserier eller mobbning",
+      "hate": "Hat eller rasism",
+      "threats": "Hot eller våld",
+      "sexual": "Sexuellt eller naket innehåll",
+      "scam": "Bedrägeri eller bluff",
+      "dangerous": "Farliga eller skadliga råd",
+      "spam": "Skräppost",
+      "other": "Annat"
+    }
   }
 }

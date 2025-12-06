@@ -504,6 +504,23 @@ class ApiClient {
       },
     );
   }
+
+  async submitReport(data: {
+    targetUserId?: string;
+    contentId?: string;
+    contentType: "video" | "profile" | "comment";
+    reason: string;
+    message?: string;
+  }) {
+    return this.request<{ success: boolean; reportId: string; createdAt: string }>(
+      "/reports",
+      {
+        method: "POST",
+        body: data,
+        requireAuth: true,
+      },
+    );
+  }
 }
 
 export interface User {

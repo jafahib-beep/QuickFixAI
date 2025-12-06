@@ -360,5 +360,28 @@
     "newest": "Más reciente",
     "mostPopular": "Más popular",
     "unanswered": "Sin respuesta"
+  },
+  "report": {
+    "reportVideo": "Reportar video",
+    "reportUser": "Reportar usuario",
+    "reportContent": "Reportar contenido",
+    "selectReason": "Selecciona una razón",
+    "describeIssue": "Describe el problema",
+    "describePlaceholder": "Proporciona detalles adicionales sobre el problema...",
+    "submit": "Enviar reporte",
+    "thankYou": "Gracias",
+    "submittedForReview": "Tu reporte ha sido enviado para revisión. Tomamos todos los reportes en serio e investigaremos.",
+    "errorSubmitting": "No se pudo enviar el reporte. Por favor intenta de nuevo.",
+    "alreadyReported": "Ya has reportado este contenido.",
+    "reasons": {
+      "harassment": "Acoso o intimidación",
+      "hate": "Odio o racismo",
+      "threats": "Amenazas o violencia",
+      "sexual": "Contenido sexual o desnudez",
+      "scam": "Estafa o fraude",
+      "dangerous": "Consejos peligrosos o dañinos",
+      "spam": "Spam",
+      "other": "Otro"
+    }
   }
 }
