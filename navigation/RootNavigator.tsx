@@ -17,6 +17,7 @@ import CategoriesScreen from "@/screens/CategoriesScreen";
 import CommunityPostDetailScreen from "@/screens/CommunityPostDetailScreen";
 import CreatePostScreen from "@/screens/CreatePostScreen";
 import VideoLibraryScreen from "@/screens/VideoLibraryScreen";
+import UserProfileScreen from "@/screens/UserProfileScreen";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/hooks/useTheme";
 import { getCommonScreenOptions } from "./screenOptions";
@@ -39,6 +40,8 @@ export type RootStackParamList = {
   CommunityPostDetail: { postId: string };
   CreatePost: undefined;
   VideoLibrary: undefined;
+  UserProfile: { userId: string };
+  Report: { contentType: "video" | "profile" | "comment"; contentId?: string; targetUserId?: string };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -185,6 +188,15 @@ export default function RootNavigator() {
           <Stack.Screen
             name="VideoLibrary"
             component={VideoLibraryScreen}
+            options={{
+              ...getCommonScreenOptions({ theme, isDark, transparent: false }),
+              headerShown: true,
+              title: "",
+            }}
+          />
+          <Stack.Screen
+            name="UserProfile"
+            component={UserProfileScreen}
             options={{
               ...getCommonScreenOptions({ theme, isDark, transparent: false }),
               headerShown: true,
