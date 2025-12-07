@@ -132,11 +132,11 @@ export default function LiveAssistScreen() {
           rawResponse: response.analysis.rawResponse,
         });
       } else {
-        setError(response.analysis?.rawResponse || t("chat.liveAssistError"));
+        setError("AI_UNAVAILABLE");
       }
     } catch (err: any) {
       console.log("[LiveAssistScreen] Error:", err?.message || err);
-      setError(t("chat.liveAssistError"));
+      setError("AI_UNAVAILABLE");
     } finally {
       setIsLoading(false);
     }

@@ -2,7 +2,7 @@ import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Feather } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
-import { Platform, StyleSheet, Pressable, View } from "react-native";
+import { Platform, StyleSheet, Pressable, View, Text } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
@@ -13,6 +13,7 @@ import CommunityStackNavigator from "./CommunityStackNavigator";
 import ToolboxStackNavigator from "./ToolboxStackNavigator";
 import ProfileStackNavigator from "./ProfileStackNavigator";
 import { useTheme } from "@/hooks/useTheme";
+import { useNotifications } from "@/contexts/NotificationsContext";
 import { RootStackParamList } from "./RootNavigator";
 import { Spacing, BorderRadius } from "@/constants/theme";
 
@@ -50,6 +51,25 @@ function UploadButton() {
       >
         <Feather name="plus" size={24} color={theme.backgroundRoot} />
       </Pressable>
+    </View>
+  );
+}
+
+function ProfileTabIcon({ color }: { color: string }) {
+  const { unreadCount } = useNotifications();
+  
+  return (
+    <View style={styles.profileIconContainer}>
+      <Feather name="user" size={TAB_ICON_SIZE} color={color} />
+      {unreadCount > 0 ? (
+        <View style={styles.notificationBadge}>
+          {unreadCount <= 9 ? (
+            <Text style={styles.notificationBadgeText}>{unreadCount}</Text>
+          ) : (
+            <Text style={styles.notificationBadgeText}>9+</Text>
+          )}
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -163,9 +183,7 @@ export default function MainTabNavigator() {
         component={ProfileStackNavigator}
         options={{
           title: "Profile",
-          tabBarIcon: ({ color, focused }) => (
-            <Feather name="user" size={TAB_ICON_SIZE} color={color} />
-          ),
+          tabBarIcon: ({ color }) => <ProfileTabIcon color={color} />,
         }}
       />
     </Tab.Navigator>
@@ -188,5 +206,25 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 4,
+  },
+  profileIconContainer: {
+    position: "relative",
+  },
+  notificationBadge: {
+    position: "absolute",
+    top: -4,
+    right: -8,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: "#FF3B30",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 4,
+  },
+  notificationBadgeText: {
+    color: "#FFFFFF",
+    fontSize: 10,
+    fontWeight: "700",
   },
 });

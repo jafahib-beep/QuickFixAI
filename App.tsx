@@ -12,6 +12,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { VideosProvider } from "@/contexts/VideosContext";
 import { CommunityProvider } from "@/contexts/CommunityContext";
+import { NotificationsProvider } from "@/contexts/NotificationsContext";
 import { useTheme } from "@/hooks/useTheme";
 import i18n, { initializeI18n } from "@/utils/i18n";
 
@@ -38,14 +39,16 @@ function AppContent() {
   return (
     <I18nextProvider i18n={i18n}>
       <AuthProvider>
-        <VideosProvider>
-          <CommunityProvider>
-            <NavigationContainer>
-              <RootNavigator />
-            </NavigationContainer>
-            <StatusBar style="auto" />
-          </CommunityProvider>
-        </VideosProvider>
+        <NotificationsProvider>
+          <VideosProvider>
+            <CommunityProvider>
+              <NavigationContainer>
+                <RootNavigator />
+              </NavigationContainer>
+              <StatusBar style="auto" />
+            </CommunityProvider>
+          </VideosProvider>
+        </NotificationsProvider>
       </AuthProvider>
     </I18nextProvider>
   );
