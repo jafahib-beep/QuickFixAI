@@ -762,7 +762,7 @@ const styles = StyleSheet.create({
   },
   messageContainer: {
     flexDirection: "row",
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.lg,
     alignItems: "flex-end",
   },
   userMessageContainer: {
@@ -772,9 +772,9 @@ const styles = StyleSheet.create({
     justifyContent: "flex-start",
   },
   avatarContainer: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -782,21 +782,23 @@ const styles = StyleSheet.create({
     marginLeft: Spacing.sm,
   },
   messageBubble: {
-    maxWidth: "75%",
-    padding: Spacing.md,
-    borderRadius: BorderRadius.lg,
+    maxWidth: "80%",
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.xl,
   },
   userBubble: {
-    borderBottomRightRadius: Spacing.xs,
-    marginLeft: Spacing.sm,
+    borderBottomRightRadius: BorderRadius.xs,
+    marginLeft: Spacing.md,
   },
   assistantBubble: {
-    borderBottomLeftRadius: Spacing.xs,
+    borderBottomLeftRadius: BorderRadius.xs,
     marginLeft: Spacing.sm,
-    marginRight: Spacing.sm,
+    marginRight: Spacing.md,
   },
   messageText: {
-    lineHeight: 22,
+    fontSize: 16,
+    lineHeight: 24,
   },
   messageImage: {
     width: 200,
@@ -834,14 +836,14 @@ const styles = StyleSheet.create({
   },
   suggestions: {
     width: "100%",
+    gap: Spacing.sm,
   },
   suggestionChip: {
     flexDirection: "row",
     alignItems: "center",
     paddingVertical: Spacing.md,
     paddingHorizontal: Spacing.lg,
-    borderRadius: BorderRadius.lg,
-    marginBottom: Spacing.sm,
+    borderRadius: BorderRadius.md,
   },
   typingIndicator: {
     flexDirection: "row",

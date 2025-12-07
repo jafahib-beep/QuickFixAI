@@ -896,29 +896,30 @@ const styles = StyleSheet.create({
   },
   resultContainer: {
     paddingHorizontal: Spacing.xl,
-    paddingVertical: Spacing.lg,
+    paddingVertical: Spacing.xl,
     gap: Spacing["2xl"],
   },
   resultImage: {
     width: "100%",
     height: 220,
-    borderRadius: BorderRadius.lg,
+    borderRadius: BorderRadius.xl,
   },
   analysisContainer: {
     gap: Spacing.lg,
   },
   resultCard: {
-    borderRadius: BorderRadius.lg,
+    borderRadius: BorderRadius.xl,
     padding: Spacing.xl,
   },
   resultCardHeader: {
     flexDirection: "row",
     alignItems: "center",
     gap: Spacing.sm,
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.md,
   },
   resultCardTitle: {
     ...Typography.h4,
+    flex: 1,
   },
   resultCardContent: {
     ...Typography.body,

@@ -81,18 +81,19 @@ const styles = StyleSheet.create({
   container: {
     paddingHorizontal: Spacing.xl,
     gap: Spacing.sm,
-    paddingVertical: Spacing.xs,
+    paddingVertical: Spacing.sm,
   },
   chip: {
     flexDirection: "row",
     alignItems: "center",
     gap: Spacing.xs,
-    paddingHorizontal: Spacing.lg,
+    paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
     borderRadius: BorderRadius.full,
     borderWidth: 1,
   },
   chipText: {
     letterSpacing: 0.1,
+    fontSize: 13,
   },
 });

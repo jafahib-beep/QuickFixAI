@@ -261,10 +261,12 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: Spacing.lg,
+    paddingTop: Spacing.md,
   },
   title: {
     marginBottom: Spacing.sm,
     lineHeight: 22,
+    letterSpacing: -0.2,
   },
   authorRow: {
     flexDirection: "row",

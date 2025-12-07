@@ -1,0 +1,65 @@
+You are helping me finish the MOBILE UX for my React Native / Expo app "QuickFix".
+
+Important global constraints:
+- This project runs on Replit with a Node/Express backend and a React Native / Expo front-end.
+- Do NOT change any backend code, routes, or API logic.
+- Do NOT touch the OpenAI integration or network requests (/api/ai/chat, /api/ai/liveassist, etc.).
+- Keep the current mock/demo AI responses exactly as they are.
+- Only modify front-end code in the mobile app (screens, components, styles, basic UI logic).
+
+GOAL A – Polish mobile UI on Home, AI Chat, and LiveAssist
+I want the app to feel like a high-quality “App Store level” product.
+
+1) HomeScreen
+- Make video cards look more polished:
+  - Better padding/margins inside each card.
+  - Clean font sizes for title, channel name, tags and counters (views, likes, etc.).
+  - Ensure long titles truncate nicely instead of wrapping in an ugly way.
+- Improve layout of sections:
+  - Headings like “Rekommenderat” and “Nytt” should have clear spacing above/below.
+  - Category filters / chips should be readable and nicely spaced.
+- Make sure the layout looks good on a typical iPhone screen (no text cut off, no overflowing).
+
+2) AIChatScreen
+- Polish the chat UI:
+  - Different bubble style for user and assistant (background, alignment).
+  - Slightly rounded corners and comfortable padding inside the bubbles.
+  - Improve text readability (font size and line height).
+- Make sure:
+  - The input bar at the bottom is always visible.
+  - The message list scrolls smoothly and scrolls to bottom when a new message appears.
+- You may adjust styles and small layout details, but:
+  - Do NOT change the logic that sends messages.
+  - Do NOT remove or change the mock/demo response behavior.
+
+3) LiveAssistScreen
+- Improve the layout of the LiveAssist result screen:
+  - Show the captured image as a nice card with rounded corners and proper margins.
+  - Sections like “Vad jag ser”, “Troligt problem” and “Steg för att fixa” should look like clean cards with consistent spacing and typography.
+- Make sure the UI feels consistent with Home and AI Chat in terms of fonts, colors and spacing.
+
+GOAL B – Make "Steps to Fix" behave like a checklist (front-end only)
+I want the user to be able to follow the steps one by one.
+
+1) Do NOT change how the steps are generated in the backend or mock.
+   - Use the existing steps array in the LiveAssist response (or a mock version of it).
+2) On the LiveAssist screen:
+   - Render each step as a separate row or card with:
+     - Step number (1, 2, 3, …)
+     - Short title or text (from the step).
+     - A small checkmark/checkbox that the user can tap.
+   - When the user taps a step:
+     - Toggle its “completed” state in local React state only.
+     - Visually indicate completion (for example, faded text, checkmark icon, or different background).
+3) The checklist state does NOT need to persist between sessions.
+   - It is enough that the state is kept while the user is on the current LiveAssist result.
+
+Technical notes:
+- Keep all existing translations and text keys (t("...")).
+- Do not introduce any new libraries; use existing components and styles.
+- Fix any obvious TypeScript errors or warnings that are caused by your UI changes.
+
+At the end, please:
+- List all files you changed.
+- Briefly explain what visual changes you made in HomeScreen, AIChatScreen and LiveAssistScreen.
+- Confirm that the app runs on Expo Go without crashes and that AI Chat & LiveAssist still show their mock/demo responses.
