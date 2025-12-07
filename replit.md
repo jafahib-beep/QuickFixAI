@@ -16,6 +16,7 @@ The application features a modern dark theme with a blue accent (#0A84FF), respe
 - HomeScreen: 4xl (48px) section spacing for visual breathing room
 - ProfileScreen: Centered stats row, polished XP card with 8px progress bar
 - SettingsScreen: New "Legal" section with Community Guidelines, Terms of Service, Privacy Policy; "About" section with version info
+- LiveAssist: Interactive tappable checklist for steps with visual completion feedback (checkmarks, strikethrough, "All done!" badge)
 
 ### Technical Implementations
 The frontend is built with Expo/React Native, supporting multi-language (English, Swedish, Arabic with RTL, German, French, Spanish). The backend is an Express server with a PostgreSQL database. Development runs in a full-stack mode where `npm run dev` concurrently starts both the Express server (port 5000) and Expo frontend (port 8081). Metro is configured to proxy `/api/*` requests from the web to the backend. Mobile/Expo Go clients use direct backend URLs. Platform-specific URL handling is managed by `utils/api.ts`. The application features an offline-first mode using sample data and local storage when the backend is unavailable.
@@ -27,9 +28,9 @@ The frontend is built with Expo/React Native, supporting multi-language (English
 - **Social Features**: Liking, commenting, saving, and sharing videos.
 - **Toolbox**: Organize saved videos and AI-generated guides.
 - **Category System**: 10 fixed categories (e.g., Kitchen, Bathroom) with filtering chips and tappable tags for navigation.
-- **AI Integration**:
-    - **AI Chat**: Multi-turn conversational AI with GPT-4o-mini (text) and GPT-4o (vision) for image analysis. Supports sending photos and videos for context.
-    - **LiveAssist**: Dedicated visual troubleshooting with AI-generated step-by-step guides, including risk assessment and visual overlays highlighting problem areas. Promoted to its own main tab.
+- **AI Integration** (connected to real OpenAI backend):
+    - **AI Chat**: Multi-turn conversational AI with GPT-4o-mini (text) and GPT-4o (vision) for image analysis. Supports sending photos and videos for context. Calls POST /api/ai/chat.
+    - **LiveAssist**: Dedicated visual troubleshooting with AI-generated step-by-step guides, including risk assessment and visual overlays highlighting problem areas. Interactive tappable checklist for steps. Calls POST /api/ai/liveassist.
     - **Content Generation**: AI-powered tag suggestions, description generation, and visual step-by-step guides with DALL-E 3 images.
 - **Community**: A dedicated tab for users to post problems, share images, comment, and mark solutions.
 - **Video Library**: Comprehensive video library with 25+ videos including:

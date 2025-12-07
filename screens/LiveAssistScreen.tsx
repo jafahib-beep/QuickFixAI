@@ -48,6 +48,19 @@ export default function LiveAssistScreen() {
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [imageDimensions, setImageDimensions] = useState<{ width: number; height: number } | null>(null);
+  const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
+
+  const toggleStepComplete = (stepIndex: number) => {
+    setCompletedSteps((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(stepIndex)) {
+        newSet.delete(stepIndex);
+      } else {
+        newSet.add(stepIndex);
+      }
+      return newSet;
+    });
+  };
 
   const handleTakePhoto = async () => {
     const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
@@ -134,6 +147,7 @@ export default function LiveAssistScreen() {
     setAnalysisResult(null);
     setError(null);
     setImageDimensions(null);
+    setCompletedSteps(new Set());
   };
 
   const handleImageLayout = (event: LayoutChangeEvent) => {
@@ -628,19 +642,58 @@ export default function LiveAssistScreen() {
                 <ThemedText style={[styles.resultCardTitle, { color: theme.text }]}>
                   {t("chat.stepsToFix")}
                 </ThemedText>
-              </View>
-              {analysisResult.steps.map((step, index) => (
-                <View key={index} style={styles.stepRow}>
-                  <View style={[styles.stepNumber, { backgroundColor: theme.link }]}>
-                    <ThemedText style={styles.stepNumberText}>
-                      {step.stepNumber || index + 1}
+                {completedSteps.size === analysisResult.steps.length && analysisResult.steps.length > 0 ? (
+                  <View style={[styles.allDoneBadge, { backgroundColor: theme.success + "20" }]}>
+                    <Feather name="check-circle" size={14} color={theme.success} />
+                    <ThemedText style={[styles.allDoneText, { color: theme.success }]}>
+                      {t("liveAssist.allDone") || "All done!"}
                     </ThemedText>
                   </View>
-                  <ThemedText style={[styles.stepText, { color: theme.textSecondary }]}>
-                    {step.text}
-                  </ThemedText>
-                </View>
-              ))}
+                ) : null}
+              </View>
+              <ThemedText style={[styles.stepsHint, { color: theme.textSecondary }]}>
+                {t("liveAssist.tapToComplete") || "Tap each step when completed"}
+              </ThemedText>
+              {analysisResult.steps.map((step, index) => {
+                const displayNumber = step.stepNumber || index + 1;
+                const isCompleted = completedSteps.has(index);
+                return (
+                  <Pressable
+                    key={index}
+                    onPress={() => toggleStepComplete(index)}
+                    style={({ pressed }) => [
+                      styles.stepRow,
+                      styles.stepRowInteractive,
+                      isCompleted && styles.stepRowCompleted,
+                      isCompleted && { backgroundColor: theme.success + "15" },
+                      { opacity: pressed ? 0.7 : 1 },
+                    ]}
+                  >
+                    <View style={[
+                      styles.stepNumber,
+                      { backgroundColor: isCompleted ? theme.success : theme.link }
+                    ]}>
+                      {isCompleted ? (
+                        <Feather name="check" size={14} color="#FFFFFF" />
+                      ) : (
+                        <ThemedText style={styles.stepNumberText}>
+                          {displayNumber}
+                        </ThemedText>
+                      )}
+                    </View>
+                    <ThemedText style={[
+                      styles.stepText,
+                      { color: theme.textSecondary },
+                      isCompleted && styles.stepTextCompleted,
+                    ]}>
+                      {step.text}
+                    </ThemedText>
+                    {isCompleted ? (
+                      <Feather name="check-circle" size={18} color={theme.success} style={styles.stepCheckIcon} />
+                    ) : null}
+                  </Pressable>
+                );
+              })}
             </View>
           ) : null}
 
@@ -893,6 +946,41 @@ const styles = StyleSheet.create({
     ...Typography.body,
     flex: 1,
     lineHeight: 24,
+  },
+  stepRowInteractive: {
+    padding: Spacing.sm,
+    borderRadius: BorderRadius.md,
+    marginTop: Spacing.xs,
+    marginHorizontal: -Spacing.sm,
+  },
+  stepRowCompleted: {
+    borderRadius: BorderRadius.md,
+  },
+  stepTextCompleted: {
+    textDecorationLine: "line-through",
+    opacity: 0.7,
+  },
+  stepCheckIcon: {
+    marginLeft: Spacing.sm,
+  },
+  stepsHint: {
+    ...Typography.small,
+    fontStyle: "italic",
+    marginBottom: Spacing.xs,
+    opacity: 0.7,
+  },
+  allDoneBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.xs,
+    paddingVertical: 2,
+    paddingHorizontal: Spacing.sm,
+    borderRadius: BorderRadius.sm,
+    marginLeft: "auto",
+  },
+  allDoneText: {
+    ...Typography.small,
+    fontWeight: "600",
   },
   safetyCard: {
     borderWidth: 1,

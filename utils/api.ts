@@ -404,135 +404,129 @@ class ApiClient {
     language?: string;
     imageBase64?: string;
     videoFileName?: string;
-  }): Promise<{ answer: string; rawResponse?: unknown }> {
-    console.log("[API MOCK] chat called with:", data);
-    
-    const lastMessage =
-      data.messages?.filter(m => m.role === "user").pop()?.content || "";
+  }): Promise<{ answer: string; rawResponse?: unknown; success?: boolean }> {
+    console.log("[API] chat called with:", {
+      messageCount: data.messages?.length,
+      language: data.language,
+      hasImage: !!data.imageBase64,
+      hasVideo: !!data.videoFileName,
+    });
 
-    const mockResponses = [
-      "I understand you're experiencing an issue. Let me help you troubleshoot this step by step.",
-      "That's a common problem! Here are some things you can try to fix it.",
-      "Based on what you've described, this could be caused by a few different things.",
-      "Great question! Let me walk you through how to address this.",
-    ];
-    
-    const randomResponse = mockResponses[Math.floor(Math.random() * mockResponses.length)];
-    
-    const answer =
-      "QuickFix AI (demo mode):\n\n" +
-      randomResponse + "\n\n" +
-      `You asked: "${lastMessage}"\n\n` +
-      "Tips:\n" +
-      "1. Check if all connections are secure\n" +
-      "2. Try turning the device off and on again\n" +
-      "3. Look for any visible damage or wear\n" +
-      "4. Consult the user manual for specific guidance\n\n" +
-      "When the real backend is connected, you'll get AI-powered responses tailored to your specific issue.";
+    try {
+      const response = await this.request<{ answer: string; rawResponse?: unknown }>("/ai/chat", {
+        method: "POST",
+        body: {
+          messages: data.messages,
+          language: data.language || "en",
+          imageBase64: data.imageBase64,
+          videoFileName: data.videoFileName,
+        },
+      });
 
-    return { answer, rawResponse: { mock: true } };
+      if (response && response.answer) {
+        return { answer: response.answer, rawResponse: response.rawResponse, success: true };
+      }
+
+      throw new Error("No answer received from AI");
+    } catch (error: any) {
+      console.log("[API] Chat error:", error?.message || error);
+      
+      const errorMessage = error?.message?.includes("API key")
+        ? "AI service is not configured. Please try again later."
+        : error?.message?.includes("network")
+          ? "Unable to reach the AI service. Please check your connection."
+          : "AI service is temporarily unavailable. Please try again.";
+      
+      return {
+        answer: errorMessage,
+        rawResponse: { error: true, message: error?.message },
+        success: false,
+      };
+    }
   }
 
 
   async liveAssist(imageBase64: string, language: string = "en"): Promise<LiveAssistResponse> {
-    console.log("[API MOCK] liveAssist called with:", {
+    console.log("[API] liveAssist called with:", {
       hasImage: !!imageBase64,
       imageLength: imageBase64?.length || 0,
       language,
     });
 
-    const localizedResponses: Record<string, {
-      summary: string;
-      possibleIssue: string;
-      safetyNote: string;
-      steps: { stepNumber: number; text: string }[];
-    }> = {
-      en: {
-        summary: "I analyzed the image and found an area that could be the problem.",
-        possibleIssue: "There may be a loose cable, dirt, or a damaged component in the marked area.",
-        safetyNote: "Turn off the power and be careful when touching electrical components.",
-        steps: [
-          { stepNumber: 1, text: "Turn off the device or power before you continue." },
-          { stepNumber: 2, text: "Inspect the area that QuickFix AI would highlight for any loose or dirty parts." },
-          { stepNumber: 3, text: "Gently clean or reconnect parts that look loose or dirty." },
-          { stepNumber: 4, text: "If you are unsure or the problem remains, contact a certified technician." }
-        ]
-      },
-      sv: {
-        summary: "Jag analyserade bilden och hittade ett område som kan vara problemet.",
-        possibleIssue: "Det kan finnas en lös kabel, smuts eller en skadad komponent i det markerade området.",
-        safetyNote: "Stäng av strömmen och var försiktig när du rör elektriska komponenter.",
-        steps: [
-          { stepNumber: 1, text: "Stäng av enheten eller strömmen innan du fortsätter." },
-          { stepNumber: 2, text: "Inspektera området som QuickFix AI skulle markera för lösa eller smutsiga delar." },
-          { stepNumber: 3, text: "Rengör försiktigt eller återanslut delar som ser lösa eller smutsiga ut." },
-          { stepNumber: 4, text: "Om du är osäker eller problemet kvarstår, kontakta en certifierad tekniker." }
-        ]
-      },
-      de: {
-        summary: "Ich habe das Bild analysiert und einen Bereich gefunden, der das Problem sein könnte.",
-        possibleIssue: "Es könnte ein loses Kabel, Schmutz oder eine beschädigte Komponente im markierten Bereich sein.",
-        safetyNote: "Schalten Sie den Strom aus und seien Sie vorsichtig beim Berühren elektrischer Komponenten.",
-        steps: [
-          { stepNumber: 1, text: "Schalten Sie das Gerät oder den Strom aus, bevor Sie fortfahren." },
-          { stepNumber: 2, text: "Überprüfen Sie den Bereich, den QuickFix AI markieren würde, auf lose oder schmutzige Teile." },
-          { stepNumber: 3, text: "Reinigen oder verbinden Sie vorsichtig Teile, die lose oder schmutzig aussehen." },
-          { stepNumber: 4, text: "Wenn Sie unsicher sind oder das Problem weiterhin besteht, wenden Sie sich an einen zertifizierten Techniker." }
-        ]
-      },
-      fr: {
-        summary: "J'ai analysé l'image et trouvé une zone qui pourrait être le problème.",
-        possibleIssue: "Il peut y avoir un câble desserré, de la saleté ou un composant endommagé dans la zone marquée.",
-        safetyNote: "Coupez l'alimentation et soyez prudent lorsque vous touchez des composants électriques.",
-        steps: [
-          { stepNumber: 1, text: "Éteignez l'appareil ou l'alimentation avant de continuer." },
-          { stepNumber: 2, text: "Inspectez la zone que QuickFix AI mettrait en évidence pour les pièces desserrées ou sales." },
-          { stepNumber: 3, text: "Nettoyez doucement ou reconnectez les pièces qui semblent desserrées ou sales." },
-          { stepNumber: 4, text: "Si vous n'êtes pas sûr ou si le problème persiste, contactez un technicien certifié." }
-        ]
-      },
-      es: {
-        summary: "Analicé la imagen y encontré un área que podría ser el problema.",
-        possibleIssue: "Puede haber un cable suelto, suciedad o un componente dañado en el área marcada.",
-        safetyNote: "Apague la energía y tenga cuidado al tocar componentes eléctricos.",
-        steps: [
-          { stepNumber: 1, text: "Apague el dispositivo o la energía antes de continuar." },
-          { stepNumber: 2, text: "Inspeccione el área que QuickFix AI resaltaría en busca de piezas sueltas o sucias." },
-          { stepNumber: 3, text: "Limpie suavemente o reconecte las piezas que parezcan sueltas o sucias." },
-          { stepNumber: 4, text: "Si no está seguro o el problema persiste, contacte a un técnico certificado." }
-        ]
-      },
-      ar: {
-        summary: "قمت بتحليل الصورة ووجدت منطقة قد تكون المشكلة.",
-        possibleIssue: "قد يكون هناك كابل مفكوك أو أوساخ أو مكون تالف في المنطقة المحددة.",
-        safetyNote: "أوقف التيار الكهربائي وكن حذراً عند لمس المكونات الكهربائية.",
-        steps: [
-          { stepNumber: 1, text: "أوقف تشغيل الجهاز أو الطاقة قبل المتابعة." },
-          { stepNumber: 2, text: "افحص المنطقة التي سيبرزها QuickFix AI بحثاً عن أجزاء مفككة أو متسخة." },
-          { stepNumber: 3, text: "نظف بلطف أو أعد توصيل الأجزاء التي تبدو مفككة أو متسخة." },
-          { stepNumber: 4, text: "إذا لم تكن متأكداً أو استمرت المشكلة، اتصل بفني معتمد." }
-        ]
-      }
-    };
+    try {
+      const response = await this.request<{
+        success?: boolean;
+        analysis?: {
+          summary?: string;
+          possibleIssue?: string;
+          safetyNote?: string;
+          steps?: Array<{ stepNumber: number; text: string }>;
+          overlays?: LiveAssistOverlay[];
+          riskLevel?: RiskSeverity;
+          riskSummary?: string;
+          risks?: RiskEntry[];
+          riskOverlays?: RiskOverlay[];
+          spareParts?: SparePart[];
+          rawResponse?: string;
+        };
+        error?: string;
+      }>("/ai/liveassist", {
+        method: "POST",
+        body: { imageBase64, language },
+      });
 
-    const response = localizedResponses[language] || localizedResponses.en;
-
-    return {
-      success: true,
-      analysis: {
-        summary: response.summary,
-        possibleIssue: response.possibleIssue,
-        safetyNote: response.safetyNote,
-        steps: response.steps,
-        rawResponse: JSON.stringify({ mock: true, timestamp: Date.now(), language })
+      if (response && response.analysis) {
+        return {
+          success: true,
+          analysis: {
+            summary: response.analysis.summary || "",
+            possibleIssue: response.analysis.possibleIssue || "",
+            safetyNote: response.analysis.safetyNote || "",
+            steps: response.analysis.steps || [],
+            overlays: response.analysis.overlays || [],
+            riskLevel: response.analysis.riskLevel,
+            riskSummary: response.analysis.riskSummary || "",
+            risks: response.analysis.risks || [],
+            riskOverlays: response.analysis.riskOverlays || [],
+            spareParts: response.analysis.spareParts || [],
+            rawResponse: response.analysis.rawResponse || "",
+          },
+        };
       }
-    };
+
+      throw new Error(response?.error || "No analysis received");
+    } catch (error: any) {
+      console.log("[API] LiveAssist error:", error?.message || error);
+      
+      return {
+        success: false,
+        analysis: {
+          summary: "",
+          possibleIssue: "",
+          safetyNote: "",
+          steps: [],
+          rawResponse: JSON.stringify({ 
+            error: true, 
+            message: error?.message || "Failed to analyze image. Please try again." 
+          }),
+        },
+      };
+    }
   }
 
-
   async checkAIServiceHealth(): Promise<boolean> {
-    console.log("[API MOCK] checkAIServiceHealth called - returning true (mock mode)");
-    return true;
+    console.log("[API] checkAIServiceHealth called");
+    try {
+      const healthUrl = API_BASE_URL.replace("/api", "") + "/health";
+      const response = await fetch(healthUrl, {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      });
+      return response.ok;
+    } catch (error) {
+      console.log("[API] Health check failed:", error);
+      return false;
+    }
   }
 
   async getCommunityPosts(params?: { category?: string; status?: string }) {

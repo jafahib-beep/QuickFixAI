@@ -277,8 +277,16 @@ export default function AIChatScreen() {
   };
 
   const sendMessage = async () => {
+    console.log("[AIChatScreen] sendMessage called", {
+      inputText,
+      selectedImage: !!selectedImage,
+      selectedVideo: !!selectedVideo,
+    });
     const trimmedText = inputText.trim();
-    if (!trimmedText && !selectedImage && !selectedVideo) return;
+    if (!trimmedText && !selectedImage && !selectedVideo) {
+      console.log("[AIChatScreen] sendMessage - no content, returning");
+      return;
+    }
 
     const userMessage: ChatMessage = {
       id: generateId(),

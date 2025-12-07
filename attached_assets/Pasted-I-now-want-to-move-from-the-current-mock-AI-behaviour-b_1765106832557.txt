@@ -1,0 +1,135 @@
+I now want to move from the current mock AI behaviour back to a real OpenAI-powered backend for both AI Chat and LiveAssist.
+
+Important context:
+- Right now `utils/api.ts` has mock implementations for `chat()` and `liveAssist()` that never call the backend. They always return the same type of demo response.
+- This is why all AI Chat answers look almost the same and LiveAssist always says things like “loose cable / dust / damaged component” even if the image is just a table or a painting.
+- I’m ready to use my real backend + OpenAI API again, but I still want good error handling and a nice UX.
+
+Goal:
+1) Re-enable real AI Chat via the backend (/api/ai/chat) with smart, contextual responses.
+2) Re-enable real LiveAssist image analysis via the backend (/api/ai/liveassist) using OpenAI Vision.
+3) Make the LiveAssist steps interactive in the UI (tappable checklist items) so users can follow and mark steps as done.
+4) Keep a safe fallback if the backend or OpenAI fails (show a clear offline / error message, not infinite loading).
+
+Please implement the following:
+
+A) AI Chat – reconnect to backend and make it behave like a real troubleshooting assistant
+
+1. In `utils/api.ts`, update the `chat` method so that:
+   - It NO LONGER returns a static mock message.
+   - Instead it sends a POST request to `${API_BASE_URL}/ai/chat` with the same body structure used before:
+     - `messages` (array of { role, content })
+     - optional `language`
+     - optional `imageBase64` / `videoFileName` if used.
+   - It parses the backend response to get:
+     - `answer` – the main assistant reply text.
+     - optionally `rawResponse` – the full data if needed.
+
+2. In the backend route `server/routes/ai.js` for `/chat`:
+   - Make sure it uses OpenAI (via `server/services/openai.js` or similar) to call a chat model, like `gpt-4o-mini` or `gpt-4.1`.
+   - The system prompt should make QuickFix AI act as a friendly but precise DIY technician assistant. It should:
+     - Read the user’s full context (conversation history).
+     - Ask follow-up questions when needed.
+     - Ask the user to send a photo or short video if a visual inspection would really help.
+     - Give clear, numbered troubleshooting steps tailored to the specific device/problem.
+     - Use the user’s language (Swedish, English, Arabic, etc.) based on the `language` field in the request.
+
+   - The backend should respond with JSON like:
+     ```json
+     {
+       "success": true,
+       "answer": "… final reply text …",
+       "rawResponse": { ... full OpenAI result ... }
+     }
+     ```
+
+3. In `screens/AIChatScreen.tsx`:
+   - Ensure `sendMessage`:
+     - Calls `api.chat(...)`.
+     - Uses `response.answer` as the assistant’s message content.
+     - Only falls back to a generic “demo / offline” text if `success` is false or the request throws.
+   - Remove the old static “QuickFix AI (demo mode)” style response so that the user always sees the real AI output when the backend is working.
+
+4. Make sure that after this change:
+   - There are real network calls to `/api/ai/chat` again.
+   - There are no TypeScript errors.
+   - Different messages like “min kran droppar”, “min tv är svart”, “hej” all produce different, contextual answers.
+
+B) LiveAssist – real image analysis + better steps
+
+1. In `utils/api.ts`, update `liveAssist(imageBase64, language)`:
+   - Remove the current static mock implementation.
+   - Restore or implement a real POST request to `${API_BASE_URL}/ai/liveassist` sending:
+     - `imageBase64`
+     - `language`
+     - optionally the last user text message if needed as additional context.
+
+2. In the backend route `server/routes/ai.js` for `/liveassist`:
+   - Use OpenAI Vision (e.g. gpt-4o mini with image input) to analyze the image.
+   - Use a structured system prompt that instructs the model to return:
+     - `summary`: 1–2 sentences describing what is visible.
+     - `possibleIssue`: the most likely problem based on the image (if it’s NOT an electrical device or not a machine, it should say that: e.g. “This looks like a painting on a wall, not an electrical component, so there is no obvious technical fault here.”).
+     - `safetyNote`: only if relevant (e.g. electricity, gas, water, heavy objects).
+     - `steps`: an array of 3–6 concrete action steps tailored to what the model sees.
+       - These steps should not always be “turn off the device” and “clean the area” – they must be adapted to the image.
+   - The backend should return JSON like:
+     ```json
+     {
+       "success": true,
+       "analysis": {
+         "summary": "...",
+         "possibleIssue": "...",
+         "safetyNote": "...",
+         "steps": [
+           { "id": 1, "text": "First do this ..." },
+           { "id": 2, "text": "Then do that ..." }
+         ],
+         "rawResponse": { ... full OpenAI result ... }
+       }
+     }
+     ```
+
+3. In the LiveAssist UI (AIChatScreen.tsx and/or LiveAssistScreen.tsx):
+   - When `liveAssist()` completes successfully:
+     - Stop the loading spinner.
+     - Render the “What I see”, “Likely problem”, and “Steps to fix” cards using the returned `analysis` fields.
+   - When there is an error:
+     - Stop the loading spinner.
+     - Show a clear error message like “Couldn’t analyze the image right now. Please try again later.”
+
+C) Make LiveAssist steps interactive (tappable checklist)
+
+1. Still in the LiveAssist UI:
+   - Introduce local state, e.g. `const [completedSteps, setCompletedSteps] = useState<number[]>([]);`
+   - When rendering `analysis.steps`, wrap each step in a `Pressable` / `TouchableOpacity` and:
+     - On press, toggle that step’s id in `completedSteps`.
+   - Visually:
+     - If a step is completed, show a checkmark and slightly different background (e.g. darker/greener or lower opacity).
+     - If not completed, show the normal style.
+
+   Example rendering idea (pseudo-TSX):
+
+   ```tsx
+   {analysis.steps.map((step) => {
+     const isDone = completedSteps.includes(step.id);
+     return (
+       <Pressable
+         key={step.id}
+         onPress={() => {
+           setCompletedSteps((prev) =>
+             prev.includes(step.id)
+               ? prev.filter((id) => id !== step.id)
+               : [...prev, step.id]
+           );
+         }}
+         style={[
+           styles.stepItem,
+           isDone && styles.stepItemDone,
+         ]}
+       >
+         <Text style={styles.stepNumber}>{step.id}</Text>
+         <Text style={styles.stepText}>{step.text}</Text>
+         {isDone && <Icon name="check" ... />}
+       </Pressable>
+     );
+   })}
