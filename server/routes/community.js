@@ -93,9 +93,13 @@ router.get('/:id', optionalAuth, async (req, res) => {
 
 router.post('/', authMiddleware, async (req, res) => {
   try {
+    console.log('[COMMUNITY] Incoming POST body:', JSON.stringify(req.body));
+    console.log('[COMMUNITY] User ID from auth:', req.userId);
+    
     const { title, description, category, imageUrl } = req.body;
     
     if (!title || !description || !category) {
+      console.log('[COMMUNITY] Missing required fields:', { title: !!title, description: !!description, category: !!category });
       return res.status(400).json({ error: 'Title, description, and category are required' });
     }
     
@@ -113,6 +117,8 @@ router.post('/', authMiddleware, async (req, res) => {
     const row = result.rows[0];
     const user = userResult.rows[0];
     
+    console.log('[COMMUNITY] Successfully created post with id:', row.id);
+    
     res.status(201).json({
       id: row.id,
       title: row.title,
@@ -128,7 +134,7 @@ router.post('/', authMiddleware, async (req, res) => {
       updatedAt: row.updated_at
     });
   } catch (error) {
-    console.error('Create post error:', error);
+    console.error('[COMMUNITY] Create post error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -200,9 +206,13 @@ router.get('/:id/comments', optionalAuth, async (req, res) => {
 
 router.post('/:id/comments', authMiddleware, async (req, res) => {
   try {
+    console.log('[COMMUNITY] Incoming comment POST body:', JSON.stringify(req.body));
+    console.log('[COMMUNITY] Comment for post:', req.params.id, 'by user:', req.userId);
+    
     const { content, linkedVideoId } = req.body;
     
     if (!content) {
+      console.log('[COMMUNITY] Missing content in comment');
       return res.status(400).json({ error: 'Content is required' });
     }
     
@@ -245,6 +255,8 @@ router.post('/:id/comments', authMiddleware, async (req, res) => {
     const row = result.rows[0];
     const user = userResult.rows[0];
     
+    console.log('[COMMUNITY] Successfully created comment with id:', row.id);
+    
     res.status(201).json({
       id: row.id,
       content: row.content,
@@ -258,7 +270,7 @@ router.post('/:id/comments', authMiddleware, async (req, res) => {
       createdAt: row.created_at
     });
   } catch (error) {
-    console.error('Add comment error:', error);
+    console.error('[COMMUNITY] Add comment error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });

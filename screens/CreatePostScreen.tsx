@@ -77,8 +77,16 @@ export default function CreatePostScreen() {
       } else {
         Alert.alert(t("common.error"), t("community.createPostError"));
       }
-    } catch (error) {
-      Alert.alert(t("common.error"), t("community.createPostError"));
+    } catch (error: any) {
+      const errorMessage = error?.message || '';
+      if (errorMessage.includes('token') || errorMessage.includes('Authentication') || errorMessage.includes('401')) {
+        Alert.alert(
+          t("common.error"),
+          t("community.authError", "Please log out and log back in to post. Your session may have expired.")
+        );
+      } else {
+        Alert.alert(t("common.error"), t("community.createPostError"));
+      }
     } finally {
       setIsSubmitting(false);
     }

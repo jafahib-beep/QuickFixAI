@@ -1,0 +1,141 @@
+I just tested the app again with two accounts on my phone and in the Replit web preview.
+
+Current status:
+
+Community feed shows real posts correctly.
+
+Tapping on the author now opens their profile – this works.
+
+But now I cannot create a new post and cannot add comments:
+
+On mobile (Expo Go), when I try to create a post, I get a “failed, try again” message.
+
+When I try to comment on a post, nothing happens – the comment is not saved.
+
+In the Replit web preview, the same thing happens: creating a post or commenting also fails.
+
+So:
+GET for community works, but POST for posts and comments is broken.
+
+Please do the following:
+
+A. Fix POST for creating Community posts
+
+Reproduce the bug yourself:
+
+Start the app, open the Community tab.
+
+Log in with a test account.
+
+Try to create a new post from the “Ask the community” flow.
+
+Watch the server console for any errors when sending the request.
+
+Check the backend route that creates posts, for example in server/routes/community.js (or whatever file handles POST /api/community):
+
+Make sure the route still matches what the frontend sends.
+
+Check that the expected body fields (title, description, category, status, userId, etc.) match the frontend.
+
+Make sure express.json() and URL-encoded parsing are correctly set up in server/index.js so the body is parsed.
+
+Fix whatever is causing the POST to fail:
+
+If a required field is missing, either:
+
+update the frontend to send it, or
+
+relax the validation on the backend.
+
+If there is a SQL/query error, fix the query to insert the post correctly in the community_posts (or equivalent) table.
+
+Ensure the route returns a proper JSON response with the created post.
+
+After the fix:
+
+Creating a post from mobile and web preview should:
+
+Succeed without “failed, try again”.
+
+Immediately show the new post in the feed for both accounts after refresh.
+
+Add debug logs around the POST handler, for example:
+
+[COMMUNITY] Incoming POST body: ...
+
+[COMMUNITY] Successfully created post with id ...
+so it’s clear in the console what happens.
+
+B. Fix POST for creating comments
+
+Find the backend route that creates comments for a community post
+(for example POST /api/community/:postId/comments or similar).
+
+Reproduce the bug:
+
+Try to add a comment to an existing post (from mobile or web preview).
+
+Watch the backend console and see what error is thrown.
+
+Make sure:
+
+The frontend sends the correct body (e.g. content, postId, userId).
+
+The backend inserts the comment into the correct comments table.
+
+The response contains the created comment object.
+
+Update the frontend comment-submit handler so that:
+
+It awaits the API call.
+
+On success, it adds the new comment to the local state so it appears immediately.
+
+On error, it shows a friendly message (not just “failed, try again”).
+
+Verify end-to-end with two accounts:
+
+Account A creates a post.
+
+Account B adds a comment → both accounts see the comment after refresh on mobile and web.
+
+No “failed” errors appear.
+
+C. Keep existing features working
+
+While fixing this, please make sure:
+
+The Community feed still:
+
+uses only real database posts (no sample data).
+
+shows posts from both accounts consistently.
+
+Notifications / comment notifications are not broken by these changes.
+
+All new code follows the existing structure:
+
+Use the same CommunityContext for fetching and refreshing posts.
+
+Keep any TypeScript types (if present) in sync with the updated backend payload.
+
+Finally, please:
+
+List which files you modified (frontend and backend).
+
+Briefly explain:
+
+Why POST for posts and comments was failing.
+
+How you fixed it.
+
+Confirm that you tested:
+
+creating posts,
+
+adding comments,
+from both:
+
+Replit web preview
+
+a physical device via Expo Go.

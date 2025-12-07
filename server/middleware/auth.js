@@ -18,6 +18,7 @@ const authMiddleware = (req, res, next) => {
   const authHeader = req.headers.authorization;
   
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    console.log('[AUTH] No auth header or invalid format');
     return res.status(401).json({ error: 'Authentication required' });
   }
   
@@ -25,9 +26,11 @@ const authMiddleware = (req, res, next) => {
   const decoded = verifyToken(token);
   
   if (!decoded) {
+    console.log('[AUTH] Token verification failed. Token prefix:', token?.substring(0, 20) + '...');
     return res.status(401).json({ error: 'Invalid or expired token' });
   }
   
+  console.log('[AUTH] Token verified for user:', decoded.userId);
   req.userId = decoded.userId;
   next();
 };

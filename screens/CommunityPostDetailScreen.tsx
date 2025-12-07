@@ -165,8 +165,16 @@ export default function CommunityPostDetailScreen() {
         setComments((prev) => [...prev, comment]);
         setNewComment("");
       }
-    } catch (error) {
-      Alert.alert(t("common.error"), t("community.commentError"));
+    } catch (error: any) {
+      const errorMessage = error?.message || '';
+      if (errorMessage.includes('token') || errorMessage.includes('Authentication') || errorMessage.includes('401')) {
+        Alert.alert(
+          t("common.error"),
+          t("community.authError", "Please log out and log back in to comment. Your session may have expired.")
+        );
+      } else {
+        Alert.alert(t("common.error"), t("community.commentError"));
+      }
     } finally {
       setIsSubmitting(false);
     }
