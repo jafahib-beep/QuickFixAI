@@ -17,6 +17,10 @@ The application features a modern dark theme with a blue accent (#0A84FF), respe
 - ProfileScreen: Centered stats row, polished XP card with 8px progress bar
 - SettingsScreen: New "Legal" section with Community Guidelines, Terms of Service, Privacy Policy; "About" section with version info
 - LiveAssist: Interactive tappable checklist for steps with visual completion feedback (checkmarks, strikethrough, "All done!" badge)
+- AIChatScreen: Polished message bubbles with 80% max width, BorderRadius.xl, improved line height (24px), larger avatars (32px)
+- CategoryFilter: Compact chip styling with Spacing.xs gap, 13px font size
+- VideoCard: Refined content padding and title letterSpacing (-0.2)
+- LiveAssistScreen: Enhanced result cards with BorderRadius.xl for more polished appearance
 
 ### Technical Implementations
 The frontend is built with Expo/React Native, supporting multi-language (English, Swedish, Arabic with RTL, German, French, Spanish). The backend is an Express server with a PostgreSQL database. Development runs in a full-stack mode where `npm run dev` concurrently starts both the Express server (port 5000) and Expo frontend (port 8081). Metro is configured to proxy `/api/*` requests from the web to the backend. Mobile/Expo Go clients use direct backend URLs. Platform-specific URL handling is managed by `utils/api.ts`. The application features an offline-first mode using sample data and local storage when the backend is unavailable.
