@@ -716,10 +716,10 @@ export default function LiveAssistScreen() {
           {renderSparePartsSection()}
         </View>
       ) : error ? (
-        <View style={[styles.errorCard, { backgroundColor: theme.error + "20" }]}>
-          <Feather name="alert-triangle" size={24} color={theme.error} />
-          <ThemedText style={[styles.errorText, { color: theme.error }]}>
-            {error}
+        <View style={styles.errorBanner}>
+          <Feather name="wifi-off" size={20} color="#FFFFFF" />
+          <ThemedText style={styles.errorBannerText}>
+            AI-analys är otillgänglig just nu. Försök igen senare.
           </ThemedText>
         </View>
       ) : null}
@@ -987,15 +987,22 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#856404",
   },
-  errorCard: {
+  errorBanner: {
     flexDirection: "row",
     alignItems: "center",
-    padding: Spacing.lg,
-    borderRadius: BorderRadius.lg,
-    gap: Spacing.md,
+    justifyContent: "center",
+    padding: Spacing.md,
+    marginHorizontal: Spacing.md,
+    marginVertical: Spacing.sm,
+    borderRadius: BorderRadius.md,
+    backgroundColor: "#FF9500",
+    gap: Spacing.sm,
   },
-  errorText: {
+  errorBannerText: {
     ...Typography.body,
+    color: "#FFFFFF",
+    fontWeight: "500",
+    textAlign: "center",
     flex: 1,
   },
   newScanButton: {
