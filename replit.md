@@ -22,6 +22,14 @@ The application features a modern dark theme with a blue accent (#0A84FF), respe
 - VideoCard: Refined content padding and title letterSpacing (-0.2)
 - LiveAssistScreen: Enhanced result cards with BorderRadius.xl for more polished appearance
 
+**Test Release Prep (Dec 2024):**
+- New app icon: Wrench with lightning bolt on dark blue gradient background with electric blue symbol
+- Splash screen: Updated to dark theme (#0D0D0D background)
+- Android adaptive icon: Background color set to #0D0D0D
+- PrivacyTermsScreen: Dedicated legal screen with Privacy Policy, Terms of Service, and Community Guidelines
+- AI Disclaimer: Important notice that AI suggestions are informational only and not professional advice
+- Settings navigation: Legal section items now navigate to PrivacyTermsScreen instead of showing alerts
+
 ### Technical Implementations
 The frontend is built with Expo/React Native, supporting multi-language (English, Swedish, Arabic with RTL, German, French, Spanish). The backend is an Express server with a PostgreSQL database. Development runs in a full-stack mode where `npm run dev` concurrently starts both the Express server (port 5000) and Expo frontend (port 8081). Metro is configured to proxy `/api/*` requests from the web to the backend. Mobile/Expo Go clients use direct backend URLs. Platform-specific URL handling is managed by `utils/api.ts`. The application features an offline-first mode using sample data and local storage when the backend is unavailable.
 
