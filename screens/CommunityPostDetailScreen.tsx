@@ -21,6 +21,7 @@ import { Spacing, BorderRadius } from "@/constants/theme";
 import { useTheme } from "@/hooks/useTheme";
 import { useCommunity } from "@/contexts/CommunityContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { useXp } from "@/contexts/XpContext";
 import { RootStackParamList } from "@/navigation/RootNavigator";
 import { CommunityPost, CommunityComment } from "@/utils/api";
 import { getCategoryIcon, getCategoryColor } from "@/constants/categories";
@@ -124,6 +125,7 @@ export default function CommunityPostDetailScreen() {
   const { t } = useTranslation();
   const { theme, isDark } = useTheme();
   const { user } = useAuth();
+  const { handleXpResponse } = useXp();
   const { getPost, getComments, addComment, markAsSolution } = useCommunity();
 
   const [post, setPost] = useState<CommunityPost | null>(null);
@@ -164,6 +166,14 @@ export default function CommunityPostDetailScreen() {
       if (comment) {
         setComments((prev) => [...prev, comment]);
         setNewComment("");
+        if (comment.xpAwarded) {
+          handleXpResponse({
+            xpAwarded: comment.xpAwarded,
+            totalXp: comment.totalXp,
+            level: comment.level,
+            leveledUp: comment.leveledUp,
+          }, 'community_comment');
+        }
       }
     } catch (error: any) {
       const errorMessage = (error?.message || '').toLowerCase();

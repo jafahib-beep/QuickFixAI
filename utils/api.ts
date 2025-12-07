@@ -113,7 +113,12 @@ class ApiClient {
   }
 
   async login(email: string, password: string) {
-    const result = await this.request<{ user: User; token: string }>(
+    const result = await this.request<{ 
+      user: User; 
+      token: string; 
+      xpAwarded?: number;
+      leveledUp?: boolean;
+    }>(
       "/auth/login",
       {
         method: "POST",
@@ -761,6 +766,10 @@ export interface CommunityPost {
   authorAvatar?: string;
   createdAt: string;
   updatedAt: string;
+  xpAwarded?: number;
+  totalXp?: number;
+  level?: number;
+  leveledUp?: boolean;
 }
 
 export interface CreatePostData {
@@ -781,6 +790,10 @@ export interface CommunityComment {
   linkedVideoTitle?: string;
   linkedVideoThumbnail?: string;
   createdAt: string;
+  xpAwarded?: number;
+  totalXp?: number;
+  level?: number;
+  leveledUp?: boolean;
 }
 
 export interface LiveAssistStep {

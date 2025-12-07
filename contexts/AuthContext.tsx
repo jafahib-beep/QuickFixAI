@@ -5,16 +5,25 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 const LOCAL_USER_KEY = "quickfix_local_user";
 const LOCAL_USERS_KEY = "quickfix_local_users";
 
+interface LoginResult {
+  success: boolean;
+  error?: string;
+  xpAwarded?: number;
+  leveledUp?: boolean;
+}
+
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  login: (email: string, password: string) => Promise<LoginResult>;
   register: (email: string, password: string, displayName: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   updateProfile: (updates: Partial<User>) => Promise<{ success: boolean; error?: string }>;
   changePassword: (currentPassword: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
   refreshUser: () => Promise<void>;
+  pendingXpNotification: { xpAwarded: number; leveledUp: boolean } | null;
+  clearPendingXpNotification: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -22,6 +31,11 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [pendingXpNotification, setPendingXpNotification] = useState<{ xpAwarded: number; leveledUp: boolean } | null>(null);
+  
+  const clearPendingXpNotification = () => {
+    setPendingXpNotification(null);
+  };
 
   useEffect(() => {
     loadUser();
@@ -58,11 +72,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
+  const login = async (email: string, password: string): Promise<LoginResult> => {
     try {
       const result = await api.login(email, password);
       setUser(result.user);
-      return { success: true };
+      
+      if (result.xpAwarded && result.xpAwarded > 0) {
+        setPendingXpNotification({
+          xpAwarded: result.xpAwarded,
+          leveledUp: result.leveledUp || false,
+        });
+      }
+      
+      return { 
+        success: true,
+        xpAwarded: result.xpAwarded,
+        leveledUp: result.leveledUp,
+      };
     } catch (error: any) {
       try {
         const usersJson = await AsyncStorage.getItem(LOCAL_USERS_KEY);
@@ -85,6 +111,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             bio: undefined,
             followersCount: 0,
             followingCount: 0,
+            xp: 0,
+            level: 1,
+            nextLevelXp: 100,
+            currentLevelXp: 0,
           };
           setUser(demoUser);
           await AsyncStorage.setItem(LOCAL_USER_KEY, JSON.stringify(demoUser));
@@ -120,6 +150,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           bio: undefined,
           followersCount: 0,
           followingCount: 0,
+          xp: 0,
+          level: 1,
+          nextLevelXp: 100,
+          currentLevelXp: 0,
         };
         users[email.toLowerCase()] = { user: newUser, password };
         await AsyncStorage.setItem(LOCAL_USERS_KEY, JSON.stringify(users));
@@ -213,6 +247,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         updateProfile,
         changePassword,
         refreshUser,
+        pendingXpNotification,
+        clearPendingXpNotification,
       }}
     >
       {children}

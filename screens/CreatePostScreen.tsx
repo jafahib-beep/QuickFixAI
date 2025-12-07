@@ -19,6 +19,7 @@ import { ScreenKeyboardAwareScrollView } from "@/components/ScreenKeyboardAwareS
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { useTheme } from "@/hooks/useTheme";
 import { useCommunity } from "@/contexts/CommunityContext";
+import { useXp } from "@/contexts/XpContext";
 import { RootStackParamList } from "@/navigation/RootNavigator";
 import { CATEGORIES, getCategoryIcon, getCategoryColor } from "@/constants/categories";
 
@@ -29,6 +30,7 @@ export default function CreatePostScreen() {
   const { t } = useTranslation();
   const { theme, isDark } = useTheme();
   const { createPost } = useCommunity();
+  const { handleXpResponse } = useXp();
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -73,6 +75,14 @@ export default function CreatePostScreen() {
       });
 
       if (post) {
+        if (post.xpAwarded) {
+          handleXpResponse({
+            xpAwarded: post.xpAwarded,
+            totalXp: post.totalXp,
+            level: post.level,
+            leveledUp: post.leveledUp,
+          }, 'community_post');
+        }
         navigation.goBack();
       } else {
         Alert.alert(t("common.error"), t("community.createPostError"));

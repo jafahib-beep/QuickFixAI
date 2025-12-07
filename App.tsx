@@ -10,6 +10,7 @@ import { I18nextProvider } from "react-i18next";
 import RootNavigator from "@/navigation/RootNavigator";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { XpProvider } from "@/contexts/XpContext";
 import { VideosProvider } from "@/contexts/VideosContext";
 import { CommunityProvider } from "@/contexts/CommunityContext";
 import { NotificationsProvider } from "@/contexts/NotificationsContext";
@@ -39,16 +40,18 @@ function AppContent() {
   return (
     <I18nextProvider i18n={i18n}>
       <AuthProvider>
-        <NotificationsProvider>
-          <VideosProvider>
-            <CommunityProvider>
-              <NavigationContainer>
-                <RootNavigator />
-              </NavigationContainer>
-              <StatusBar style="auto" />
-            </CommunityProvider>
-          </VideosProvider>
-        </NotificationsProvider>
+        <XpProvider>
+          <NotificationsProvider>
+            <VideosProvider>
+              <CommunityProvider>
+                <NavigationContainer>
+                  <RootNavigator />
+                </NavigationContainer>
+                <StatusBar style="auto" />
+              </CommunityProvider>
+            </VideosProvider>
+          </NotificationsProvider>
+        </XpProvider>
       </AuthProvider>
     </I18nextProvider>
   );
