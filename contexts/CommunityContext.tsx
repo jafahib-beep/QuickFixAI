@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
+import { Platform } from "react-native";
 import { api, CommunityPost, CommunityComment, CreatePostData } from "@/utils/api";
 import { useAuth } from "./AuthContext";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
 interface CommunityContextType {
   posts: CommunityPost[];
@@ -17,75 +17,43 @@ interface CommunityContextType {
 
 const CommunityContext = createContext<CommunityContextType | undefined>(undefined);
 
-const POSTS_STORAGE_KEY = "quickfix_community_posts";
-const COMMENTS_STORAGE_KEY = "quickfix_community_comments";
+const getLogPrefix = () => Platform.OS === 'web' ? '[WEB]' : '[MOBILE]';
 
 export function CommunityProvider({ children }: { children: ReactNode }) {
-  const { user, isAuthenticated } = useAuth();
+  const { user } = useAuth();
   const [posts, setPosts] = useState<CommunityPost[]>([]);
-  const [localPosts, setLocalPosts] = useState<CommunityPost[]>([]);
-  const [localComments, setLocalComments] = useState<Record<string, CommunityComment[]>>({});
   const [isLoading, setIsLoading] = useState(true);
 
-  const loadLocalData = useCallback(async () => {
-    try {
-      const [postsJson, commentsJson] = await Promise.all([
-        AsyncStorage.getItem(POSTS_STORAGE_KEY),
-        AsyncStorage.getItem(COMMENTS_STORAGE_KEY),
-      ]);
-      
-      if (postsJson) {
-        setLocalPosts(JSON.parse(postsJson));
-      }
-      if (commentsJson) {
-        setLocalComments(JSON.parse(commentsJson));
-      }
-    } catch (error) {
-      console.log("[CommunityContext] Failed to load local data:", error);
-    }
-  }, []);
-
-  const saveLocalPosts = useCallback(async (newPosts: CommunityPost[]) => {
-    try {
-      await AsyncStorage.setItem(POSTS_STORAGE_KEY, JSON.stringify(newPosts));
-    } catch (error) {
-      console.log("[CommunityContext] Failed to save local posts:", error);
-    }
-  }, []);
-
-  const saveLocalComments = useCallback(async (comments: Record<string, CommunityComment[]>) => {
-    try {
-      await AsyncStorage.setItem(COMMENTS_STORAGE_KEY, JSON.stringify(comments));
-    } catch (error) {
-      console.log("[CommunityContext] Failed to save local comments:", error);
-    }
-  }, []);
-
   const loadData = useCallback(async () => {
-    await loadLocalData();
+    const prefix = getLogPrefix();
+    console.log(`${prefix} Fetching /api/community...`);
     
     try {
       const apiPosts = await api.getCommunityPosts();
+      console.log(`${prefix} Received ${apiPosts?.length || 0} posts from backend`);
       setPosts(apiPosts || []);
-    } catch (error) {
-      console.log("[CommunityContext] API unavailable, showing empty feed");
+    } catch (error: any) {
+      console.log(`${prefix} Failed to fetch posts:`, error?.message || error);
       setPosts([]);
     } finally {
       setIsLoading(false);
     }
-  }, [loadLocalData]);
+  }, []);
 
   useEffect(() => {
     loadData();
   }, []);
 
   const refreshPosts = async () => {
+    const prefix = getLogPrefix();
+    console.log(`${prefix} Refreshing /api/community...`);
     setIsLoading(true);
     try {
       const apiPosts = await api.getCommunityPosts();
+      console.log(`${prefix} Refresh received ${apiPosts?.length || 0} posts from backend`);
       setPosts(apiPosts || []);
-    } catch (error) {
-      console.log("[CommunityContext] Failed to refresh posts:", error);
+    } catch (error: any) {
+      console.log(`${prefix} Failed to refresh posts:`, error?.message || error);
       setPosts([]);
     } finally {
       setIsLoading(false);
@@ -106,34 +74,17 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
 
   const createPost = async (data: CreatePostData): Promise<CommunityPost | null> => {
     if (!user) return null;
+    const prefix = getLogPrefix();
+    console.log(`${prefix} Creating post via /api/community...`);
     
     try {
       const newPost = await api.createCommunityPost(data);
+      console.log(`${prefix} Post created successfully:`, newPost.id);
       setPosts(prev => [newPost, ...prev]);
       return newPost;
-    } catch (error) {
-      console.log("[CommunityContext] API unavailable, creating local post");
-      const localPost: CommunityPost = {
-        id: `local_${Date.now()}`,
-        title: data.title,
-        description: data.description,
-        category: data.category,
-        imageUrl: data.imageUrl,
-        status: 'open',
-        commentsCount: 0,
-        authorId: user.id,
-        authorName: user.displayName,
-        authorAvatar: user.avatarUrl,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      
-      const updatedLocalPosts = [localPost, ...localPosts];
-      setLocalPosts(updatedLocalPosts);
-      setPosts(prev => [localPost, ...prev]);
-      await saveLocalPosts(updatedLocalPosts);
-      
-      return localPost;
+    } catch (error: any) {
+      console.log(`${prefix} Failed to create post:`, error?.message || error);
+      throw error;
     }
   };
 
@@ -150,49 +101,33 @@ export function CommunityProvider({ children }: { children: ReactNode }) {
   };
 
   const getComments = async (postId: string): Promise<CommunityComment[]> => {
+    const prefix = getLogPrefix();
+    console.log(`${prefix} Fetching comments for post ${postId}...`);
     try {
       const comments = await api.getPostComments(postId);
+      console.log(`${prefix} Received ${comments?.length || 0} comments from backend`);
       return comments;
-    } catch (error) {
-      console.log("[CommunityContext] API unavailable, using local comments");
-      return localComments[postId] || [];
+    } catch (error: any) {
+      console.log(`${prefix} Failed to fetch comments:`, error?.message || error);
+      return [];
     }
   };
 
   const addComment = async (postId: string, content: string, linkedVideoId?: string): Promise<CommunityComment | null> => {
     if (!user) return null;
+    const prefix = getLogPrefix();
+    console.log(`${prefix} Adding comment to post ${postId}...`);
     
     try {
       const newComment = await api.addPostComment(postId, content, linkedVideoId);
+      console.log(`${prefix} Comment added successfully:`, newComment.id);
       setPosts(prev => prev.map(p => 
         p.id === postId ? { ...p, commentsCount: p.commentsCount + 1 } : p
       ));
       return newComment;
-    } catch (error) {
-      console.log("[CommunityContext] API unavailable, creating local comment");
-      const localComment: CommunityComment = {
-        id: `local_comment_${Date.now()}`,
-        content,
-        isSolution: false,
-        authorId: user.id,
-        authorName: user.displayName,
-        authorAvatar: user.avatarUrl,
-        linkedVideoId,
-        createdAt: new Date().toISOString(),
-      };
-      
-      const updatedComments = {
-        ...localComments,
-        [postId]: [...(localComments[postId] || []), localComment],
-      };
-      setLocalComments(updatedComments);
-      await saveLocalComments(updatedComments);
-      
-      setPosts(prev => prev.map(p => 
-        p.id === postId ? { ...p, commentsCount: p.commentsCount + 1 } : p
-      ));
-      
-      return localComment;
+    } catch (error: any) {
+      console.log(`${prefix} Failed to add comment:`, error?.message || error);
+      throw error;
     }
   };
 

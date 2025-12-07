@@ -68,9 +68,10 @@ function getStatusIcon(status: string): string {
 interface PostCardProps {
   post: CommunityPost;
   onPress: () => void;
+  onAuthorPress: () => void;
 }
 
-function PostCard({ post, onPress }: PostCardProps) {
+function PostCard({ post, onPress, onAuthorPress }: PostCardProps) {
   const { theme } = useTheme();
   const { t } = useTranslation();
   const categoryIcon = getCategoryIcon(post.category);
@@ -114,16 +115,23 @@ function PostCard({ post, onPress }: PostCardProps) {
       ) : null}
 
       <View style={styles.postFooter}>
-        <View style={styles.authorInfo}>
+        <Pressable 
+          style={styles.authorInfo}
+          onPress={(e) => {
+            e.stopPropagation();
+            onAuthorPress();
+          }}
+          hitSlop={8}
+        >
           <View style={[styles.avatar, { backgroundColor: theme.link }]}>
             <ThemedText type="small" style={{ color: "#FFFFFF", fontWeight: "600" }}>
               {post.authorName.charAt(0).toUpperCase()}
             </ThemedText>
           </View>
-          <ThemedText type="small" style={{ color: theme.textSecondary }}>
+          <ThemedText type="small" style={{ color: theme.link, fontWeight: "500" }}>
             {post.authorName}
           </ThemedText>
-        </View>
+        </Pressable>
         <View style={styles.postMeta}>
           <Feather name="message-circle" size={14} color={theme.textSecondary} />
           <ThemedText type="small" style={{ color: theme.textSecondary, marginLeft: 4, marginRight: 12 }}>
@@ -159,6 +167,10 @@ export default function CommunityScreen() {
 
   const handlePostPress = useCallback((post: CommunityPost) => {
     navigation.navigate("CommunityPostDetail", { postId: post.id });
+  }, [navigation]);
+
+  const handleAuthorPress = useCallback((post: CommunityPost) => {
+    navigation.navigate("UserProfile", { userId: post.authorId, userName: post.authorName });
   }, [navigation]);
 
   const handleCreatePost = useCallback(() => {
@@ -278,6 +290,7 @@ export default function CommunityScreen() {
                 key={post.id}
                 post={post}
                 onPress={() => handlePostPress(post)}
+                onAuthorPress={() => handleAuthorPress(post)}
               />
             ))}
           </View>

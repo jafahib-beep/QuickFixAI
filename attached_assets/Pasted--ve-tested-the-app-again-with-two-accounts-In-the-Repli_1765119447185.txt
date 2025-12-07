@@ -1,0 +1,80 @@
+’ve tested the app again with two accounts:
+
+In the Replit web preview, the Community feed works:
+I can see posts and comments from both test accounts.
+
+On my physical phone (Expo Go), using the same backend, I do not see the same posts/comments, even after pull-to-refresh.
+
+This means:
+
+Backend and database are OK.
+
+The mobile app Community screen is still using stale data, wrong fetch logic, or some caching/fallback that is different from the web preview.
+
+I need you to:
+
+A. Make the Community feed identical on mobile and web
+
+Ensure that the React Native app (AIChatScreen / Community screens / CommunityContext) always loads posts and comments only from the real backend:
+
+GET /api/community for posts
+
+the real comments endpoint for comments
+
+Remove or disable any remaining:
+
+sample data
+
+local “offline” fallback
+
+in-memory arrays that might be used instead of the API response
+
+Make sure pull-to-refresh on the Community tab:
+
+actually calls GET /api/community
+
+replaces the current list with the latest data from the backend
+
+After your changes, please verify this with two real accounts:
+
+Account A creates a post → Account B can see it on mobile after refresh.
+
+Account B comments on A’s post → both accounts see the comment on mobile and web.
+
+Please add clear console logs for the mobile fetch calls, e.g. [MOBILE] Fetching /api/community and [MOBILE] Received N posts, so I can see in the Replit console that the phone really hits the backend.
+
+B. Make post authors and commenters tappable → open profile
+
+Right now, in the Community feed:
+
+I see the author’s name/avatar,
+
+but I cannot tap it to open their profile or add them as a friend.
+
+I need you to:
+
+Make the author name / avatar on posts and comments tappable.
+
+When tapped:
+
+Navigate to the existing User Profile screen for that user (the one that shows followers, uploads, XP, etc.).
+
+Make sure it receives the correct userId so it shows the selected user, not just my own profile.
+
+On that profile screen, ensure there is a clear action like:
+
+“Follow” / “Add friend” button, if that system already exists,
+
+or at least prepare the navigation/hook so we can easily attach friend/follow logic later.
+
+Please:
+
+List the files you changed.
+
+Explain briefly how you fixed:
+
+mobile Community feed (so it shows the same data as web),
+
+profile navigation from posts/comments.
+
+Confirm that you tested with two accounts on a physical device (Expo Go) and that both see each other’s posts/comments.

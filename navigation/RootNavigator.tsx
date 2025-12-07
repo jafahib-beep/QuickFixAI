@@ -42,7 +42,7 @@ export type RootStackParamList = {
   CommunityPostDetail: { postId: string };
   CreatePost: undefined;
   VideoLibrary: undefined;
-  UserProfile: { userId: string };
+  UserProfile: { userId: string; userName?: string };
   Report: { contentType: "video" | "profile" | "comment"; contentId?: string; targetUserId?: string };
   PrivacyTerms: { type: "privacy" | "terms" | "guidelines" };
   Notifications: undefined;

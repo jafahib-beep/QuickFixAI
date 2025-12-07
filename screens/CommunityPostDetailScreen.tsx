@@ -56,9 +56,10 @@ interface CommentItemProps {
   comment: CommunityComment;
   isPostAuthor: boolean;
   onMarkSolution: () => void;
+  onAuthorPress: () => void;
 }
 
-function CommentItem({ comment, isPostAuthor, onMarkSolution }: CommentItemProps) {
+function CommentItem({ comment, isPostAuthor, onMarkSolution, onAuthorPress }: CommentItemProps) {
   const { theme } = useTheme();
   const { t } = useTranslation();
 
@@ -74,16 +75,16 @@ function CommentItem({ comment, isPostAuthor, onMarkSolution }: CommentItemProps
       ) : null}
 
       <View style={styles.commentHeader}>
-        <View style={styles.commentAuthor}>
+        <Pressable style={styles.commentAuthor} onPress={onAuthorPress} hitSlop={8}>
           <View style={[styles.avatar, { backgroundColor: theme.link }]}>
             <ThemedText type="small" style={{ color: "#FFFFFF", fontWeight: "600" }}>
               {comment.authorName.charAt(0).toUpperCase()}
             </ThemedText>
           </View>
-          <ThemedText type="body" style={{ fontWeight: "600" }}>
+          <ThemedText type="body" style={{ fontWeight: "600", color: theme.link }}>
             {comment.authorName}
           </ThemedText>
-        </View>
+        </Pressable>
         <ThemedText type="small" style={{ color: theme.textSecondary }}>
           {formatTimeAgo(comment.createdAt)}
         </ThemedText>
@@ -185,6 +186,10 @@ export default function CommunityPostDetailScreen() {
     }
   };
 
+  const handleAuthorPress = useCallback((userId: string, userName: string) => {
+    navigation.navigate("UserProfile", { userId, userName });
+  }, [navigation]);
+
   if (isLoading) {
     return (
       <ThemedView style={styles.loadingContainer}>
@@ -246,21 +251,25 @@ export default function CommunityPostDetailScreen() {
             ) : null}
 
             <View style={styles.postFooter}>
-              <View style={styles.authorInfo}>
+              <Pressable 
+                style={styles.authorInfo}
+                onPress={() => handleAuthorPress(post.authorId, post.authorName)}
+                hitSlop={8}
+              >
                 <View style={[styles.avatar, { backgroundColor: theme.link }]}>
                   <ThemedText type="body" style={{ color: "#FFFFFF", fontWeight: "600" }}>
                     {post.authorName.charAt(0).toUpperCase()}
                   </ThemedText>
                 </View>
                 <View>
-                  <ThemedText type="body" style={{ fontWeight: "600" }}>
+                  <ThemedText type="body" style={{ fontWeight: "600", color: theme.link }}>
                     {post.authorName}
                   </ThemedText>
                   <ThemedText type="small" style={{ color: theme.textSecondary }}>
                     {formatTimeAgo(post.createdAt)}
                   </ThemedText>
                 </View>
-              </View>
+              </Pressable>
             </View>
           </View>
 
@@ -277,6 +286,7 @@ export default function CommunityPostDetailScreen() {
                     comment={comment}
                     isPostAuthor={isPostAuthor}
                     onMarkSolution={() => handleMarkSolution(comment.id)}
+                    onAuthorPress={() => handleAuthorPress(comment.authorId, comment.authorName)}
                   />
                 ))}
               </View>
