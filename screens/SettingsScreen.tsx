@@ -205,18 +205,15 @@ export default function SettingsScreen() {
         </ThemedText>
         <View style={[styles.sectionContent, { backgroundColor: theme.cardBackground }]}>
           {renderSettingRow("book-open", t("settings.communityGuidelines", { defaultValue: "Community Guidelines" }), () => {
-            Alert.alert(
-              t("settings.communityGuidelines", { defaultValue: "Community Guidelines" }), 
-              "Be respectful, no harassment or hate speech, no spam or misleading content, no dangerous advice. Report violations to help keep QuickFix safe."
-            );
+            navigation.navigate("PrivacyTerms", { type: "guidelines" });
           })}
           <View style={[styles.divider, { backgroundColor: theme.border }]} />
           {renderSettingRow("file-text", t("settings.termsOfService"), () => {
-            Alert.alert(t("settings.termsOfService"), "Terms of Service will be displayed here.");
+            navigation.navigate("PrivacyTerms", { type: "terms" });
           })}
           <View style={[styles.divider, { backgroundColor: theme.border }]} />
           {renderSettingRow("shield", t("settings.privacyPolicy"), () => {
-            Alert.alert(t("settings.privacyPolicy"), "Privacy Policy will be displayed here.");
+            navigation.navigate("PrivacyTerms", { type: "privacy" });
           })}
         </View>
       </View>
