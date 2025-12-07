@@ -78,8 +78,13 @@ export default function CreatePostScreen() {
         Alert.alert(t("common.error"), t("community.createPostError"));
       }
     } catch (error: any) {
-      const errorMessage = error?.message || '';
-      if (errorMessage.includes('token') || errorMessage.includes('Authentication') || errorMessage.includes('401')) {
+      const errorMessage = (error?.message || '').toLowerCase();
+      console.log('[CreatePost] Error:', error?.message);
+      const isAuthError = errorMessage.includes('token') || 
+                          errorMessage.includes('expired') || 
+                          errorMessage.includes('authentication') || 
+                          errorMessage.includes('unauthorized');
+      if (isAuthError) {
         Alert.alert(
           t("common.error"),
           t("community.authError", "Please log out and log back in to post. Your session may have expired.")
