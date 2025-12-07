@@ -1,0 +1,117 @@
+I need you to fix two concrete issues in my QuickFix mobile app related to AI Chat and LiveAssist.  
+
+Goal for now:  
+Make BOTH AI Chat and LiveAssist work entirely with local mock responses in the frontend (no real backend calls to /api/ai/*), so the app behaves nicely for demo and testing until I move the backend off Replit.
+
+Here is what I want you to do step by step:
+
+1) Fix AI Chat so it no longer calls the backend and no longer repeats the same fallback message:
+
+- In utils/api.ts, update the `chat` method so it DOES NOT call the backend at all for now.  
+  Instead, it should:
+  - Take the last user message from `data.messages` (role === "user").
+  - Build and return a local mock response object, for example:
+
+    ```ts
+    async chat(data: {
+      messages: { role: string; content: string }[];
+      language?: string;
+      imageBase64?: string;
+      videoFileName?: string;
+    }): Promise<{ answer: string; rawResponse?: any }> {
+      console.log("[API MOCK] chat called with:", data);
+      const lastMessage =
+        data.messages?.[data.messages.length - 1]?.content || "";
+
+      const answer =
+        "QuickFix AI (mock):\n\n" +
+        "I read your message and here is a possible explanation and a few steps you could try. " +
+        "When we connect the real backend, this will be replaced with real OpenAI answers.\n\n" +
+        `You wrote: "${lastMessage}"`;
+
+      return { answer, rawResponse: { mock: true } };
+    }
+    ```
+
+  - Do NOT call fetch or this.request inside `chat` for now.
+  - Make sure the return type matches what AIChatScreen.tsx expects
+    (an object with at least `answer: string`).
+
+- In screens/AIChatScreen.tsx, inside the `sendMessage` function:
+  - Make sure the assistant reply ALWAYS uses the `answer` field from the API response.
+  - Remove or disable any old “debug” or “offline” fallback that always shows the same message.
+  - The flow should be:
+    1. User sends a message.
+    2. Call `api.chat(...)`.
+    3. Take `response.answer` and add an assistant message with that content.
+  - After your change, sending different user messages (e.g. “my sink is leaking”, “my TV is black”, “hej”) should produce different replies (or at least a reply that includes the text of the last user message), not the same static text every time.
+  - Also make sure we are NOT calling `/api/ai/chat` anymore. After your change, the console log should not show `[API] Error 404` for `/api/ai/chat`.
+
+2) Fix LiveAssist so it shows instant mock results instead of loading forever:
+
+- In utils/api.ts, update the `liveAssist` method similarly:
+  - For now, DO NOT call the backend at `/api/ai/liveassist`.
+  - Instead, return a local mock LiveAssistResponse that matches the structure used in AIChatScreen.tsx. For example:
+
+    ```ts
+    async liveAssist(imageBase64: string, language: string = "en") {
+      console.log("[API MOCK] liveAssist called with:", {
+        hasImage: !!imageBase64,
+        language,
+      });
+
+      return {
+        success: true,
+        analysis: {
+          summary: "I analyzed the image and found an area that could be the problem.",
+          possibleIssue:
+            "There may be a loose cable, dirt, or a damaged component in the marked area.",
+          safetyNote:
+            "Turn off the power and be careful when touching electrical components.",
+          steps: [
+            {
+              id: 1,
+              text: "Turn off the device or power before you continue.",
+            },
+            {
+              id: 2,
+              text: "Inspect the area that QuickFix AI would highlight for any loose or dirty parts.",
+            },
+            {
+              id: 3,
+              text: "Gently clean or reconnect parts that look loose or dirty.",
+            },
+            {
+              id: 4,
+              text:
+                "If you are unsure or the problem remains, contact a certified technician.",
+            },
+          ],
+          rawResponse: { mock: true },
+        },
+      };
+    }
+    ```
+
+  - Again, there should be NO fetch or this.request to the backend inside `liveAssist` for now.
+
+- In the screen code that handles LiveAssist (AIChatScreen.tsx or LiveAssistScreen.tsx):
+  - When `liveAssist()` resolves, make sure you:
+    - Set any `isLiveAssistLoading` flag to `false`.
+    - Render the three cards (“What I see”, “Likely problem”, “Steps to fix”) using the fields from the mock response.
+  - When there is an error, make sure:
+    - Loading is stopped (`isLiveAssistLoading = false`).
+    - A simple error message is shown instead of an infinite spinner.
+  - After your change, when I take a photo or pick an image:
+    - The spinner should appear briefly, then disappear.
+    - The LiveAssist cards should show mock text (like the example above), instead of loading forever.
+
+3) General constraints:
+
+- Keep all previous fixes that you already applied (MediaTypeOptions deprecation, TypeScript rawResponse type, health check regression fix, etc.).
+- Do NOT change other parts of the app layout or navigation.
+- Make sure the app builds and runs on Expo Go without any TypeScript or runtime errors.
+- After your changes:
+  - There should be NO `/api/ai/chat` or `/api/ai/liveassist` HTTP calls in the console.
+  - AI Chat should always reply with something based on the last user message.
+  - LiveAssist should never get stuck in a loading state; it should always either show mock results or a clear error message.
