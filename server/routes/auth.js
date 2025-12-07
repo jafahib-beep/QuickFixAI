@@ -2,7 +2,7 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const { pool } = require('../db');
 const { generateToken, authMiddleware } = require('../middleware/auth');
-const { getNextLevelXp, getCurrentLevelXp } = require('../services/xp');
+const { getNextLevelXp, getCurrentLevelXp, awardDailyLoginXp, XP_REWARDS } = require('../services/xp');
 
 const router = express.Router();
 
@@ -90,8 +90,20 @@ router.post('/login', async (req, res) => {
     }
     
     const token = generateToken(user.id);
-    const xp = user.xp || 0;
-    const level = user.level || 1;
+    
+    const dailyLoginResult = await awardDailyLoginXp(user.id);
+    
+    let xp = user.xp || 0;
+    let level = user.level || 1;
+    let dailyLoginXpAwarded = 0;
+    let leveledUp = false;
+    
+    if (dailyLoginResult.success && dailyLoginResult.awarded) {
+      xp = dailyLoginResult.xp;
+      level = dailyLoginResult.level;
+      dailyLoginXpAwarded = dailyLoginResult.xpAwarded;
+      leveledUp = dailyLoginResult.leveledUp || false;
+    }
     
     res.json({
       user: {
@@ -109,7 +121,9 @@ router.post('/login', async (req, res) => {
         currentLevelXp: getCurrentLevelXp(level),
         createdAt: user.created_at
       },
-      token
+      token,
+      xpAwarded: dailyLoginXpAwarded,
+      leveledUp
     });
   } catch (error) {
     console.error('Login error:', error);

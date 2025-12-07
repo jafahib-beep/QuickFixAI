@@ -1,6 +1,7 @@
 const express = require('express');
 const { pool } = require('../db');
 const { authMiddleware, optionalAuth } = require('../middleware/auth');
+const { awardXpDirect, awardCommentXp, XP_REWARDS, getNextLevelXp, getCurrentLevelXp } = require('../services/xp');
 
 const router = express.Router();
 
@@ -119,6 +120,8 @@ router.post('/', authMiddleware, async (req, res) => {
     
     console.log('[COMMUNITY] Successfully created post with id:', row.id);
     
+    const xpResult = await awardXpDirect(req.userId, XP_REWARDS.community_post, 'community_post');
+    
     res.status(201).json({
       id: row.id,
       title: row.title,
@@ -131,7 +134,13 @@ router.post('/', authMiddleware, async (req, res) => {
       authorName: user.display_name,
       authorAvatar: user.avatar_url,
       createdAt: row.created_at,
-      updatedAt: row.updated_at
+      updatedAt: row.updated_at,
+      xpAwarded: xpResult.success ? xpResult.xpAwarded : 0,
+      totalXp: xpResult.success ? xpResult.xp : undefined,
+      level: xpResult.success ? xpResult.level : undefined,
+      leveledUp: xpResult.success ? xpResult.leveledUp : false,
+      nextLevelXp: xpResult.success ? xpResult.nextLevelXp : undefined,
+      currentLevelXp: xpResult.success ? xpResult.currentLevelXp : undefined
     });
   } catch (error) {
     console.error('[COMMUNITY] Create post error:', error);
@@ -257,6 +266,8 @@ router.post('/:id/comments', authMiddleware, async (req, res) => {
     
     console.log('[COMMUNITY] Successfully created comment with id:', row.id);
     
+    const xpResult = await awardCommentXp(req.userId, req.params.id);
+    
     res.status(201).json({
       id: row.id,
       content: row.content,
@@ -267,7 +278,11 @@ router.post('/:id/comments', authMiddleware, async (req, res) => {
       linkedVideoId: row.linked_video_id,
       linkedVideoTitle: videoData?.title,
       linkedVideoThumbnail: videoData?.thumbnail_url,
-      createdAt: row.created_at
+      createdAt: row.created_at,
+      xpAwarded: xpResult.success && xpResult.awarded ? xpResult.xpAwarded : 0,
+      totalXp: xpResult.success && xpResult.awarded ? xpResult.xp : undefined,
+      level: xpResult.success && xpResult.awarded ? xpResult.level : undefined,
+      leveledUp: xpResult.success && xpResult.awarded ? xpResult.leveledUp : false
     });
   } catch (error) {
     console.error('[COMMUNITY] Add comment error:', error);
@@ -292,6 +307,17 @@ router.put('/:postId/comments/:commentId/solution', authMiddleware, async (req, 
       return res.status(403).json({ error: 'Only the post author can mark solutions' });
     }
     
+    const commentCheck = await pool.query(
+      'SELECT user_id FROM community_comments WHERE id = $1 AND post_id = $2',
+      [commentId, postId]
+    );
+    
+    if (commentCheck.rows.length === 0) {
+      return res.status(404).json({ error: 'Comment not found' });
+    }
+    
+    const helperUserId = commentCheck.rows[0].user_id;
+    
     await pool.query(
       'UPDATE community_comments SET is_solution = false WHERE post_id = $1',
       [postId]
@@ -307,7 +333,16 @@ router.put('/:postId/comments/:commentId/solution', authMiddleware, async (req, 
       ['solved', postId]
     );
     
-    res.json({ success: true });
+    let xpResult = { success: false };
+    if (helperUserId && helperUserId !== req.userId) {
+      xpResult = await awardXpDirect(helperUserId, XP_REWARDS.post_solved, 'post_solved');
+      console.log(`[COMMUNITY] Awarded ${XP_REWARDS.post_solved} XP to helper ${helperUserId} for solving post ${postId}`);
+    }
+    
+    res.json({ 
+      success: true,
+      helperXpAwarded: xpResult.success ? xpResult.xpAwarded : 0
+    });
   } catch (error) {
     console.error('Mark solution error:', error);
     res.status(500).json({ error: 'Server error' });

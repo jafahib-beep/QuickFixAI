@@ -1,7 +1,7 @@
 const express = require('express');
 const { pool } = require('../db');
 const { authMiddleware, optionalAuth } = require('../middleware/auth');
-const { awardXp } = require('../services/xp');
+const { awardXp, awardXpDirect, XP_REWARDS, getNextLevelXp, getCurrentLevelXp } = require('../services/xp');
 const { getBlockedUserIds } = require('./block');
 
 const router = express.Router();
@@ -249,6 +249,8 @@ router.post('/', authMiddleware, async (req, res) => {
       [req.userId]
     );
     
+    const xpResult = await awardXpDirect(req.userId, XP_REWARDS.video_upload, 'video_upload');
+    
     res.status(201).json({
       id: video.id,
       title: video.title,
@@ -265,7 +267,11 @@ router.post('/', authMiddleware, async (req, res) => {
       authorAvatar: userResult.rows[0].avatar_url,
       isLiked: false,
       isSaved: false,
-      createdAt: video.created_at
+      createdAt: video.created_at,
+      xpAwarded: xpResult.success ? xpResult.xpAwarded : 0,
+      totalXp: xpResult.success ? xpResult.xp : undefined,
+      level: xpResult.success ? xpResult.level : undefined,
+      leveledUp: xpResult.success ? xpResult.leveledUp : false
     });
   } catch (error) {
     console.error('Create video error:', error);
