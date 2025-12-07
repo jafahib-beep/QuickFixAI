@@ -1,0 +1,126 @@
+XP SYSTEM IMPLEMENTATION — FULL TASK ORDER
+
+Goal:
+Implement a complete XP + Level system in QuickFix. The system must track XP in the backend, update the user profile, and award XP based on real user actions.
+
+1. Add XP fields to the backend user model
+
+Add xp: number (default 0)
+
+Add level: number (default 1)
+
+Add xpToNextLevel: number (default 100)
+
+If these fields already exist, verify they update correctly.
+
+2. Create XP award function in backend
+
+Add a reusable backend function:
+
+awardXP(userId, amount)
+
+
+This function must:
+
+Load user
+
+Add XP
+
+If XP >= xpToNextLevel, increase level
+
+Carry over remaining XP
+
+Save the updated user
+
+Return updated XP & level
+
+3. Add XP triggers for real app actions
+
+Implement XP rewards for the following actions:
+
+A. Create Community Post
+
++20 XP
+
+B. Comment on a Post
+
++10 XP
+(Only once per post to prevent spam)
+
+C. User receives a "Löst" (Solved) mark on their post
+
++50 XP
+(This rewards helpfulness)
+
+D. Upload a Video (Toolbox / Community)
+
++30 XP
+
+E. Daily Login Bonus
+
++10 XP
+(Only once per day)
+
+4. Update API routes to return updated XP & level
+
+All relevant endpoints (POST/comment, POST/community, POST/markSolved, POST/videoUpload) must return:
+
+{
+  success: true,
+  xp: updatedXP,
+  level: updatedLevel
+}
+
+
+This allows the frontend to update the UI instantly.
+
+5. Update frontend User Context to store XP and Level
+
+Whenever the user performs an action that triggers XP, update:
+
+XP bar on Profile
+
+Level badge
+
+XP numbers (e.g., “30 / 100 XP”)
+
+Make sure the progress bar animates smoothly.
+
+6. Add XP animation / feedback
+
+Whenever XP is awarded, show a small toast:
+
+“+20 XP earned!”
+
+Use a consistent UI component.
+
+7. Add Level Up handling
+
+When level increases:
+
+Show a popup:
+“🔥 Grattis! Du nådde nivå X!”
+
+Reset XP bar with new xpToNextLevel
+
+Update profile immediately
+
+8. Verify everything with tests
+
+The agent must confirm:
+
+XP persists in the database
+
+Leveling works even with large XP jumps
+
+XP does not duplicate
+
+XP updates correctly on both mobile and web preview
+
+IMPORTANT
+
+Do NOT modify unrelated systems.
+Do NOT rewrite auth or user registration.
+Only implement XP & Level logic as described.
+
+✔️ End of XP System Implementation Task

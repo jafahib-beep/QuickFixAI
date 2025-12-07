@@ -147,6 +147,27 @@ const initializeDatabase = async () => {
         created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
       );
 
+      CREATE TABLE IF NOT EXISTS xp_daily_logins (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+        login_date DATE NOT NULL,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        UNIQUE(user_id, login_date)
+      );
+
+      CREATE TABLE IF NOT EXISTS xp_post_comments (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+        post_id UUID REFERENCES community_posts(id) ON DELETE CASCADE,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        UNIQUE(user_id, post_id)
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_xp_daily_logins_user ON xp_daily_logins(user_id);
+      CREATE INDEX IF NOT EXISTS idx_xp_daily_logins_date ON xp_daily_logins(login_date);
+      CREATE INDEX IF NOT EXISTS idx_xp_post_comments_user ON xp_post_comments(user_id);
+      CREATE INDEX IF NOT EXISTS idx_xp_post_comments_post ON xp_post_comments(post_id);
+
       CREATE INDEX IF NOT EXISTS idx_community_posts_author ON community_posts(author_id);
       CREATE INDEX IF NOT EXISTS idx_community_posts_category ON community_posts(category);
       CREATE INDEX IF NOT EXISTS idx_community_posts_status ON community_posts(status);
