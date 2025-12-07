@@ -45,7 +45,7 @@ const reportsRoutes = require("./routes/reports");
 const { router: blockRoutes } = require("./routes/block");
 
 const app = express();
-const PORT = process.env.BACKEND_PORT || 5000;
+const PORT = process.env.PORT || process.env.BACKEND_PORT || 5000;
 
 // 🔍 Logga alla requests som kommer in till backend
 app.use((req, res, next) => {
@@ -75,7 +75,6 @@ app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-
 
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok" });
