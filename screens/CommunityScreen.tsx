@@ -78,50 +78,48 @@ function PostCard({ post, onPress, onAuthorPress }: PostCardProps) {
   const statusColor = getStatusColor(post.status, theme);
 
   return (
-    <Pressable
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.postCard,
-        { backgroundColor: theme.backgroundDefault, opacity: pressed ? 0.9 : 1 },
-      ]}
-    >
-      <View style={styles.postHeader}>
-        <View style={[styles.categoryBadge, { backgroundColor: getCategoryColor(post.category) + "20" }]}>
-          <Feather name={categoryIcon} size={12} color={getCategoryColor(post.category)} />
-          <ThemedText type="small" style={{ color: getCategoryColor(post.category), marginLeft: 4 }}>
-            {t(`categories.${post.category}`)}
-          </ThemedText>
+    <View style={[styles.postCard, { backgroundColor: theme.backgroundDefault }]}>
+      <Pressable
+        onPress={onPress}
+        style={({ pressed }) => [
+          styles.postContent,
+          { opacity: pressed ? 0.85 : 1 },
+        ]}
+      >
+        <View style={styles.postHeader}>
+          <View style={[styles.categoryBadge, { backgroundColor: getCategoryColor(post.category) + "20" }]}>
+            <Feather name={categoryIcon} size={12} color={getCategoryColor(post.category)} />
+            <ThemedText type="small" style={{ color: getCategoryColor(post.category), marginLeft: 4 }}>
+              {t(`categories.${post.category}`)}
+            </ThemedText>
+          </View>
+          <View style={[styles.statusBadge, { backgroundColor: statusColor + "20" }]}>
+            <Feather name={getStatusIcon(post.status) as any} size={12} color={statusColor} />
+            <ThemedText type="small" style={{ color: statusColor, marginLeft: 4, textTransform: "capitalize" }}>
+              {t(`community.status.${post.status}`)}
+            </ThemedText>
+          </View>
         </View>
-        <View style={[styles.statusBadge, { backgroundColor: statusColor + "20" }]}>
-          <Feather name={getStatusIcon(post.status) as any} size={12} color={statusColor} />
-          <ThemedText type="small" style={{ color: statusColor, marginLeft: 4, textTransform: "capitalize" }}>
-            {t(`community.status.${post.status}`)}
-          </ThemedText>
-        </View>
-      </View>
 
-      <ThemedText type="h4" style={styles.postTitle} numberOfLines={2}>
-        {post.title}
-      </ThemedText>
+        <ThemedText type="h4" style={styles.postTitle} numberOfLines={2}>
+          {post.title}
+        </ThemedText>
 
-      <ThemedText type="body" style={[styles.postDescription, { color: theme.textSecondary }]} numberOfLines={2}>
-        {post.description}
-      </ThemedText>
+        <ThemedText type="body" style={[styles.postDescription, { color: theme.textSecondary }]} numberOfLines={2}>
+          {post.description}
+        </ThemedText>
 
-      {post.imageUrl ? (
-        <View style={[styles.postImage, { backgroundColor: theme.backgroundSecondary }]}>
-          <Feather name="image" size={24} color={theme.textSecondary} />
-        </View>
-      ) : null}
+        {post.imageUrl ? (
+          <View style={[styles.postImage, { backgroundColor: theme.backgroundSecondary }]}>
+            <Feather name="image" size={24} color={theme.textSecondary} />
+          </View>
+        ) : null}
+      </Pressable>
 
       <View style={styles.postFooter}>
         <Pressable 
           style={styles.authorInfo}
-          onPress={(e) => {
-            e.stopPropagation();
-            onAuthorPress();
-          }}
-          hitSlop={8}
+          onPress={onAuthorPress}
         >
           <View style={[styles.avatar, { backgroundColor: theme.link }]}>
             <ThemedText type="small" style={{ color: "#FFFFFF", fontWeight: "600" }}>
@@ -132,7 +130,7 @@ function PostCard({ post, onPress, onAuthorPress }: PostCardProps) {
             {post.authorName}
           </ThemedText>
         </Pressable>
-        <View style={styles.postMeta}>
+        <Pressable style={styles.postMeta} onPress={onPress}>
           <Feather name="message-circle" size={14} color={theme.textSecondary} />
           <ThemedText type="small" style={{ color: theme.textSecondary, marginLeft: 4, marginRight: 12 }}>
             {post.commentsCount}
@@ -140,9 +138,9 @@ function PostCard({ post, onPress, onAuthorPress }: PostCardProps) {
           <ThemedText type="small" style={{ color: theme.textSecondary }}>
             {formatTimeAgo(post.createdAt)}
           </ThemedText>
-        </View>
+        </Pressable>
       </View>
-    </Pressable>
+    </View>
   );
 }
 
@@ -366,6 +364,8 @@ const styles = StyleSheet.create({
   postCard: {
     padding: Spacing.lg,
     borderRadius: BorderRadius.lg,
+  },
+  postContent: {
   },
   postHeader: {
     flexDirection: "row",
