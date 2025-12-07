@@ -1,0 +1,84 @@
+TASK: Perform UI cleanup, fix LiveAssist camera loading bug, fix AI Chat 404 error, and stabilize the entire app. Follow the steps in exact order.
+
+----------------------------------------------------
+1. MOBILE UI CLEANUP (Home, AI Chat, LiveAssist)
+----------------------------------------------------
+
+Goal: Make the mobile UI look polished, modern, and App Store–quality.
+
+- Improve spacing, padding, margins, and layout consistency.
+- Make typography consistent across all screens.
+- Apply modern card styles with smooth rounded corners and subtle shadows.
+- Fix layout issues on:
+  • HomeScreen
+  • AIChatScreen
+  • LiveAssistScreen
+- Ensure all screens look clean and professional in mobile preview.
+
+----------------------------------------------------
+2. FIX LIVEASSIST CAMERA LOADING BUG
+----------------------------------------------------
+
+Problem: LiveAssist works with uploaded images but hangs when using camera.
+
+Required fixes:
+
+1. Review and correct ImagePicker logic:
+   - Ensure both launchCameraAsync and launchImageLibraryAsync return usable base64 data.
+2. Ensure imageBase64 is ALWAYS included in the request body.
+3. Add debugging logs for:
+   - base64 length
+   - request payload size
+   - fetch error messages
+4. Auto-compress large images (quality: 0.7).
+5. Guarantee that /api/ai/liveassist ALWAYS returns a response.
+6. Validate successful operation:
+   - Camera → works
+   - Gallery → works
+   - No infinite loading spinner.
+
+----------------------------------------------------
+3. FIX AI CHAT 404 ERROR (BACKEND ROUTE)
+----------------------------------------------------
+
+Goal: Make AI Chat functional using the mock response until the final AI backend is ready.
+
+Steps:
+
+1. Verify /api/ai/chat is implemented and exported correctly.
+2. Ensure aiRoutes is properly imported and registered in server/index.js.
+3. Disable or remove all checkAIServiceHealth code on both frontend and backend.
+4. Fix API_BASE_URL so the mobile app calls the correct backend (no localhost).
+5. Add logs in backend to confirm chat requests are received.
+6. Test:
+   - Sending text message → works
+   - Sending image message → works
+   - No more 404 errors.
+
+----------------------------------------------------
+4. GENERAL STABILITY IMPROVEMENTS
+----------------------------------------------------
+
+- Remove duplicated variables (e.g., duplicate "theme", duplicate "renderMessage").
+- Fix React warnings without changing functionality.
+- Ensure hooks and callbacks follow correct patterns.
+- Optimize AIChatScreen message rendering and scroll behavior.
+- Update deprecated ImagePicker options to current standards.
+- Build the app and ensure zero red-screen runtime errors.
+
+----------------------------------------------------
+5. FINAL VERIFICATION
+----------------------------------------------------
+
+After completing all steps:
+
+- Test Home, AI Chat, and LiveAssist thoroughly.
+- Test camera image uploads multiple times.
+- Test gallery uploads.
+- Test chat interactions with and without images.
+- Check backend logs for correct route calls.
+- Provide a written summary of what was fixed.
+
+----------------------------------------------------
+
+END OF TASK — Execute all steps above.

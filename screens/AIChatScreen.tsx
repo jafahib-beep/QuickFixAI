@@ -44,13 +44,20 @@ export default function AIChatScreen() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedImage, setSelectedImage] = useState<{ uri: string; base64: string } | null>(null);
-  const [selectedVideo, setSelectedVideo] = useState<{ uri: string; name: string } | null>(null);
+  const [selectedImage, setSelectedImage] = useState<{
+    uri: string;
+    base64: string;
+  } | null>(null);
+  const [selectedVideo, setSelectedVideo] = useState<{
+    uri: string;
+    name: string;
+  } | null>(null);
   const [isOffline, setIsOffline] = useState(false);
   const [isCheckingHealth, setIsCheckingHealth] = useState(true);
   const [isLiveAssistLoading, setIsLiveAssistLoading] = useState(false);
 
-  const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  const generateId = () =>
+    `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
   const checkHealth = useCallback(async () => {
     try {
@@ -84,14 +91,18 @@ export default function AIChatScreen() {
   }, [messages.length, scrollToBottom]);
 
   const pickImage = async () => {
-    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    const permissionResult =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permissionResult.granted) {
-      Alert.alert(t("chat.permissionRequired"), t("chat.photoLibraryPermission"));
+      Alert.alert(
+        t("chat.permissionRequired"),
+        t("chat.photoLibraryPermission"),
+      );
       return;
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ["images"],
       allowsEditing: true,
       quality: 0.7,
       base64: true,
@@ -133,14 +144,18 @@ export default function AIChatScreen() {
   };
 
   const pickVideo = async () => {
-    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    const permissionResult =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permissionResult.granted) {
-      Alert.alert(t("chat.permissionRequired"), t("chat.photoLibraryPermission"));
+      Alert.alert(
+        t("chat.permissionRequired"),
+        t("chat.photoLibraryPermission"),
+      );
       return;
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Videos,
+      mediaTypes: ["videos"],
       allowsEditing: false,
       quality: 0.8,
     });
@@ -195,10 +210,11 @@ export default function AIChatScreen() {
       setIsOffline(false);
 
       let formattedResponse = "";
-      
+
       if (response.success && response.analysis) {
-        const { summary, possibleIssue, steps, safetyNote, rawResponse } = response.analysis;
-        
+        const { summary, possibleIssue, steps, safetyNote, rawResponse } =
+          response.analysis;
+
         if (summary) {
           formattedResponse += `**${t("chat.whatISee")}:**\n${summary}\n\n`;
         }
@@ -208,7 +224,7 @@ export default function AIChatScreen() {
         if (steps && steps.length > 0) {
           formattedResponse += `**${t("chat.stepsToFix")}:**\n`;
           steps.forEach((step, index) => {
-            const stepNum = step.stepNumber || (index + 1);
+            const stepNum = step.stepNumber || index + 1;
             formattedResponse += `${stepNum}. ${step.text}\n`;
           });
           formattedResponse += "\n";
@@ -216,14 +232,15 @@ export default function AIChatScreen() {
         if (safetyNote) {
           formattedResponse += `**${t("chat.safetyNote")}:** ${safetyNote}`;
         }
-        
+
         if (!formattedResponse.trim() && rawResponse) {
           formattedResponse = rawResponse;
         }
       }
-      
+
       if (!formattedResponse.trim()) {
-        formattedResponse = response.analysis?.rawResponse || t("chat.liveAssistError");
+        formattedResponse =
+          response.analysis?.rawResponse || t("chat.liveAssistError");
       }
 
       const assistantMessage: ChatMessage = {
@@ -235,12 +252,12 @@ export default function AIChatScreen() {
       setMessages((prev) => [...prev, assistantMessage]);
     } catch (error: any) {
       console.log("[AIChatScreen] LiveAssist error:", error?.message || error);
-      
-      const isNetworkError = 
-        error?.message?.includes("Network") || 
+
+      const isNetworkError =
+        error?.message?.includes("Network") ||
         error?.message?.includes("fetch") ||
         error?.name === "TypeError";
-      
+
       if (isNetworkError) {
         setIsOffline(true);
       }
@@ -248,7 +265,9 @@ export default function AIChatScreen() {
       const errorMessage: ChatMessage = {
         id: generateId(),
         role: "assistant",
-        content: isNetworkError ? t("chat.offlineMessage") : t("chat.liveAssistError"),
+        content: isNetworkError
+          ? t("chat.offlineMessage")
+          : t("chat.liveAssistError"),
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, errorMessage]);
@@ -264,7 +283,9 @@ export default function AIChatScreen() {
     const userMessage: ChatMessage = {
       id: generateId(),
       role: "user",
-      content: trimmedText || (selectedImage ? t("chat.sentImage") : t("chat.sentVideo")),
+      content:
+        trimmedText ||
+        (selectedImage ? t("chat.sentImage") : t("chat.sentVideo")),
       imageUri: selectedImage?.uri,
       videoUri: selectedVideo?.uri,
       videoName: selectedVideo?.name,
@@ -299,7 +320,7 @@ export default function AIChatScreen() {
       });
 
       setIsOffline(false);
-      
+
       const assistantMessage: ChatMessage = {
         id: generateId(),
         role: "assistant",
@@ -310,11 +331,11 @@ export default function AIChatScreen() {
       setMessages((prev) => [...prev, assistantMessage]);
     } catch (error: any) {
       console.log("[AIChatScreen] Chat error:", error?.message || error);
-      
+
       const errorMsg = error?.message || "";
       const errorName = error?.name || "";
-      const isNetworkError = 
-        errorMsg.includes("Network error") || 
+      const isNetworkError =
+        errorMsg.includes("Network error") ||
         errorMsg.includes("Failed to fetch") ||
         errorMsg.includes("fetch") ||
         errorMsg.includes("network") ||
@@ -324,15 +345,17 @@ export default function AIChatScreen() {
         errorName === "AbortError" ||
         error?.cause?.code === "ECONNREFUSED" ||
         error?.cause?.code === "ENOTFOUND";
-      
+
       if (isNetworkError) {
         setIsOffline(true);
       }
-      
+
       const errorMessage: ChatMessage = {
         id: generateId(),
         role: "assistant",
-        content: isNetworkError ? t("chat.offlineMessage") : t("chat.errorMessage"),
+        content: isNetworkError
+          ? t("chat.offlineMessage")
+          : t("chat.errorMessage"),
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, errorMessage]);
@@ -349,11 +372,15 @@ export default function AIChatScreen() {
         <View
           style={[
             styles.messageContainer,
-            isUser ? styles.userMessageContainer : styles.assistantMessageContainer,
+            isUser
+              ? styles.userMessageContainer
+              : styles.assistantMessageContainer,
           ]}
         >
           {!isUser && (
-            <View style={[styles.avatarContainer, { backgroundColor: theme.link }]}>
+            <View
+              style={[styles.avatarContainer, { backgroundColor: theme.link }]}
+            >
               <Feather name="cpu" size={16} color="#FFFFFF" />
             </View>
           )}
@@ -362,16 +389,30 @@ export default function AIChatScreen() {
               styles.messageBubble,
               isUser
                 ? [styles.userBubble, { backgroundColor: theme.link }]
-                : [styles.assistantBubble, { backgroundColor: theme.backgroundSecondary }],
+                : [
+                    styles.assistantBubble,
+                    { backgroundColor: theme.backgroundSecondary },
+                  ],
             ]}
           >
             {item.imageUri && (
-              <Image source={{ uri: item.imageUri }} style={styles.messageImage} />
+              <Image
+                source={{ uri: item.imageUri }}
+                style={styles.messageImage}
+              />
             )}
             {item.videoUri && (
-              <View style={[styles.videoPreview, { backgroundColor: theme.backgroundTertiary }]}>
+              <View
+                style={[
+                  styles.videoPreview,
+                  { backgroundColor: theme.backgroundTertiary },
+                ]}
+              >
                 <Feather name="video" size={24} color={theme.textSecondary} />
-                <ThemedText type="small" style={{ color: theme.textSecondary, marginTop: Spacing.xs }}>
+                <ThemedText
+                  type="small"
+                  style={{ color: theme.textSecondary, marginTop: Spacing.xs }}
+                >
                   {item.videoName || "video.mp4"}
                 </ThemedText>
               </View>
@@ -387,14 +428,20 @@ export default function AIChatScreen() {
             </ThemedText>
           </View>
           {isUser && (
-            <View style={[styles.avatarContainer, styles.userAvatar, { backgroundColor: theme.textSecondary }]}>
+            <View
+              style={[
+                styles.avatarContainer,
+                styles.userAvatar,
+                { backgroundColor: theme.textSecondary },
+              ]}
+            >
               <Feather name="user" size={16} color="#FFFFFF" />
             </View>
           )}
         </View>
       );
     },
-    [theme, t]
+    [theme, t],
   );
 
   const renderEmptyState = () => (
@@ -405,7 +452,10 @@ export default function AIChatScreen() {
       <ThemedText type="h3" style={[styles.emptyTitle, { color: theme.text }]}>
         {t("chat.welcomeTitle")}
       </ThemedText>
-      <ThemedText type="body" style={[styles.emptySubtitle, { color: theme.textSecondary }]}>
+      <ThemedText
+        type="body"
+        style={[styles.emptySubtitle, { color: theme.textSecondary }]}
+      >
         {t("chat.welcomeSubtitle")}
       </ThemedText>
       <View style={styles.suggestions}>
@@ -419,11 +469,17 @@ export default function AIChatScreen() {
             onPress={() => setInputText(suggestion)}
             style={({ pressed }) => [
               styles.suggestionChip,
-              { backgroundColor: theme.backgroundSecondary, opacity: pressed ? 0.7 : 1 },
+              {
+                backgroundColor: theme.backgroundSecondary,
+                opacity: pressed ? 0.7 : 1,
+              },
             ]}
           >
             <Feather name="zap" size={14} color={theme.link} />
-            <ThemedText type="small" style={{ color: theme.text, marginLeft: Spacing.xs }}>
+            <ThemedText
+              type="small"
+              style={{ color: theme.text, marginLeft: Spacing.xs }}
+            >
               {suggestion}
             </ThemedText>
           </Pressable>
@@ -481,28 +537,58 @@ export default function AIChatScreen() {
         />
 
         {(isLoading || isLiveAssistLoading) && (
-          <View style={[styles.typingIndicator, { backgroundColor: theme.backgroundSecondary }]}>
+          <View
+            style={[
+              styles.typingIndicator,
+              { backgroundColor: theme.backgroundSecondary },
+            ]}
+          >
             <ActivityIndicator size="small" color={theme.link} />
-            <ThemedText type="small" style={{ color: theme.textSecondary, marginLeft: Spacing.sm }}>
-              {isLiveAssistLoading ? t("chat.analyzingPhoto") : t("chat.thinking")}
+            <ThemedText
+              type="small"
+              style={{ color: theme.textSecondary, marginLeft: Spacing.sm }}
+            >
+              {isLiveAssistLoading
+                ? t("chat.analyzingPhoto")
+                : t("chat.thinking")}
             </ThemedText>
           </View>
         )}
 
         {(selectedImage || selectedVideo) && (
-          <View style={[styles.attachmentPreview, { backgroundColor: theme.backgroundSecondary }]}>
+          <View
+            style={[
+              styles.attachmentPreview,
+              { backgroundColor: theme.backgroundSecondary },
+            ]}
+          >
             {selectedImage && (
-              <Image source={{ uri: selectedImage.uri }} style={styles.attachmentImage} />
+              <Image
+                source={{ uri: selectedImage.uri }}
+                style={styles.attachmentImage}
+              />
             )}
             {selectedVideo && (
-              <View style={[styles.attachmentVideo, { backgroundColor: theme.backgroundTertiary }]}>
+              <View
+                style={[
+                  styles.attachmentVideo,
+                  { backgroundColor: theme.backgroundTertiary },
+                ]}
+              >
                 <Feather name="video" size={20} color={theme.link} />
-                <ThemedText type="small" style={{ color: theme.text, marginLeft: Spacing.xs }} numberOfLines={1}>
+                <ThemedText
+                  type="small"
+                  style={{ color: theme.text, marginLeft: Spacing.xs }}
+                  numberOfLines={1}
+                >
                   {selectedVideo.name}
                 </ThemedText>
               </View>
             )}
-            <Pressable onPress={clearAttachment} style={styles.removeAttachment}>
+            <Pressable
+              onPress={clearAttachment}
+              style={styles.removeAttachment}
+            >
               <Feather name="x" size={18} color={theme.error} />
             </Pressable>
           </View>
@@ -511,7 +597,7 @@ export default function AIChatScreen() {
         <View
           style={[
             styles.inputContainer,
-            { 
+            {
               backgroundColor: theme.backgroundSecondary,
               paddingBottom: Math.max(insets.bottom, tabBarHeight) + Spacing.sm,
             },
@@ -523,9 +609,10 @@ export default function AIChatScreen() {
               disabled={isLiveAssistLoading || isLoading}
               style={({ pressed }) => [
                 styles.liveAssistButton,
-                { 
-                  backgroundColor: theme.link, 
-                  opacity: (pressed || isLiveAssistLoading || isLoading) ? 0.7 : 1 
+                {
+                  backgroundColor: theme.link,
+                  opacity:
+                    pressed || isLiveAssistLoading || isLoading ? 0.7 : 1,
                 },
               ]}
             >
@@ -545,7 +632,10 @@ export default function AIChatScreen() {
                 onPress={pickImage}
                 style={({ pressed }) => [
                   styles.attachButton,
-                  { backgroundColor: theme.backgroundTertiary, opacity: pressed ? 0.7 : 1 },
+                  {
+                    backgroundColor: theme.backgroundTertiary,
+                    opacity: pressed ? 0.7 : 1,
+                  },
                 ]}
               >
                 <Feather name="image" size={20} color={theme.textSecondary} />
@@ -554,7 +644,10 @@ export default function AIChatScreen() {
                 onPress={takePhoto}
                 style={({ pressed }) => [
                   styles.attachButton,
-                  { backgroundColor: theme.backgroundTertiary, opacity: pressed ? 0.7 : 1 },
+                  {
+                    backgroundColor: theme.backgroundTertiary,
+                    opacity: pressed ? 0.7 : 1,
+                  },
                 ]}
               >
                 <Feather name="camera" size={20} color={theme.textSecondary} />
@@ -563,7 +656,10 @@ export default function AIChatScreen() {
                 onPress={pickVideo}
                 style={({ pressed }) => [
                   styles.attachButton,
-                  { backgroundColor: theme.backgroundTertiary, opacity: pressed ? 0.7 : 1 },
+                  {
+                    backgroundColor: theme.backgroundTertiary,
+                    opacity: pressed ? 0.7 : 1,
+                  },
                 ]}
               >
                 <Feather name="video" size={20} color={theme.textSecondary} />
@@ -573,7 +669,13 @@ export default function AIChatScreen() {
 
           <View style={styles.inputRow}>
             <TextInput
-              style={[styles.textInput, { color: theme.text, backgroundColor: theme.backgroundTertiary }]}
+              style={[
+                styles.textInput,
+                {
+                  color: theme.text,
+                  backgroundColor: theme.backgroundTertiary,
+                },
+              ]}
               value={inputText}
               onChangeText={setInputText}
               placeholder={t("chat.placeholder")}
@@ -584,13 +686,18 @@ export default function AIChatScreen() {
             />
             <Pressable
               onPress={sendMessage}
-              disabled={isLoading || (!inputText.trim() && !selectedImage && !selectedVideo)}
+              disabled={
+                isLoading ||
+                (!inputText.trim() && !selectedImage && !selectedVideo)
+              }
               style={({ pressed }) => [
                 styles.sendButton,
                 {
-                  backgroundColor: (inputText.trim() || selectedImage || selectedVideo) && !isLoading
-                    ? theme.link
-                    : theme.backgroundTertiary,
+                  backgroundColor:
+                    (inputText.trim() || selectedImage || selectedVideo) &&
+                    !isLoading
+                      ? theme.link
+                      : theme.backgroundTertiary,
                   opacity: pressed && !isLoading ? 0.8 : 1,
                 },
               ]}
@@ -601,7 +708,11 @@ export default function AIChatScreen() {
                 <Feather
                   name="send"
                   size={20}
-                  color={(inputText.trim() || selectedImage || selectedVideo) ? "#FFFFFF" : theme.textSecondary}
+                  color={
+                    inputText.trim() || selectedImage || selectedVideo
+                      ? "#FFFFFF"
+                      : theme.textSecondary
+                  }
                 />
               )}
             </Pressable>

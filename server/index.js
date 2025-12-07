@@ -47,6 +47,12 @@ const { router: blockRoutes } = require("./routes/block");
 const app = express();
 const PORT = process.env.BACKEND_PORT || 5000;
 
+// 🔍 Logga alla requests som kommer in till backend
+app.use((req, res, next) => {
+  console.log("[BACKEND]", req.method, req.url);
+  next();
+});
+
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", req.headers.origin || "*");
   res.header("Access-Control-Allow-Credentials", "true");
@@ -70,7 +76,7 @@ app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// Health check endpoint - used by frontend to check if backend is available
+
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok" });
 });
