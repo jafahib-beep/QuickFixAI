@@ -31,7 +31,7 @@ The application features a modern dark theme with a blue accent (#0A84FF), respe
 - Settings navigation: Legal section items now navigate to PrivacyTermsScreen instead of showing alerts
 
 ### Technical Implementations
-The frontend is built with Expo/React Native, supporting multi-language (English, Swedish, Arabic with RTL, German, French, Spanish). The backend is an Express server with a PostgreSQL database. Development runs in a full-stack mode where `npm run dev` concurrently starts both the Express server (port 5000) and Expo frontend (port 8081). Metro is configured to proxy `/api/*` requests from the web to the backend. Mobile/Expo Go clients use direct backend URLs. Platform-specific URL handling is managed by `utils/api.ts`. The application features an offline-first mode using sample data and local storage when the backend is unavailable.
+The frontend is built with Expo/React Native, supporting multi-language (English, Swedish, Arabic with RTL, German, French, Spanish). The backend is an Express server with a PostgreSQL database. Development runs in a full-stack mode where `npm run dev` concurrently starts both the Express server (port 5000) and Expo frontend (port 8081). Metro is configured to proxy `/api/*` requests from the web to the backend. Mobile/Expo Go clients use direct backend URLs. Platform-specific URL handling is managed by `utils/api.ts`. The Community feed now uses real database entries only (no mock/sample data fallback).
 
 ### Feature Specifications
 - **User Authentication**: Register, login, and profile management with an authentication gate.
@@ -44,7 +44,8 @@ The frontend is built with Expo/React Native, supporting multi-language (English
     - **AI Chat**: Multi-turn conversational AI with GPT-4o-mini (text) and GPT-4o (vision) for image analysis. Supports sending photos and videos for context. Calls POST /api/ai/chat.
     - **LiveAssist**: Dedicated visual troubleshooting with AI-generated step-by-step guides, including risk assessment and visual overlays highlighting problem areas. Interactive tappable checklist for steps. Calls POST /api/ai/liveassist.
     - **Content Generation**: AI-powered tag suggestions, description generation, and visual step-by-step guides with DALL-E 3 images.
-- **Community**: A dedicated tab for users to post problems, share images, comment, and mark solutions.
+- **Community**: A dedicated tab for users to post problems, share images, comment, and mark solutions. Uses real database entries only (no mock/sample data).
+- **Notifications**: Comment notification system with 30-second polling. Bell icon with unread badge in Profile header. NotificationsScreen for viewing/managing notifications.
 - **Video Library**: Comprehensive video library with 25+ videos including:
     - 5 real YouTube tutorial videos (plumbing, electrical, bathroom, DIY)
     - 20+ dummy QuickFix videos across all categories
