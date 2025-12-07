@@ -53,12 +53,19 @@ The frontend is built with Expo/React Native, supporting multi-language (English
     - Category filtering and sorting (Trending, Newest, Most Viewed)
     - "All Videos" link from HomeScreen's Recommended section
     - YouTube badge on tutorial videos with distinct red styling
-- **XP System**: Gamification with 5 levels to encourage engagement. Users earn XP for:
+- **XP System**: Full gamification with 5 levels, real-time notifications, and duplicate prevention. Users earn XP for:
+    - Daily login: +10 XP (once per day, tracked in xp_daily_login table)
+    - Community post creation: +20 XP per post
+    - Community comment: +10 XP (first comment per post only, tracked in xp_comment_post_tracking table)
+    - Post marked as solved: +50 XP (awarded to the comment author who provided the solution)
+    - Video upload: +30 XP per video
     - AI Chat messages: +5 XP per message
     - LiveAssist scans: +10 XP per scan
     - Video watches: +3 XP per video (5-minute cooldown per video to prevent farming)
     - Level thresholds: L1 (0-99 XP), L2 (100-249 XP), L3 (250-499 XP), L4 (500-999 XP), L5 (1000+ XP)
-    - XP/Level displayed on Profile screen with progress bar
+    - **Frontend components**: XpToast (green pill notification showing "+X XP Reason"), LevelUpModal (celebration modal on level-up)
+    - **Backend service**: server/services/xp.js with duplicate prevention and XP helpers
+    - **API responses include XP data**: xpAwarded, totalXp, level, leveledUp fields in relevant endpoints
 
 ### System Design Choices
 The project utilizes `start-dev.js` to manage concurrent execution of frontend and backend. `metro.config.js` includes `http-proxy-middleware` for API proxying. `utils/api.ts` handles platform-specific API client configurations. The backend's structure includes `routes`, `middleware`, and `db.js` for database interaction. The database schema includes tables for users, videos, likes, saves, comments, community posts, and notifications. Error handling prioritizes `console.log` for expected API fallbacks to prevent disruptive red overlays in Expo Go. The `expo-video` package is used for video playback.
