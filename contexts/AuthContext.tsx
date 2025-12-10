@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { api, User } from "@/utils/api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { cleanLegacyDemoToken } from "@/src/demoTokenGuard";
 
 const LOCAL_USER_KEY = "quickfix_local_user";
 const LOCAL_USERS_KEY = "quickfix_local_users";
@@ -43,6 +44,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loadUser = async () => {
     try {
+      // Clean up any legacy demo tokens first
+      const wasDemo = await cleanLegacyDemoToken();
+      if (wasDemo) {
+        console.warn("[AuthContext] Cleaned legacy demo token on startup");
+        setUser(null);
+        setIsLoading(false);
+        return;
+      }
+      
       const token = await AsyncStorage.getItem("authToken");
       if (!token) {
         setUser(null);
@@ -102,26 +112,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return { success: true };
         }
         
-        if (email && password && password.length >= 4) {
-          const demoUser: User = {
-            id: `demo_${Date.now()}`,
-            email: email.toLowerCase(),
-            displayName: email.split("@")[0] || "Demo User",
-            avatarUrl: undefined,
-            bio: undefined,
-            followersCount: 0,
-            followingCount: 0,
-            xp: 0,
-            level: 1,
-            nextLevelXp: 100,
-            currentLevelXp: 0,
-          };
-          setUser(demoUser);
-          await AsyncStorage.setItem(LOCAL_USER_KEY, JSON.stringify(demoUser));
-          await AsyncStorage.setItem("authToken", `demo_${Date.now()}`);
-          console.log("[AuthContext] API unavailable, using demo login");
-          return { success: true };
-        }
+        // Demo fallback removed - require real authentication
+        console.warn("[AuthContext] Demo fallback disabled. Real authentication required.");
+        // Do not create demo users - fall through to invalid credentials error
         
         return { success: false, error: "Invalid email or password" };
       } catch {

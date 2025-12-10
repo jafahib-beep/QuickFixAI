@@ -74,6 +74,17 @@ app.use((req, res, next) => {
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
+// Block demo tokens - security middleware
+app.use((req, res, next) => {
+  const authHeader = req.headers.authorization || "";
+  const token = authHeader.replace("Bearer ", "");
+  if (token && token.startsWith("demo_")) {
+    console.warn("[SECURITY] Blocked request with demo token");
+    return res.status(403).json({ error: "Demo tokens are not allowed. Please log in with a real account." });
+  }
+  next();
+});
+
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 app.get("/api/health", (req, res) => {
