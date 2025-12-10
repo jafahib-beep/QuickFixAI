@@ -5,8 +5,23 @@ const { authMiddleware, optionalAuth } = require("../middleware/auth");
 const { awardXp } = require("../services/xp");
 
 const router = express.Router();
+const crypto = require("crypto");
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+
+// In-memory session storage for LiveAssist conversations (MVP)
+const liveAssistSessions = new Map();
+
+// Session cleanup - remove sessions older than 2 hours
+setInterval(() => {
+  const now = Date.now();
+  const TWO_HOURS = 2 * 60 * 60 * 1000;
+  for (const [sessionId, session] of liveAssistSessions) {
+    if (now - session.createdAt > TWO_HOURS) {
+      liveAssistSessions.delete(sessionId);
+    }
+  }
+}, 30 * 60 * 1000); // Run cleanup every 30 minutes
 
 const openai = OPENAI_API_KEY ? new OpenAI({ apiKey: OPENAI_API_KEY }) : null;
 
@@ -258,6 +273,236 @@ Remember: A real technician asks questions first, diagnoses second, and fixes la
       ? "OpenAI API key is invalid or expired"
       : "Failed to get AI response. Please try again.";
     res.status(500).json({ error: errorMessage });
+  }
+});
+
+/**
+ * LiveAssist Session API - MVP Conversation Thread
+ * Creates a new session for multi-turn LiveAssist conversations
+ */
+router.post("/liveassist/session", optionalAuth, async (req, res) => {
+  try {
+    const sessionId = crypto.randomUUID();
+    const session = {
+      id: sessionId,
+      userId: req.userId || null,
+      messages: [],
+      stepProgress: {},
+      createdAt: Date.now(),
+    };
+    liveAssistSessions.set(sessionId, session);
+    console.log("[LiveAssist Session] Created session:", sessionId);
+    res.json({ sessionId });
+  } catch (error) {
+    console.error("LiveAssist session creation error:", error);
+    res.status(500).json({ error: "Failed to create session" });
+  }
+});
+
+/**
+ * LiveAssist Session Message - Send message and get AI response
+ * Supports text + image attachments in conversation
+ */
+router.post("/liveassist/session/:sessionId/message", optionalAuth, async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const { text, images = [], language = "en" } = req.body;
+
+    const session = liveAssistSessions.get(sessionId);
+    if (!session) {
+      return res.status(404).json({ error: "Session not found" });
+    }
+
+    if (!openai) {
+      return res.status(503).json({
+        error: "AI service is not configured. Please check your OpenAI API key.",
+      });
+    }
+
+    // Add user message to history
+    const userMessage = {
+      role: "user",
+      text: text || "",
+      images: images || [],
+      timestamp: Date.now(),
+    };
+    session.messages.push(userMessage);
+
+    const languageNames = {
+      en: "English",
+      sv: "Swedish",
+      ar: "Arabic",
+      de: "German",
+      fr: "French",
+      ru: "Russian",
+    };
+    const languageName = languageNames[language] || "English";
+
+    // Build system prompt for LiveAssist conversation thread
+    const systemPrompt = `You are LiveAssist, a step-by-step repair assistant for the QuickFix app. When given user text and image URLs, produce a JSON object with these keys:
+
+{
+  "text": "Short assistant reply text (1-3 sentences)",
+  "steps": [
+    { "id": "s1", "text": "Step title", "detail": "Detailed instructions for this step", "tools": ["tool1", "tool2"] }
+  ],
+  "youtube_links": [
+    { "title": "Video title", "url": "https://youtube.com/watch?v=xxxxx" }
+  ],
+  "images_to_show": [],
+  "safety_warnings": ["Warning text if any"]
+}
+
+## Guidelines:
+- Steps must be clear, ordered, actionable repair instructions
+- For each step, suggest any tools needed (e.g., "Philips #2 screwdriver", "adjustable wrench")
+- Include 1-3 relevant YouTube tutorial links when helpful (use real, common repair video topics)
+- Keep items concise and practical
+- If the request is outside safe scope (high-voltage electrical, gas lines, structural work), respond with safety_warnings and advise professional service
+- Do NOT provide instructions that could be dangerous or illegal
+- Respond in ${languageName}
+- Return ONLY valid JSON, no markdown`;
+
+    // Build conversation history (last 5 turns)
+    const historyMessages = session.messages.slice(-10).map((msg) => {
+      if (msg.role === "user") {
+        const content = [];
+        if (msg.text) {
+          content.push({ type: "text", text: msg.text });
+        }
+        if (msg.images && msg.images.length > 0) {
+          msg.images.forEach((imgUrl) => {
+            if (imgUrl.startsWith("data:")) {
+              content.push({
+                type: "image_url",
+                image_url: { url: imgUrl, detail: "auto" },
+              });
+            } else {
+              content.push({
+                type: "image_url",
+                image_url: { url: imgUrl, detail: "auto" },
+              });
+            }
+          });
+        }
+        return { role: "user", content: content.length > 0 ? content : msg.text || "Hello" };
+      } else {
+        return { role: "assistant", content: msg.text || "" };
+      }
+    });
+
+    const formattedMessages = [
+      { role: "system", content: systemPrompt },
+      ...historyMessages,
+    ];
+
+    console.log("[LiveAssist Session] Processing message:", {
+      sessionId,
+      messageCount: historyMessages.length,
+      hasImages: images.length > 0,
+    });
+
+    const completion = await openai.chat.completions.create({
+      model: images.length > 0 ? "gpt-4o" : "gpt-4o-mini",
+      messages: formattedMessages,
+      temperature: 0.7,
+      max_tokens: 1200,
+    });
+
+    const rawAnswer = completion.choices[0]?.message?.content?.trim();
+
+    if (!rawAnswer) {
+      return res.status(500).json({ error: "No response from AI" });
+    }
+
+    // Parse AI response
+    let aiResponse = {
+      text: "",
+      steps: [],
+      youtube_links: [],
+      images_to_show: [],
+      safety_warnings: [],
+      structured: true,
+    };
+
+    try {
+      // Extract JSON from response (handle markdown code blocks)
+      let jsonStr = rawAnswer;
+      const jsonMatch = rawAnswer.match(/```(?:json)?\s*([\s\S]*?)```/);
+      if (jsonMatch) {
+        jsonStr = jsonMatch[1].trim();
+      }
+      const jsonObjectMatch = jsonStr.match(/\{[\s\S]*\}/);
+      if (jsonObjectMatch) {
+        jsonStr = jsonObjectMatch[0];
+      }
+
+      const parsed = JSON.parse(jsonStr);
+      aiResponse.text = parsed.text || "";
+      aiResponse.steps = Array.isArray(parsed.steps) ? parsed.steps.map((s, idx) => ({
+        id: s.id || `s${idx + 1}`,
+        text: s.text || "",
+        detail: s.detail || "",
+        tools: Array.isArray(s.tools) ? s.tools : [],
+      })) : [];
+      aiResponse.youtube_links = Array.isArray(parsed.youtube_links) ? parsed.youtube_links.filter(
+        (yt) => yt.title && yt.url
+      ) : [];
+      aiResponse.images_to_show = Array.isArray(parsed.images_to_show) ? parsed.images_to_show : [];
+      aiResponse.safety_warnings = Array.isArray(parsed.safety_warnings) ? parsed.safety_warnings : [];
+      
+      console.log("[LiveAssist Session] Parsed JSON response successfully");
+    } catch (parseError) {
+      console.log("[LiveAssist Session] JSON parse failed, using plain text:", parseError.message);
+      aiResponse.text = rawAnswer;
+      aiResponse.structured = false;
+    }
+
+    // Add assistant message to history
+    session.messages.push({
+      role: "assistant",
+      text: aiResponse.text,
+      steps: aiResponse.steps,
+      youtube_links: aiResponse.youtube_links,
+      safety_warnings: aiResponse.safety_warnings,
+      timestamp: Date.now(),
+    });
+
+    // Award XP for LiveAssist scan (non-blocking)
+    if (req.userId) {
+      awardXp(req.userId, "liveassist_scan").catch((err) => {
+        console.log("[XP] Non-blocking XP award error:", err.message);
+      });
+    }
+
+    res.json(aiResponse);
+  } catch (error) {
+    console.error("LiveAssist session message error:", error.message || error);
+    const errorMessage = error.message?.includes("API key")
+      ? "OpenAI API key is invalid or expired"
+      : "Failed to get AI response. Please try again.";
+    res.status(500).json({ error: errorMessage });
+  }
+});
+
+/**
+ * Update step progress in a session (optional)
+ */
+router.patch("/liveassist/session/:sessionId/steps/:stepId", optionalAuth, async (req, res) => {
+  try {
+    const { sessionId, stepId } = req.params;
+    const { completed } = req.body;
+
+    const session = liveAssistSessions.get(sessionId);
+    if (!session) {
+      return res.status(404).json({ error: "Session not found" });
+    }
+
+    session.stepProgress[stepId] = !!completed;
+    res.json({ success: true, stepId, completed: !!completed });
+  } catch (error) {
+    console.error("Step progress update error:", error);
+    res.status(500).json({ error: "Failed to update step progress" });
   }
 });
 

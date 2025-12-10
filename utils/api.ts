@@ -28,7 +28,7 @@ const API_BASE_URL = getApiBaseUrl();
 console.log("[API] FULL API URL:", API_BASE_URL);
 
 interface ApiOptions {
-  method?: "GET" | "POST" | "PUT" | "DELETE";
+  method?: "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
   body?: any;
   requireAuth?: boolean;
 }
@@ -516,6 +516,54 @@ class ApiClient {
     }
   }
 
+  // LiveAssist Session API - MVP Conversation Thread
+  async createLiveAssistSession(): Promise<{ sessionId: string }> {
+    console.log("[API] createLiveAssistSession called");
+    return this.request<{ sessionId: string }>("/ai/liveassist/session", {
+      method: "POST",
+      body: {},
+      requireAuth: true,
+    });
+  }
+
+  async sendLiveAssistMessage(
+    sessionId: string,
+    data: { text?: string; images?: string[]; language?: string }
+  ): Promise<LiveAssistSessionMessage> {
+    console.log("[API] sendLiveAssistMessage called:", {
+      sessionId,
+      hasText: !!data.text,
+      imageCount: data.images?.length || 0,
+    });
+    return this.request<LiveAssistSessionMessage>(
+      `/ai/liveassist/session/${sessionId}/message`,
+      {
+        method: "POST",
+        body: {
+          text: data.text || "",
+          images: data.images || [],
+          language: data.language || "en",
+        },
+        requireAuth: true,
+      }
+    );
+  }
+
+  async updateLiveAssistStepProgress(
+    sessionId: string,
+    stepId: string,
+    completed: boolean
+  ): Promise<{ success: boolean }> {
+    return this.request<{ success: boolean }>(
+      `/ai/liveassist/session/${sessionId}/steps/${stepId}`,
+      {
+        method: "PATCH",
+        body: { completed },
+        requireAuth: true,
+      }
+    );
+  }
+
   async checkAIServiceHealth(): Promise<boolean> {
     console.log("[API] checkAIServiceHealth called");
     try {
@@ -865,6 +913,28 @@ export interface LiveAssistResponse {
     rawResponse: string;
   };
   error?: string;
+}
+
+// LiveAssist Session types for MVP conversation thread
+export interface LiveAssistSessionStep {
+  id: string;
+  text: string;
+  detail: string;
+  tools: string[];
+}
+
+export interface LiveAssistYouTubeLink {
+  title: string;
+  url: string;
+}
+
+export interface LiveAssistSessionMessage {
+  text: string;
+  steps: LiveAssistSessionStep[];
+  youtube_links: LiveAssistYouTubeLink[];
+  images_to_show: string[];
+  safety_warnings: string[];
+  structured: boolean;
 }
 
 export const api = new ApiClient();

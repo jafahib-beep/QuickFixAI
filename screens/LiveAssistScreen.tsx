@@ -18,6 +18,7 @@ import { LinearGradient } from "expo-linear-gradient";
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
+import LiveAssistThread from "@/components/LiveAssistThread";
 import { Spacing, BorderRadius, Typography } from "@/constants/theme";
 import { useTheme } from "@/hooks/useTheme";
 import { api, LiveAssistResponse, LiveAssistOverlay, RiskSeverity, RiskEntry, RiskOverlay, SparePart, SparePartPriority } from "@/utils/api";
@@ -49,6 +50,11 @@ export default function LiveAssistScreen() {
   const [error, setError] = useState<string | null>(null);
   const [imageDimensions, setImageDimensions] = useState<{ width: number; height: number } | null>(null);
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
+  
+  // Conversation thread state
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [isThreadMode, setIsThreadMode] = useState(false);
+  const [isCreatingSession, setIsCreatingSession] = useState(false);
 
   const toggleStepComplete = (stepIndex: number) => {
     setCompletedSteps((prev) => {
@@ -148,6 +154,25 @@ export default function LiveAssistScreen() {
     setError(null);
     setImageDimensions(null);
     setCompletedSteps(new Set());
+    setSessionId(null);
+    setIsThreadMode(false);
+  };
+
+  const handleStartConversation = async () => {
+    setIsCreatingSession(true);
+    try {
+      const result = await api.createLiveAssistSession();
+      setSessionId(result.sessionId);
+      setIsThreadMode(true);
+    } catch (err: any) {
+      console.log("[LiveAssistScreen] Failed to create session:", err?.message);
+      Alert.alert(
+        t("common.error"),
+        "Failed to start conversation. Please try again."
+      );
+    } finally {
+      setIsCreatingSession(false);
+    }
   };
 
   const handleImageLayout = (event: LayoutChangeEvent) => {
@@ -724,22 +749,67 @@ export default function LiveAssistScreen() {
         </View>
       ) : null}
 
-      <Pressable
-        onPress={handleReset}
-        style={({ pressed }) => [
-          styles.newScanButton,
-          { 
-            backgroundColor: theme.link,
-            opacity: pressed ? 0.9 : 1,
-          },
-        ]}
-      >
-        <Feather name="refresh-cw" size={20} color="#FFFFFF" />
-        <ThemedText style={styles.newScanButtonText}>
-          {t("liveAssist.newScan")}
-        </ThemedText>
-      </Pressable>
+      <View style={styles.actionButtonsContainer}>
+        <Pressable
+          onPress={handleStartConversation}
+          disabled={isCreatingSession}
+          style={({ pressed }) => [
+            styles.continueButton,
+            { 
+              backgroundColor: theme.success,
+              opacity: pressed ? 0.9 : 1,
+            },
+          ]}
+        >
+          {isCreatingSession ? (
+            <ActivityIndicator size="small" color="#FFFFFF" />
+          ) : (
+            <>
+              <Feather name="message-circle" size={20} color="#FFFFFF" />
+              <ThemedText style={styles.continueButtonText}>
+                Continue Conversation
+              </ThemedText>
+            </>
+          )}
+        </Pressable>
+
+        <Pressable
+          onPress={handleReset}
+          style={({ pressed }) => [
+            styles.newScanButton,
+            { 
+              backgroundColor: theme.link,
+              opacity: pressed ? 0.9 : 1,
+            },
+          ]}
+        >
+          <Feather name="refresh-cw" size={20} color="#FFFFFF" />
+          <ThemedText style={styles.newScanButtonText}>
+            {t("liveAssist.newScan")}
+          </ThemedText>
+        </Pressable>
+      </View>
     </ScrollView>
+  );
+
+  const renderThreadMode = () => (
+    <View style={{ flex: 1 }}>
+      <View style={[styles.threadHeader, { backgroundColor: theme.backgroundSecondary }]}>
+        <Pressable onPress={handleReset} style={styles.backButton}>
+          <Feather name="arrow-left" size={20} color={theme.text} />
+        </Pressable>
+        <ThemedText style={[styles.threadTitle, { color: theme.text }]}>
+          Conversation
+        </ThemedText>
+      </View>
+      {sessionId ? (
+        <LiveAssistThread
+          sessionId={sessionId}
+          language={language}
+          onError={(err) => console.log("[LiveAssistScreen] Thread error:", err)}
+        />
+      ) : null}
+    </View>
   );
 
   return (
@@ -765,7 +835,9 @@ export default function LiveAssistScreen() {
       </View>
 
       <View style={styles.content}>
-        {isLoading ? (
+        {isThreadMode ? (
+          renderThreadMode()
+        ) : isLoading ? (
           renderLoadingState()
         ) : analysisResult || error ? (
           renderResultState()
@@ -1323,5 +1395,34 @@ const styles = StyleSheet.create({
   overlayLinkText: {
     ...Typography.small,
     fontWeight: "500",
+  },
+  actionButtonsContainer: {
+    gap: Spacing.md,
+  },
+  continueButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: Spacing.lg,
+    borderRadius: BorderRadius.lg,
+    gap: Spacing.sm,
+  },
+  continueButtonText: {
+    color: "#FFFFFF",
+    ...Typography.body,
+    fontWeight: "600",
+  },
+  threadHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+  },
+  backButton: {
+    padding: Spacing.sm,
+    marginRight: Spacing.sm,
+  },
+  threadTitle: {
+    ...Typography.h4,
   },
 });
