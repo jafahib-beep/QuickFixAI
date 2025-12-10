@@ -9,6 +9,8 @@ import {
   Image,
   Linking,
   ScrollView,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
@@ -28,6 +30,7 @@ interface ThreadMessage {
   role: "user" | "assistant";
   text: string;
   images?: string[];
+  imageUrls?: string[];
   steps?: LiveAssistSessionStep[];
   youtube_links?: LiveAssistYouTubeLink[];
   safety_warnings?: string[];
@@ -140,6 +143,7 @@ export default function LiveAssistThread({
       role: "user",
       text: inputText.trim(),
       images: pendingImages.length > 0 ? [...pendingImages] : undefined,
+      imageUrls: pendingImages.length > 0 ? [...pendingImages] : undefined,
       timestamp: Date.now(),
     };
 
@@ -324,16 +328,16 @@ export default function LiveAssistThread({
               : [styles.assistantBubble, { backgroundColor: theme.backgroundSecondary }],
           ]}
         >
-          {item.images && item.images.length > 0 ? (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={styles.imagesScroll}
-            >
-              {item.images.map((img, i) => (
-                <Image key={i} source={{ uri: img }} style={styles.messageImage} />
+          {(item.images && item.images.length > 0) || (item.imageUrls && item.imageUrls.length > 0) ? (
+            <View style={{ flexDirection: "row", flexWrap: "wrap", marginBottom: Spacing.sm }}>
+              {(item.images || item.imageUrls || []).map((img, i) => (
+                <Image
+                  key={i}
+                  source={{ uri: img }}
+                  style={{ width: 120, height: 80, borderRadius: BorderRadius.md, marginRight: Spacing.xs, marginBottom: Spacing.xs }}
+                />
               ))}
-            </ScrollView>
+            </View>
           ) : null}
 
           {item.text ? (
@@ -399,14 +403,20 @@ export default function LiveAssistThread({
     );
   };
 
+  const TAB_BAR_HEIGHT = 80;
+
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
+    >
       <FlatList
         ref={flatListRef}
         data={messages}
         renderItem={renderMessage}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.messagesList}
+        contentContainerStyle={[styles.messagesList, { paddingBottom: 140 + TAB_BAR_HEIGHT }]}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <View style={styles.emptyState}>
@@ -416,10 +426,15 @@ export default function LiveAssistThread({
             </ThemedText>
           </View>
         }
+        onContentSizeChange={() => {
+          if (messages.length > 0) {
+            flatListRef.current?.scrollToEnd({ animated: true });
+          }
+        }}
       />
 
       {isLoading ? (
-        <View style={[styles.loadingBar, { backgroundColor: theme.backgroundSecondary }]}>
+        <View style={[styles.loadingBar, { backgroundColor: theme.backgroundSecondary, bottom: 80 + TAB_BAR_HEIGHT }]}>
           <ActivityIndicator size="small" color={theme.link} />
           <ThemedText style={[styles.loadingText, { color: theme.textSecondary }]}>
             Analyzing...
@@ -427,60 +442,63 @@ export default function LiveAssistThread({
         </View>
       ) : null}
 
-      {pendingImages.length > 0 ? (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={[styles.pendingImagesContainer, { backgroundColor: theme.backgroundSecondary }]}
-        >
-          {pendingImages.map((img, i) => (
-            <View key={i} style={styles.pendingImageWrapper}>
-              <Image source={{ uri: img }} style={styles.pendingImage} />
-              <Pressable
-                style={styles.removeImageButton}
-                onPress={() => removePendingImage(i)}
-              >
-                <Feather name="x" size={14} color="#FFFFFF" />
-              </Pressable>
-            </View>
-          ))}
-        </ScrollView>
-      ) : null}
+      <View style={[styles.inputWrapper, { bottom: TAB_BAR_HEIGHT }]}>
+        {pendingImages.length > 0 ? (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={[styles.pendingImagesContainer, { backgroundColor: theme.backgroundSecondary }]}
+          >
+            {pendingImages.map((img, i) => (
+              <View key={i} style={styles.pendingImageWrapper}>
+                <Image source={{ uri: img }} style={styles.pendingImage} />
+                <Pressable
+                  style={styles.removeImageButton}
+                  onPress={() => removePendingImage(i)}
+                >
+                  <Feather name="x" size={14} color="#FFFFFF" />
+                </Pressable>
+              </View>
+            ))}
+          </ScrollView>
+        ) : null}
 
-      <View style={[styles.inputContainer, { backgroundColor: theme.backgroundSecondary }]}>
-        <Pressable onPress={handleTakePhoto} style={styles.iconButton}>
-          <Feather name="camera" size={22} color={theme.link} />
-        </Pressable>
-        <Pressable onPress={handlePickImage} style={styles.iconButton}>
-          <Feather name="image" size={22} color={theme.link} />
-        </Pressable>
-        <TextInput
-          style={[
-            styles.textInput,
-            { color: theme.text, backgroundColor: isDark ? "#252525" : "#FFFFFF" },
-          ]}
-          value={inputText}
-          onChangeText={setInputText}
-          placeholder="Describe your problem..."
-          placeholderTextColor={theme.textSecondary}
-          multiline
-          maxLength={1000}
-        />
-        <Pressable
-          onPress={handleSend}
-          disabled={isLoading || (!inputText.trim() && pendingImages.length === 0)}
-          style={[
-            styles.sendButton,
-            {
-              backgroundColor:
-                inputText.trim() || pendingImages.length > 0 ? theme.link : theme.border,
-            },
-          ]}
-        >
-          <Feather name="send" size={18} color="#FFFFFF" />
-        </Pressable>
+        <View style={[styles.inputContainer, { backgroundColor: theme.backgroundDefault, borderTopWidth: 1, borderTopColor: theme.border }]}>
+          <Pressable onPress={handleTakePhoto} style={styles.iconButton}>
+            <Feather name="camera" size={24} color={theme.link} />
+          </Pressable>
+          <Pressable onPress={handlePickImage} style={styles.iconButton}>
+            <Feather name="image" size={24} color={theme.link} />
+          </Pressable>
+          <TextInput
+            style={[
+              styles.textInput,
+              { color: theme.text, backgroundColor: isDark ? "#252525" : "#F5F5F5" },
+            ]}
+            value={inputText}
+            onChangeText={setInputText}
+            placeholder="Describe your problem..."
+            placeholderTextColor={theme.textSecondary}
+            multiline
+            maxLength={1000}
+          />
+          <Pressable
+            onPress={handleSend}
+            disabled={isLoading || (!inputText.trim() && pendingImages.length === 0)}
+            style={[
+              styles.sendButton,
+              {
+                backgroundColor:
+                  inputText.trim() || pendingImages.length > 0 ? theme.link : theme.border,
+                opacity: isLoading ? 0.5 : 1,
+              },
+            ]}
+          >
+            <Feather name="send" size={20} color="#FFFFFF" />
+          </Pressable>
+        </View>
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -491,6 +509,12 @@ const styles = StyleSheet.create({
   messagesList: {
     padding: Spacing.md,
     paddingBottom: Spacing.xl,
+  },
+  inputWrapper: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    zIndex: 100,
   },
   emptyState: {
     alignItems: "center",
@@ -674,11 +698,15 @@ const styles = StyleSheet.create({
     fontSize: Typography.small.fontSize,
   },
   loadingBar: {
+    position: "absolute",
+    left: 0,
+    right: 0,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     padding: Spacing.sm,
     gap: Spacing.sm,
+    zIndex: 99,
   },
   loadingText: {
     fontSize: Typography.caption.fontSize,
