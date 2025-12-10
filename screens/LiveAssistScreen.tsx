@@ -19,9 +19,12 @@ import { LinearGradient } from "expo-linear-gradient";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import LiveAssistThread from "@/components/LiveAssistThread";
+import AIChatView from "@/components/AIChatView";
 import { Spacing, BorderRadius, Typography } from "@/constants/theme";
 import { useTheme } from "@/hooks/useTheme";
 import { api, LiveAssistResponse, LiveAssistOverlay, RiskSeverity, RiskEntry, RiskOverlay, SparePart, SparePartPriority } from "@/utils/api";
+
+type LiveAssistMode = "analysis" | "chat";
 
 interface AnalysisResult {
   summary: string;
@@ -43,6 +46,9 @@ export default function LiveAssistScreen() {
   const insets = useSafeAreaInsets();
   const tabBarHeight = useBottomTabBarHeight();
   const language = i18n.language;
+
+  // Mode toggle: Analysis vs AI Chat
+  const [activeMode, setActiveMode] = useState<LiveAssistMode>("analysis");
 
   const [isLoading, setIsLoading] = useState(false);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
@@ -829,13 +835,60 @@ export default function LiveAssistScreen() {
             <Feather name="zap" size={20} color="#FFFFFF" />
           </View>
           <ThemedText style={[styles.headerTitle, { color: theme.text }]}>
-            {t("liveAssist.title")}
+            {activeMode === "analysis" ? t("liveAssist.title") : t("chat.title")}
           </ThemedText>
+        </View>
+
+        <View style={[styles.modeToggle, { backgroundColor: theme.backgroundSecondary }]}>
+          <Pressable
+            onPress={() => setActiveMode("analysis")}
+            style={[
+              styles.modeToggleButton,
+              activeMode === "analysis" && [styles.modeToggleButtonActive, { backgroundColor: theme.link }],
+            ]}
+          >
+            <Feather
+              name="camera"
+              size={16}
+              color={activeMode === "analysis" ? "#FFFFFF" : theme.textSecondary}
+            />
+            <ThemedText
+              style={[
+                styles.modeToggleText,
+                { color: activeMode === "analysis" ? "#FFFFFF" : theme.textSecondary },
+              ]}
+            >
+              {t("liveAssist.analysis") || "Analysis"}
+            </ThemedText>
+          </Pressable>
+          <Pressable
+            onPress={() => setActiveMode("chat")}
+            style={[
+              styles.modeToggleButton,
+              activeMode === "chat" && [styles.modeToggleButtonActive, { backgroundColor: theme.link }],
+            ]}
+          >
+            <Feather
+              name="message-circle"
+              size={16}
+              color={activeMode === "chat" ? "#FFFFFF" : theme.textSecondary}
+            />
+            <ThemedText
+              style={[
+                styles.modeToggleText,
+                { color: activeMode === "chat" ? "#FFFFFF" : theme.textSecondary },
+              ]}
+            >
+              {t("chat.title") || "AI Chat"}
+            </ThemedText>
+          </Pressable>
         </View>
       </View>
 
       <View style={styles.content}>
-        {isThreadMode ? (
+        {activeMode === "chat" ? (
+          <AIChatView />
+        ) : isThreadMode ? (
           renderThreadMode()
         ) : isLoading ? (
           renderLoadingState()
