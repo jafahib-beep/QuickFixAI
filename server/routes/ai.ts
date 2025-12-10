@@ -19,6 +19,23 @@ router.post("/text", async (req: Request, res: Response) => {
     res.status(500).json({ error: "AI text request failed" });
   }
 });
+// POST /api/ai/chat
+router.post("/ai/chat", async (req: Request, res: Response) => {
+  try {
+    const { prompt } = req.body;
+
+    if (!prompt) {
+      return res.status(400).json({ error: "prompt is required" });
+    }
+
+    const answer = await askAI(prompt);
+
+    res.json({ answer });
+  } catch (err) {
+    console.error("AI chat error:", err);
+    res.status(500).json({ error: "AI chat request failed" });
+  }
+});
 
 // POST /api/ai/image
 // body: { imageBase64: string }

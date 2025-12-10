@@ -5,20 +5,21 @@ import Constants from "expo-constants";
 const BACKEND_PORT = 5000;
 
 function getApiBaseUrl(): string {
-  if (Platform.OS === "web" && typeof window !== "undefined") {
+  // Use local Replit backend for development
+  // The local backend runs on port 5000 and has all the AI endpoints
+  
+  if (Platform.OS === "web") {
+    // Web: Use relative URL which Metro proxies to the backend
     return "/api";
   }
-
-  const replitDevDomain = Constants.expoConfig?.extra?.REPLIT_DEV_DOMAIN;
-  if (replitDevDomain) {
-    if (replitDevDomain.includes(".riker.replit.dev")) {
-      const parts = replitDevDomain.split(".riker.replit.dev")[0];
-      return `https://${parts}-${BACKEND_PORT}.riker.replit.dev/api`;
-    }
-    const parts = replitDevDomain.split(".replit.dev")[0];
-    return `https://${parts}-${BACKEND_PORT}.replit.dev/api`;
+  
+  // Native (Expo Go): Use the Replit hostname for API calls
+  const expoHost = Constants.expoConfig?.hostUri?.split(":")[0];
+  if (expoHost) {
+    return `http://${expoHost}:${BACKEND_PORT}/api`;
   }
-
+  
+  // Fallback to localhost
   return `http://localhost:${BACKEND_PORT}/api`;
 }
 
@@ -113,18 +114,15 @@ class ApiClient {
   }
 
   async login(email: string, password: string) {
-    const result = await this.request<{ 
-      user: User; 
-      token: string; 
+    const result = await this.request<{
+      user: User;
+      token: string;
       xpAwarded?: number;
       leveledUp?: boolean;
-    }>(
-      "/auth/login",
-      {
-        method: "POST",
-        body: { email, password },
-      },
-    );
+    }>("/auth/login", {
+      method: "POST",
+      body: { email, password },
+    });
     await this.setToken(result.token);
     return result;
   }
@@ -418,7 +416,10 @@ class ApiClient {
     });
 
     try {
-      const response = await this.request<{ answer: string; rawResponse?: unknown }>("/ai/chat", {
+      const response = await this.request<{
+        answer: string;
+        rawResponse?: unknown;
+      }>("/ai/chat", {
         method: "POST",
         body: {
           messages: data.messages,
@@ -429,29 +430,24 @@ class ApiClient {
       });
 
       if (response && response.answer) {
-        return { answer: response.answer, rawResponse: response.rawResponse, success: true };
+        return {
+          answer: response.answer,
+          rawResponse: response.rawResponse,
+          success: true,
+        };
       }
 
       throw new Error("No answer received from AI");
     } catch (error: any) {
-      console.log("[API] Chat error:", error?.message || error);
-      
-      const errorMessage = error?.message?.includes("API key")
-        ? "AI service is not configured. Please try again later."
-        : error?.message?.includes("network")
-          ? "Unable to reach the AI service. Please check your connection."
-          : "AI service is temporarily unavailable. Please try again.";
-      
-      return {
-        answer: errorMessage,
-        rawResponse: { error: true, message: error?.message },
-        success: false,
-      };
+      console.error("[API] Chat error:", error?.message || error);
+      throw error;
     }
   }
 
-
-  async liveAssist(imageBase64: string, language: string = "en"): Promise<LiveAssistResponse> {
+  async liveAssist(
+    imageBase64: string,
+    language: string = "en",
+  ): Promise<LiveAssistResponse> {
     console.log("[API] liveAssist called with:", {
       hasImage: !!imageBase64,
       imageLength: imageBase64?.length || 0,
@@ -502,7 +498,7 @@ class ApiClient {
       throw new Error(response?.error || "No analysis received");
     } catch (error: any) {
       console.log("[API] LiveAssist error:", error?.message || error);
-      
+
       return {
         success: false,
         analysis: {
@@ -510,9 +506,10 @@ class ApiClient {
           possibleIssue: "",
           safetyNote: "",
           steps: [],
-          rawResponse: JSON.stringify({ 
-            error: true, 
-            message: error?.message || "Failed to analyze image. Please try again." 
+          rawResponse: JSON.stringify({
+            error: true,
+            message:
+              error?.message || "Failed to analyze image. Please try again.",
           }),
         },
       };
@@ -522,12 +519,24 @@ class ApiClient {
   async checkAIServiceHealth(): Promise<boolean> {
     console.log("[API] checkAIServiceHealth called");
     try {
-      const healthUrl = API_BASE_URL.replace("/api", "") + "/health";
+      // Construct health URL based on current API_BASE_URL
+      let healthUrl: string;
+      if (API_BASE_URL === "/api") {
+        // Web platform - use relative URL
+        healthUrl = "/api/health";
+      } else {
+        // Native platform - replace /api with /api/health
+        healthUrl = API_BASE_URL.replace(/\/api$/, "") + "/api/health";
+      }
+      
+      console.log("[API] Health check URL:", healthUrl);
       const response = await fetch(healthUrl, {
         method: "GET",
         headers: { "Content-Type": "application/json" },
       });
-      return response.ok;
+      const isHealthy = response.ok;
+      console.log("[API] Health check result:", isHealthy);
+      return isHealthy;
     } catch (error) {
       console.log("[API] Health check failed:", error);
       return false;
