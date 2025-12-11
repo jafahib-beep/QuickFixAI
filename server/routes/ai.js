@@ -285,23 +285,148 @@ Remember: A real technician asks questions first, diagnoses second, and fixes la
 /**
  * LiveAssist Session API - MVP Conversation Thread
  * Creates a new session for multi-turn LiveAssist conversations
+ * Now persists to database for history
  */
 router.post("/liveassist/session", optionalAuth, async (req, res) => {
   try {
-    const sessionId = crypto.randomUUID();
+    const { title } = req.body;
+    
+    // Create session in database if user is authenticated
+    let dbSessionId = null;
+    if (req.userId) {
+      const result = await pool.query(
+        `INSERT INTO liveassist_sessions (user_id, title) 
+         VALUES ($1, $2) 
+         RETURNING id`,
+        [req.userId, title || 'New Analysis']
+      );
+      dbSessionId = result.rows[0].id;
+    }
+    
+    const sessionId = dbSessionId || crypto.randomUUID();
     const session = {
       id: sessionId,
       userId: req.userId || null,
       messages: [],
       stepProgress: {},
       createdAt: Date.now(),
+      dbSessionId: dbSessionId,
     };
     liveAssistSessions.set(sessionId, session);
-    console.log("[LiveAssist Session] Created session:", sessionId);
+    console.log("[LiveAssist Session] Created session:", sessionId, dbSessionId ? "(persisted)" : "(in-memory)");
     res.json({ sessionId });
   } catch (error) {
     console.error("LiveAssist session creation error:", error);
     res.status(500).json({ error: "Failed to create session" });
+  }
+});
+
+/**
+ * Get user's LiveAssist sessions (history)
+ */
+router.get("/liveassist/sessions", authMiddleware, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT id, title, created_at, updated_at 
+       FROM liveassist_sessions 
+       WHERE user_id = $1 
+       ORDER BY updated_at DESC 
+       LIMIT 20`,
+      [req.userId]
+    );
+    res.json({ sessions: result.rows });
+  } catch (error) {
+    console.error("Get sessions error:", error);
+    res.status(500).json({ error: "Failed to get sessions" });
+  }
+});
+
+/**
+ * Get messages for a specific session
+ */
+router.get("/liveassist/session/:sessionId/messages", optionalAuth, async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    
+    // First try to get from memory
+    const memSession = liveAssistSessions.get(sessionId);
+    if (memSession && memSession.messages.length > 0) {
+      return res.json({ 
+        messages: memSession.messages.map(m => ({
+          role: m.role,
+          text: m.text,
+          imageUrls: m.images || m.imageUrls || [],
+          analysisResult: m.analysisResult,
+          createdAt: m.timestamp ? new Date(m.timestamp).toISOString() : new Date().toISOString()
+        }))
+      });
+    }
+    
+    // Otherwise get from database
+    const result = await pool.query(
+      `SELECT id, role, text, image_urls, analysis_result, created_at 
+       FROM liveassist_messages 
+       WHERE session_id = $1 
+       ORDER BY created_at ASC`,
+      [sessionId]
+    );
+    
+    const messages = result.rows.map(row => ({
+      id: row.id,
+      role: row.role,
+      text: row.text,
+      imageUrls: row.image_urls || [],
+      analysisResult: row.analysis_result,
+      createdAt: row.created_at
+    }));
+    
+    // Hydrate memory session with DB messages
+    if (messages.length > 0) {
+      const session = {
+        id: sessionId,
+        userId: req.userId || null,
+        messages: messages.map(m => ({
+          role: m.role,
+          text: m.text,
+          images: m.imageUrls,
+          analysisResult: m.analysisResult,
+          timestamp: new Date(m.createdAt).getTime()
+        })),
+        stepProgress: {},
+        createdAt: Date.now(),
+        dbSessionId: sessionId,
+      };
+      liveAssistSessions.set(sessionId, session);
+    }
+    
+    res.json({ messages });
+  } catch (error) {
+    console.error("Get session messages error:", error);
+    res.status(500).json({ error: "Failed to get messages" });
+  }
+});
+
+/**
+ * Get user's latest session ID (for resume on screen open)
+ */
+router.get("/liveassist/latest-session", authMiddleware, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT id FROM liveassist_sessions 
+       WHERE user_id = $1 
+       ORDER BY updated_at DESC 
+       LIMIT 1`,
+      [req.userId]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.json({ sessionId: null });
+    }
+    
+    res.json({ sessionId: result.rows[0].id });
+  } catch (error) {
+    console.error("Get latest session error:", error);
+    res.status(500).json({ error: "Failed to get latest session" });
   }
 });
 
@@ -486,14 +611,38 @@ router.post("/liveassist/session/:sessionId/message", optionalAuth, async (req, 
     }
 
     // Add assistant message to history
-    session.messages.push({
+    const assistantMessage = {
       role: "assistant",
       text: aiResponse.text,
       steps: aiResponse.steps,
       youtube_links: aiResponse.youtube_links,
       safety_warnings: aiResponse.safety_warnings,
       timestamp: Date.now(),
-    });
+    };
+    session.messages.push(assistantMessage);
+
+    // Persist messages to database (non-blocking)
+    if (req.userId && session.dbSessionId) {
+      // Save user message
+      pool.query(
+        `INSERT INTO liveassist_messages (session_id, user_id, role, text, image_urls)
+         VALUES ($1, $2, $3, $4, $5)`,
+        [session.dbSessionId, req.userId, 'user', text || '', JSON.stringify(images)]
+      ).catch(err => console.log("[LiveAssist] Error saving user message:", err.message));
+      
+      // Save assistant message
+      pool.query(
+        `INSERT INTO liveassist_messages (session_id, user_id, role, text, analysis_result)
+         VALUES ($1, $2, $3, $4, $5)`,
+        [session.dbSessionId, req.userId, 'assistant', aiResponse.text, JSON.stringify(aiResponse)]
+      ).catch(err => console.log("[LiveAssist] Error saving assistant message:", err.message));
+      
+      // Update session timestamp
+      pool.query(
+        `UPDATE liveassist_sessions SET updated_at = NOW() WHERE id = $1`,
+        [session.dbSessionId]
+      ).catch(err => console.log("[LiveAssist] Error updating session:", err.message));
+    }
 
     // Track image usage for subscription limits (if images were sent) and award XP (non-blocking)
     if (req.userId) {

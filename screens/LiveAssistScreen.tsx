@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import {
   View,
   StyleSheet,
@@ -20,8 +20,10 @@ import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import LiveAssistThread from "@/components/LiveAssistThread";
 import AIChatView from "@/components/AIChatView";
+import { UpgradeModal } from "@/components/UpgradeModal";
 import { Spacing, BorderRadius, Typography } from "@/constants/theme";
 import { useTheme } from "@/hooks/useTheme";
+import { useSubscription } from "@/contexts/SubscriptionContext";
 import { api, LiveAssistResponse, LiveAssistOverlay, RiskSeverity, RiskEntry, RiskOverlay, SparePart, SparePartPriority } from "@/utils/api";
 
 type LiveAssistMode = "analysis" | "chat";
@@ -45,6 +47,7 @@ export default function LiveAssistScreen() {
   const { theme, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const tabBarHeight = useBottomTabBarHeight();
+  const { usage, refreshSubscription } = useSubscription();
   const language = i18n.language;
 
   // Mode toggle: Analysis vs AI Chat
@@ -56,6 +59,10 @@ export default function LiveAssistScreen() {
   const [error, setError] = useState<string | null>(null);
   const [imageDimensions, setImageDimensions] = useState<{ width: number; height: number } | null>(null);
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
+  
+  // Upgrade modal state
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [limitInfo, setLimitInfo] = useState<{ imagesUsed: number; limit: number }>({ imagesUsed: 0, limit: 2 });
   
   // Conversation thread state
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -143,11 +150,26 @@ export default function LiveAssistScreen() {
           spareParts: response.analysis.spareParts || [],
           rawResponse: response.analysis.rawResponse,
         });
+        // Refresh subscription status to get updated usage count
+        refreshSubscription();
       } else {
         setError("AI_UNAVAILABLE");
       }
     } catch (err: any) {
       console.log("[LiveAssistScreen] Error:", err?.message || err);
+      
+      // Check if it's a daily limit error
+      if (err?.response?.error === "daily_limit_reached" || err?.message?.includes("daily_limit")) {
+        const errorData = err?.response || {};
+        setLimitInfo({
+          imagesUsed: errorData.imagesUsed || usage?.imagesUsedToday || 2,
+          limit: errorData.limit || usage?.dailyImageLimit || 2,
+        });
+        setShowUpgradeModal(true);
+        setCapturedImage(null);
+        return;
+      }
+      
       setError("AI_UNAVAILABLE");
     } finally {
       setIsLoading(false);
@@ -898,6 +920,17 @@ export default function LiveAssistScreen() {
           renderWelcomeState()
         )}
       </View>
+
+      <UpgradeModal
+        visible={showUpgradeModal}
+        onClose={() => {
+          setShowUpgradeModal(false);
+          refreshSubscription();
+        }}
+        reason="daily_limit"
+        imagesUsed={limitInfo.imagesUsed}
+        limit={limitInfo.limit}
+      />
     </ThemedView>
   );
 }

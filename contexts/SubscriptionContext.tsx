@@ -1,4 +1,6 @@
-import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
+import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from "react";
+import { Platform, Alert } from "react-native";
+import * as Linking from "expo-linking";
 import { api } from "../utils/api";
 import { useAuth } from "./AuthContext";
 
@@ -70,6 +72,58 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
       setSubscription(null);
       setUsage(null);
     }
+  }, [user, refreshSubscription]);
+
+  // Detect return from Stripe checkout and refresh subscription status
+  const hasCheckedUrl = useRef(false);
+  useEffect(() => {
+    if (!user || hasCheckedUrl.current) return;
+    
+    const checkUrlForSubscription = async () => {
+      try {
+        let url: string | null = null;
+        
+        if (Platform.OS === "web" && typeof window !== "undefined") {
+          url = window.location.href;
+        } else {
+          url = await Linking.getInitialURL();
+        }
+        
+        if (url && url.includes("subscription=success")) {
+          console.log("[Subscription] Detected successful checkout return, refreshing status...");
+          hasCheckedUrl.current = true;
+          
+          // Wait a moment for webhook to process
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          await refreshSubscription();
+          
+          // Show success message
+          Alert.alert(
+            "Welcome to Premium!",
+            "Your subscription is now active. Enjoy unlimited LiveAssist access!",
+            [{ text: "Got it", style: "default" }]
+          );
+          
+          // Clean URL on web
+          if (Platform.OS === "web" && typeof window !== "undefined") {
+            const cleanUrl = url.split("?")[0];
+            window.history.replaceState({}, document.title, cleanUrl);
+          }
+        } else if (url && url.includes("subscription=canceled")) {
+          hasCheckedUrl.current = true;
+          console.log("[Subscription] Checkout was canceled");
+          
+          if (Platform.OS === "web" && typeof window !== "undefined") {
+            const cleanUrl = url.split("?")[0];
+            window.history.replaceState({}, document.title, cleanUrl);
+          }
+        }
+      } catch (err) {
+        console.log("[Subscription] Error checking URL:", err);
+      }
+    };
+    
+    checkUrlForSubscription();
   }, [user, refreshSubscription]);
 
   const startTrial = useCallback(async () => {

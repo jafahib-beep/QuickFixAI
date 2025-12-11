@@ -249,6 +249,36 @@ const initializeDatabase = async () => {
       CREATE INDEX IF NOT EXISTS idx_liveassist_usage_date ON liveassist_usage(usage_date);
     `);
     
+    // Create liveassist_sessions table for persistent chat sessions
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS liveassist_sessions (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+        title TEXT,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      );
+      
+      CREATE INDEX IF NOT EXISTS idx_liveassist_sessions_user ON liveassist_sessions(user_id);
+    `);
+    
+    // Create liveassist_messages table for persistent chat history
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS liveassist_messages (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        session_id UUID REFERENCES liveassist_sessions(id) ON DELETE CASCADE,
+        user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+        role VARCHAR(20) NOT NULL,
+        text TEXT,
+        image_urls JSONB DEFAULT '[]'::jsonb,
+        analysis_result JSONB,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      );
+      
+      CREATE INDEX IF NOT EXISTS idx_liveassist_messages_session ON liveassist_messages(session_id);
+      CREATE INDEX IF NOT EXISTS idx_liveassist_messages_user ON liveassist_messages(user_id);
+    `);
+    
     console.log('Database initialized successfully');
   } catch (error) {
     console.error('Database initialization error:', error);

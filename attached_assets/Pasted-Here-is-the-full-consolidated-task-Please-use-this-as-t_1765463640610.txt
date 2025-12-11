@@ -1,0 +1,111 @@
+Here is the full consolidated task.  
+Please use this as the complete specification for fixing the subscription system, free-user limits, premium activation, and LiveAssist history.
+
+Do NOT commit any changes. Only stage diffs and show them for review.
+
+-----------------------------------------
+TASK: Fix subscription activation, limits, messaging, XP reward, and LiveAssist history persistence.
+-----------------------------------------
+
+These issues were found during manual testing:
+
+1) Stripe payment succeeds, but the user still appears as "Free".
+   - After returning to the app, subscription status does not refresh.
+   - The user cannot upload more than 2 images even after paying.
+   - UI still shows “2 / 2 images used”.
+
+2) The required popup after hitting the free limit does NOT appear.
+   - After 2 images, nothing happens.
+   - We need a blocking modal:
+     "Daily free limit reached. Upgrade to Premium to continue."
+     Button → opens Subscription screen.
+
+3) XP reward (+250 XP) after subscription purchase is not granted.
+
+4) LiveAssist chat history is NOT saved.
+   - When leaving the screen and coming back, the conversation is gone.
+   - No messages are persisted.
+   - We need full history:
+     - Save every message (text + images + system replies)
+     - Return history on GET /api/liveassist/session/:id/messages
+     - When reopening LiveAssist, load the latest session and display the full conversation.
+
+5) Premium benefits not activated:
+   - Premium users should have unlimited images and video upload.
+   - Free users should remain limited to 2 images/day and no video.
+   - After subscription activation, the app should refresh user state immediately.
+
+-----------------------------------------
+BACKEND FIXES REQUIRED:
+-----------------------------------------
+
+A) Webhook + DB update
+- Ensure Stripe webhook correctly updates:
+  - isPremium = true
+  - premiumExpiresAt = calculated next billing
+  - usageCountToday reset or ignored for premium
+- Refresh or invalidate session so UI can reflect the new state.
+
+B) Usage limit logic
+- For Free users:
+  - Max 2 images/day
+  - No video upload
+  - When limit hit → return a clear error code AND show upgrade modal
+- For Premium:
+  - Unlimited images
+  - Video allowed
+
+C) XP reward
+- On successful subscription payment:
+  - Add 250 XP to the user
+  - Save an xp_event log
+
+D) History persistence
+- Create table: liveassist_messages
+  (sessionId, userId, role, text, imageUrls[], createdAt)
+- POST /message should save every message
+- GET /messages returns history for session
+- Client should load history when opening LiveAssist
+
+-----------------------------------------
+FRONTEND FIXES REQUIRED:
+-----------------------------------------
+
+1) After completing Stripe payment:
+   - Automatically call `/api/subscription/status`
+   - Refresh user state (`isPremium`)
+   - Update UI to premium mode
+
+2) Enforce premium/unlimited logic:
+   - Allow >2 images for premium users
+   - Enable video upload for premium
+
+3) Free-user popup:
+   - Show blocking modal after hitting 2 images:
+     “You’ve reached your free limit. Upgrade to Premium to continue.”
+   - Add Upgrade button → opens Subscription screen
+
+4) LiveAssist history:
+   - Load previous messages on screen mount
+   - Persist session ID
+   - Display full conversation (text + images)
+
+-----------------------------------------
+DELIVERABLES:
+-----------------------------------------
+
+- Staged backend diff: `/tmp/subscription-fix-backend.patch`
+- Staged frontend diff: `/tmp/subscription-fix-frontend.patch`
+- Logs proving:
+   - Stripe webhook executed
+   - User isPremium updated
+   - XP granted
+   - Premium can upload >2 images
+   - Free is blocked at 2 with popup
+   - Chat history persists and reloads
+
+Do NOT commit until Jafar approves everything.
+
+-----------------------------------------
+
+If you need test credentials, let me know.

@@ -471,6 +471,9 @@ class ApiClient {
           rawResponse?: string;
         };
         error?: string;
+        imagesUsed?: number;
+        limit?: number;
+        upgradeRequired?: boolean;
       }>("/ai/liveassist", {
         method: "POST",
         body: { imageBase64, language },
@@ -498,6 +501,18 @@ class ApiClient {
       throw new Error(response?.error || "No analysis received");
     } catch (error: any) {
       console.log("[API] LiveAssist error:", error?.message || error);
+      
+      // Check for daily limit error and re-throw with response data attached
+      if (error?.message?.includes("daily_limit_reached") || error?.message?.includes("daily limit")) {
+        const customError: any = new Error("daily_limit_reached");
+        customError.response = {
+          error: "daily_limit_reached",
+          imagesUsed: 2,
+          limit: 2,
+          upgradeRequired: true,
+        };
+        throw customError;
+      }
 
       return {
         success: false,
