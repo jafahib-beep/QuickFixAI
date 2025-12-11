@@ -202,6 +202,17 @@ async function activatePaidSubscription(userId, stripeSubscriptionId, periodEnd)
     paid_until: periodEnd.toISOString()
   });
   
+  // Fix B: Reset image_counter to 0 on subscription activation
+  const today = new Date().toISOString().split('T')[0];
+  await pool.query(
+    `INSERT INTO liveassist_usage (user_id, usage_date, images_sent)
+     VALUES ($1, $2, 0)
+     ON CONFLICT (user_id, usage_date) 
+     DO UPDATE SET images_sent = 0, updated_at = NOW()`,
+    [userId, today]
+  );
+  console.log(`[Subscription] Reset image_counter for user ${userId}`);
+  
   console.log(`[Subscription] Activated paid subscription for user ${userId}, valid until ${periodEnd.toISOString()}`);
   
   return {

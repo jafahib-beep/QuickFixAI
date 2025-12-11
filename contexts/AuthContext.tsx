@@ -1,4 +1,6 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from "react";
+import { Platform } from "react-native";
+import * as Linking from "expo-linking";
 import { api, User } from "@/utils/api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { cleanLegacyDemoToken } from "@/src/demoTokenGuard";
@@ -40,6 +42,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     loadUser();
+  }, []);
+
+  // Fix B: Detect ?subscription=success URL and refresh user immediately
+  const subscriptionCheckDone = useRef(false);
+  useEffect(() => {
+    if (subscriptionCheckDone.current) return;
+    
+    const checkSubscriptionRedirect = async () => {
+      try {
+        let url: string | null = null;
+        
+        if (Platform.OS === "web" && typeof window !== "undefined") {
+          url = window.location.href;
+        } else {
+          url = await Linking.getInitialURL();
+        }
+        
+        if (url && url.includes("subscription=success")) {
+          subscriptionCheckDone.current = true;
+          console.log("[AuthContext] Detected subscription=success, refreshing user...");
+          
+          // Wait a moment for webhook to process, then refresh user
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          
+          try {
+            const userData = await api.getMe();
+            setUser(userData);
+            console.log("[AuthContext] User refreshed after subscription success");
+          } catch (err) {
+            console.log("[AuthContext] Failed to refresh user after subscription:", err);
+          }
+          
+          // Clean URL on web
+          if (Platform.OS === "web" && typeof window !== "undefined") {
+            const cleanUrl = url.split("?")[0];
+            window.history.replaceState({}, document.title, cleanUrl);
+          }
+        }
+      } catch (err) {
+        console.log("[AuthContext] Error checking subscription URL:", err);
+      }
+    };
+    
+    checkSubscriptionRedirect();
   }, []);
 
   const loadUser = async () => {

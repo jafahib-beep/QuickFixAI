@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   View,
   StyleSheet,
@@ -53,9 +53,44 @@ export default function LiveAssistThread({
   const [inputText, setInputText] = useState("");
   const [pendingImages, setPendingImages] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [completedSteps, setCompletedSteps] = useState<Set<string>>(new Set());
   const [expandedSteps, setExpandedSteps] = useState<Set<string>>(new Set());
   const flatListRef = useRef<FlatList>(null);
+  const messagesLoadedRef = useRef(false);
+
+  // Fix A: Load existing messages from server on mount
+  useEffect(() => {
+    if (messagesLoadedRef.current || !sessionId) return;
+    messagesLoadedRef.current = true;
+    
+    const loadMessages = async () => {
+      setIsLoadingHistory(true);
+      try {
+        console.log("[LiveAssistThread] Loading messages for session:", sessionId);
+        const result = await api.getLiveAssistSessionMessages(sessionId);
+        if (result.messages && result.messages.length > 0) {
+          const loadedMessages: ThreadMessage[] = result.messages.map((m, index) => ({
+            id: `loaded-${index}-${Date.now()}`,
+            role: m.role as "user" | "assistant",
+            text: m.text || "",
+            imageUrls: m.imageUrls || [],
+            steps: m.analysisResult?.steps,
+            youtube_links: m.analysisResult?.youtube_links,
+            safety_warnings: m.analysisResult?.safety_warnings,
+            timestamp: m.createdAt ? new Date(m.createdAt).getTime() : Date.now(),
+          }));
+          setMessages(loadedMessages);
+          console.log("[LiveAssistThread] Loaded", loadedMessages.length, "messages from history");
+        }
+      } catch (err) {
+        console.log("[LiveAssistThread] Failed to load messages:", err);
+      } finally {
+        setIsLoadingHistory(false);
+      }
+    };
+    loadMessages();
+  }, [sessionId]);
 
   const toggleStepComplete = async (stepId: string) => {
     const newCompleted = new Set(completedSteps);

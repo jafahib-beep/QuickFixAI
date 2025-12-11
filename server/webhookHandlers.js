@@ -3,6 +3,37 @@ const { pool } = require('./db');
 const { activatePaidSubscription, downgradeToFree, getUserByStripeCustomerId } = require('./services/subscription');
 
 class WebhookHandlers {
+  // Fix B: Ensure webhook_events table exists for idempotency
+  static async ensureWebhookEventsTable() {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS webhook_events (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        event_id VARCHAR(255) UNIQUE NOT NULL,
+        event_type VARCHAR(100) NOT NULL,
+        session_id VARCHAR(255),
+        processed_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+  }
+
+  // Fix B: Check if webhook was already processed (idempotency)
+  static async isWebhookProcessed(eventId) {
+    const result = await pool.query(
+      'SELECT id FROM webhook_events WHERE event_id = $1',
+      [eventId]
+    );
+    return result.rows.length > 0;
+  }
+
+  // Fix B: Mark webhook as processed
+  static async markWebhookProcessed(eventId, eventType, sessionId) {
+    await pool.query(
+      `INSERT INTO webhook_events (event_id, event_type, session_id) 
+       VALUES ($1, $2, $3) ON CONFLICT (event_id) DO NOTHING`,
+      [eventId, eventType, sessionId || null]
+    );
+  }
+
   static async processWebhook(payload, signature, uuid) {
     if (!Buffer.isBuffer(payload)) {
       throw new Error(
@@ -19,12 +50,25 @@ class WebhookHandlers {
 
     // Then handle app-specific logic by parsing the event
     try {
+      // Ensure webhook_events table exists
+      await this.ensureWebhookEventsTable();
+      
       const stripe = await getUncachableStripeClient();
       const event = JSON.parse(payload.toString());
       
-      console.log(`[Webhook] Processing event: ${event.type}`);
+      console.log(`[Webhook] Processing event: ${event.type} (id: ${event.id})`);
+      
+      // Fix B: Idempotency check - skip if already processed
+      if (await this.isWebhookProcessed(event.id)) {
+        console.log(`[Webhook] Event ${event.id} already processed, skipping`);
+        return;
+      }
       
       await this.handleStripeEvent(event, stripe);
+      
+      // Fix B: Mark event as processed
+      await this.markWebhookProcessed(event.id, event.type, event.data?.object?.id);
+      console.log(`[Webhook] Marked event ${event.id} as processed`);
     } catch (error) {
       console.error('[Webhook] Error processing app-specific logic:', error.message);
       // Don't throw - the sync was successful, our app logic can fail gracefully
@@ -104,7 +148,7 @@ class WebhookHandlers {
         const invoice = event.data.object;
         console.log(`[Webhook] Payment succeeded for invoice: ${invoice.id}`);
         
-        // Renew subscription period
+        // Renew subscription period using activatePaidSubscription to reset image_counter
         if (invoice.subscription) {
           const stripe = await getUncachableStripeClient();
           const subscription = await stripe.subscriptions.retrieve(invoice.subscription);
@@ -112,10 +156,8 @@ class WebhookHandlers {
           
           if (user && (subscription.status === 'active' || subscription.status === 'trialing')) {
             const periodEnd = new Date(subscription.current_period_end * 1000);
-            await pool.query(
-              'UPDATE users SET paid_until = $1, subscription_status = $2 WHERE id = $3',
-              [periodEnd.toISOString(), 'active', user.id]
-            );
+            // Fix B: Use activatePaidSubscription to reset image_counter on renewal
+            await activatePaidSubscription(user.id, subscription.id, periodEnd);
             console.log(`[Webhook] Renewed subscription for user ${user.id} until ${periodEnd.toISOString()}`);
           }
         }

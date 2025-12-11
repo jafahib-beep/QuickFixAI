@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import {
   View,
   StyleSheet,
@@ -15,6 +15,7 @@ import { useTranslation } from "react-i18next";
 import { Feather } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
@@ -68,6 +69,27 @@ export default function LiveAssistScreen() {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [isThreadMode, setIsThreadMode] = useState(false);
   const [isCreatingSession, setIsCreatingSession] = useState(false);
+  const sessionLoadedRef = useRef(false);
+
+  // Fix A: Load sessionId from AsyncStorage on mount
+  useEffect(() => {
+    if (sessionLoadedRef.current) return;
+    sessionLoadedRef.current = true;
+    
+    const loadSession = async () => {
+      try {
+        const storedSessionId = await AsyncStorage.getItem("liveassistSessionId");
+        if (storedSessionId) {
+          console.log("[LiveAssistScreen] Loaded session from storage:", storedSessionId);
+          setSessionId(storedSessionId);
+          setIsThreadMode(true);
+        }
+      } catch (err) {
+        console.log("[LiveAssistScreen] Failed to load session from storage:", err);
+      }
+    };
+    loadSession();
+  }, []);
 
   const toggleStepComplete = (stepIndex: number) => {
     setCompletedSteps((prev) => {
@@ -81,7 +103,32 @@ export default function LiveAssistScreen() {
     });
   };
 
+  // Fix C: Check image limit BEFORE capturing/selecting image
+  const checkLimitBeforeImage = async (): Promise<boolean> => {
+    try {
+      const limitCheck = await api.checkImageLimit();
+      if (!limitCheck.allowed) {
+        console.log("[LiveAssistScreen] Image limit reached before capture");
+        setLimitInfo({
+          imagesUsed: limitCheck.imagesUsed || 2,
+          limit: limitCheck.limit || 2,
+        });
+        setShowUpgradeModal(true);
+        return false;
+      }
+      return true;
+    } catch (err: any) {
+      console.log("[LiveAssistScreen] Failed to check limit:", err?.message);
+      // Allow if check fails (will be caught on server side)
+      return true;
+    }
+  };
+
   const handleTakePhoto = async () => {
+    // Fix C: Check limit BEFORE capturing
+    const allowed = await checkLimitBeforeImage();
+    if (!allowed) return;
+
     const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
     if (!permissionResult.granted) {
       Alert.alert(t("chat.permissionRequired"), t("chat.cameraPermission"));
@@ -105,6 +152,10 @@ export default function LiveAssistScreen() {
   };
 
   const handlePickImage = async () => {
+    // Fix C: Check limit BEFORE picking
+    const allowed = await checkLimitBeforeImage();
+    if (!allowed) return;
+
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permissionResult.granted) {
       Alert.alert(t("chat.permissionRequired"), t("chat.photoLibraryPermission"));
@@ -176,7 +227,7 @@ export default function LiveAssistScreen() {
     }
   };
 
-  const handleReset = () => {
+  const handleReset = async () => {
     setCapturedImage(null);
     setAnalysisResult(null);
     setError(null);
@@ -184,6 +235,13 @@ export default function LiveAssistScreen() {
     setCompletedSteps(new Set());
     setSessionId(null);
     setIsThreadMode(false);
+    // Fix A: Clear sessionId from AsyncStorage on reset
+    try {
+      await AsyncStorage.removeItem("liveassistSessionId");
+      console.log("[LiveAssistScreen] Cleared session from storage");
+    } catch (err) {
+      console.log("[LiveAssistScreen] Failed to clear session from storage:", err);
+    }
   };
 
   const handleStartConversation = async () => {
@@ -192,6 +250,9 @@ export default function LiveAssistScreen() {
       const result = await api.createLiveAssistSession();
       setSessionId(result.sessionId);
       setIsThreadMode(true);
+      // Fix A: Save sessionId to AsyncStorage
+      await AsyncStorage.setItem("liveassistSessionId", result.sessionId);
+      console.log("[LiveAssistScreen] Saved session to storage:", result.sessionId);
     } catch (err: any) {
       console.log("[LiveAssistScreen] Failed to create session:", err?.message);
       Alert.alert(

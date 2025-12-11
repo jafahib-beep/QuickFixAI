@@ -543,6 +543,18 @@ class ApiClient {
     });
   }
 
+  // Fix A: Get messages for existing session
+  async getLiveAssistSessionMessages(sessionId: string): Promise<{ messages: Array<{ role: string; text?: string; imageUrls?: string[]; analysisResult?: any; createdAt?: string }> }> {
+    console.log("[API] getLiveAssistSessionMessages called:", sessionId);
+    return this.request<{ messages: Array<{ role: string; text?: string; imageUrls?: string[]; analysisResult?: any; createdAt?: string }> }>(
+      `/ai/liveassist/session/${sessionId}/messages`,
+      {
+        method: "GET",
+        requireAuth: true,
+      }
+    );
+  }
+
   async sendLiveAssistMessage(
     sessionId: string,
     data: { text?: string; images?: string[]; language?: string }
