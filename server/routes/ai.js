@@ -3,6 +3,12 @@ const OpenAI = require("openai");
 const { pool } = require("../db");
 const { authMiddleware, optionalAuth } = require("../middleware/auth");
 const { awardXp } = require("../services/xp");
+const { 
+  checkImageLimit, 
+  incrementImageUsage, 
+  getUserSubscription,
+  SUBSCRIPTION_CONFIG 
+} = require("../services/subscription");
 
 const router = express.Router();
 const crypto = require("crypto");
@@ -302,6 +308,10 @@ router.post("/liveassist/session", optionalAuth, async (req, res) => {
 /**
  * LiveAssist Session Message - Send message and get AI response
  * Supports text + image attachments in conversation
+ * 
+ * SUBSCRIPTION LIMITS:
+ * - Free users: 2 images per day
+ * - Premium/Trial users: Unlimited
  */
 router.post("/liveassist/session/:sessionId/message", optionalAuth, async (req, res) => {
   try {
@@ -311,6 +321,23 @@ router.post("/liveassist/session/:sessionId/message", optionalAuth, async (req, 
     const session = liveAssistSessions.get(sessionId);
     if (!session) {
       return res.status(404).json({ error: "Session not found" });
+    }
+
+    // Check subscription limits if sending images
+    if (images.length > 0 && req.userId) {
+      const limitCheck = await checkImageLimit(req.userId);
+      
+      if (!limitCheck.allowed) {
+        console.log(`[LiveAssist Session] User ${req.userId} hit daily image limit`);
+        return res.status(403).json({
+          error: "daily_limit_reached",
+          message: limitCheck.message,
+          imagesUsed: limitCheck.imagesUsed,
+          limit: limitCheck.limit,
+          isPremium: false,
+          upgradeRequired: true
+        });
+      }
     }
 
     if (!openai) {
@@ -468,8 +495,13 @@ router.post("/liveassist/session/:sessionId/message", optionalAuth, async (req, 
       timestamp: Date.now(),
     });
 
-    // Award XP for LiveAssist scan (non-blocking)
+    // Track image usage for subscription limits (if images were sent) and award XP (non-blocking)
     if (req.userId) {
+      if (images.length > 0) {
+        incrementImageUsage(req.userId).catch((err) => {
+          console.log("[Subscription] Non-blocking image usage tracking error:", err.message);
+        });
+      }
       awardXp(req.userId, "liveassist_scan").catch((err) => {
         console.log("[XP] Non-blocking XP award error:", err.message);
       });
@@ -509,6 +541,10 @@ router.patch("/liveassist/session/:sessionId/steps/:stepId", optionalAuth, async
 /**
  * LiveAssist endpoint - Visual troubleshooting with AI
  * Accepts an image and returns a structured repair guide
+ * 
+ * SUBSCRIPTION LIMITS:
+ * - Free users: 2 images per day
+ * - Premium/Trial users: Unlimited
  */
 router.post("/liveassist", optionalAuth, async (req, res) => {
   try {
@@ -516,6 +552,23 @@ router.post("/liveassist", optionalAuth, async (req, res) => {
 
     if (!imageBase64) {
       return res.status(400).json({ error: "Image is required" });
+    }
+
+    // Check subscription limits for image analysis
+    if (req.userId) {
+      const limitCheck = await checkImageLimit(req.userId);
+      
+      if (!limitCheck.allowed) {
+        console.log(`[LiveAssist] User ${req.userId} hit daily image limit`);
+        return res.status(403).json({
+          error: "daily_limit_reached",
+          message: limitCheck.message,
+          imagesUsed: limitCheck.imagesUsed,
+          limit: limitCheck.limit,
+          isPremium: false,
+          upgradeRequired: true
+        });
+      }
     }
 
     if (!openai) {
@@ -898,11 +951,31 @@ When you see an image, respond with EXACTLY this JSON format. Return ONLY valid 
       sparePartsCount: spareParts.length,
     });
 
-    // Award XP for successful LiveAssist scan (non-blocking)
+    // Track image usage for subscription limits and award XP (non-blocking)
     if (req.userId) {
+      incrementImageUsage(req.userId).catch((err) => {
+        console.log("[Subscription] Non-blocking image usage tracking error:", err.message);
+      });
       awardXp(req.userId, "liveassist_scan").catch((err) => {
         console.log("[XP] Non-blocking XP award error:", err.message);
       });
+    }
+
+    // Get subscription info for response
+    let subscriptionInfo = null;
+    if (req.userId) {
+      try {
+        const subscription = await getUserSubscription(req.userId);
+        const limitCheck = await checkImageLimit(req.userId);
+        subscriptionInfo = {
+          isPremium: subscription?.isPremium || false,
+          imagesUsedToday: limitCheck.imagesUsed || 0,
+          dailyLimit: subscription?.isPremium ? null : SUBSCRIPTION_CONFIG.FREE_DAILY_IMAGES,
+          remaining: limitCheck.remaining
+        };
+      } catch (err) {
+        console.log("[Subscription] Could not get subscription info:", err.message);
+      }
     }
 
     res.json({
@@ -920,6 +993,7 @@ When you see an image, respond with EXACTLY this JSON format. Return ONLY valid 
         spareParts,
         rawResponse: answer,
       },
+      subscription: subscriptionInfo,
     });
   } catch (error) {
     console.error("LiveAssist error:", error.message || error);
