@@ -7,6 +7,7 @@ import { cleanLegacyDemoToken } from "@/src/demoTokenGuard";
 
 const LOCAL_USER_KEY = "quickfix_local_user";
 const LOCAL_USERS_KEY = "quickfix_local_users";
+const POLLING_INTERVAL_MS = 5000;
 
 interface LoginResult {
   success: boolean;
@@ -27,6 +28,7 @@ interface AuthContextType {
   refreshUser: () => Promise<void>;
   pendingXpNotification: { xpAwarded: number; leveledUp: boolean } | null;
   clearPendingXpNotification: () => void;
+  setWebSocketConnected: (connected: boolean) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -35,10 +37,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [pendingXpNotification, setPendingXpNotification] = useState<{ xpAwarded: number; leveledUp: boolean } | null>(null);
+  const [wsConnected, setWsConnected] = useState(false);
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   
   const clearPendingXpNotification = () => {
     setPendingXpNotification(null);
   };
+  
+  const setWebSocketConnected = useCallback((connected: boolean) => {
+    console.log(`[AuthContext] WebSocket connected status: ${connected}`);
+    setWsConnected(connected);
+  }, []);
 
   useEffect(() => {
     loadUser();
@@ -87,6 +96,64 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     checkSubscriptionRedirect();
   }, []);
+
+  // Mandatory fallback polling for subscription status updates
+  // Polls /api/auth/me every 5 seconds until WebSocket is confirmed connected
+  useEffect(() => {
+    // Only start polling if user is authenticated and loading is complete
+    if (isLoading || !user) {
+      return;
+    }
+
+    // If WebSocket is connected, stop polling
+    if (wsConnected) {
+      console.log("[AuthContext] WebSocket connected - stopping polling");
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+        pollingIntervalRef.current = null;
+      }
+      return;
+    }
+
+    console.log("[AuthContext] Starting subscription status polling (every 5s)");
+
+    const pollUserData = async () => {
+      try {
+        const token = await AsyncStorage.getItem("authToken");
+        if (!token) return;
+
+        const userData = await api.getMe();
+        
+        // Only update if subscription status actually changed
+        if (userData.subscription_status !== user?.subscription_status ||
+            userData.subscription_expiry !== user?.subscription_expiry ||
+            userData.image_counter !== user?.image_counter) {
+          console.log("[AuthContext] Subscription data updated via polling:", {
+            status: userData.subscription_status,
+            expiry: userData.subscription_expiry,
+            imageCounter: userData.image_counter
+          });
+          setUser(userData);
+        }
+      } catch (err) {
+        console.log("[AuthContext] Polling error (will retry):", err);
+      }
+    };
+
+    // Immediately poll once
+    pollUserData();
+
+    // Set up interval
+    pollingIntervalRef.current = setInterval(pollUserData, POLLING_INTERVAL_MS);
+
+    // Cleanup on unmount or when dependencies change
+    return () => {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+        pollingIntervalRef.current = null;
+      }
+    };
+  }, [isLoading, user?.id, wsConnected]);
 
   const loadUser = async () => {
     try {
@@ -288,6 +355,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         refreshUser,
         pendingXpNotification,
         clearPendingXpNotification,
+        setWebSocketConnected,
       }}
     >
       {children}

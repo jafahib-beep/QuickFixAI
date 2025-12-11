@@ -47,7 +47,7 @@ const getWebSocketUrl = (): string => {
 };
 
 export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, setWebSocketConnected } = useAuth();
   const [connected, setConnected] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
   const handlersRef = useRef<Map<string, Set<WebSocketEventHandler>>>(new Map());
@@ -76,6 +76,7 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       ws.onopen = () => {
         console.log('[WebSocket] Connected');
         setConnected(true);
+        setWebSocketConnected(true);
 
         // Authenticate with JWT token (Fix: use token instead of userId)
         ws.send(JSON.stringify({ type: 'auth', token: authToken }));
@@ -123,6 +124,7 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       ws.onclose = (event) => {
         console.log('[WebSocket] Disconnected:', event.code, event.reason);
         setConnected(false);
+        setWebSocketConnected(false);
         wsRef.current = null;
 
         // Reconnect after 5 seconds if we were authenticated
@@ -139,7 +141,7 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     } catch (err) {
       console.log('[WebSocket] Connection error:', err);
     }
-  }, [user?.id, isAuthenticated]);
+  }, [user?.id, isAuthenticated, setWebSocketConnected]);
 
   // Connect when authenticated
   useEffect(() => {

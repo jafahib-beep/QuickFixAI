@@ -854,6 +854,9 @@ export interface User {
   nextLevelXp: number;
   currentLevelXp: number;
   createdAt?: string;
+  subscription_status?: string;
+  subscription_expiry?: string;
+  image_counter?: number;
 }
 
 export interface UserProfile extends User {
