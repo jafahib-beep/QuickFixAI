@@ -61,6 +61,17 @@ The frontend is built with Expo/React Native, supporting multi-language (English
     - Category filtering and sorting (Trending, Newest, Most Viewed)
     - "All Videos" link from HomeScreen's Recommended section
     - YouTube badge on tutorial videos with distinct red styling
+- **Subscription System (LiveAssist Permission)**: Stripe-powered paid subscription for premium LiveAssist features:
+    - **Pricing**: 39 SEK/month with 5-day free trial
+    - **Free tier limits**: 2 image analyses per day, no video upload for AI
+    - **Premium benefits**: Unlimited image analyses, video upload support, full AI responses
+    - **Backend**: `server/services/subscription.js` for usage tracking and limit enforcement
+    - **Routes**: `/api/subscriptions/*` for status, checkout, trial, cancel, reactivate
+    - **Stripe integration**: `stripe-replit-sync` for webhook handling and data sync
+    - **Frontend**: `SubscriptionContext` for state management, `UpgradeModal` for upsell
+    - **Settings integration**: Subscription section in SettingsScreen with plan status and cancel option
+    - **Image usage tracking**: `image_usage` table with daily reset, enforced in AI routes
+    - **Seed script**: `server/seed-products.js` to create Stripe product and price
 - **XP System**: Full gamification with 5 levels, real-time notifications, and duplicate prevention. Users earn XP for:
     - Daily login: +10 XP (once per day, tracked in xp_daily_login table)
     - Community post creation: +20 XP per post
@@ -81,6 +92,7 @@ The project utilizes `start-dev.js` to manage concurrent execution of frontend a
 ## External Dependencies
 - **Database**: PostgreSQL
 - **AI Services**: OpenAI API (GPT-4o-mini, GPT-4o, DALL-E 3)
+- **Payment Processing**: Stripe (subscriptions, checkout)
 - **Authentication**: JWT (for session management)
 - **Frontend Framework**: Expo/React Native
 - **Backend Framework**: Express.js
