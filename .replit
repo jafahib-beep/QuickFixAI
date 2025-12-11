@@ -76,6 +76,7 @@ ensurePreviewReachable = "/status"
 
 [agent]
 stack = "EXPO"
+integrations = ["stripe:2.0.0"]
 
 [deployment]
 deploymentTarget = "static"
