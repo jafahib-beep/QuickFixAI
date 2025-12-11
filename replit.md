@@ -9,7 +9,7 @@ I prefer simple language and detailed explanations. I want iterative development
 ## System Architecture
 
 ### UI/UX Decisions
-The application features a modern dark theme with a blue accent (#0A84FF), respecting system color schemes. It draws inspiration from iOS 26 Liquid Glass UI styling, utilizing Feather icons. The design incorporates dark backgrounds (#0D0D0D for root, #1A1A1A for cards, #252525 for secondary elements), polished UI with refined shadows, modern card designs, and pill-shaped chips. A 7-tab bottom navigation (Home, AI Chat, LiveAssist, Upload (FAB), Community, Toolbox, Profile) is implemented, with a central Floating Action Button (FAB) for video uploads. Safe area insets are handled by helper components.
+The application features a modern dark theme with a blue accent (#0A84FF), respecting system color schemes. It draws inspiration from iOS 26 Liquid Glass UI styling, utilizing Feather icons. The design incorporates dark backgrounds (#0D0D0D for root, #1A1A1A for cards, #252525 for secondary elements), polished UI with refined shadows, modern card designs, and pill-shaped chips. A 5-tab bottom navigation (Home, LiveAssist, Upload (FAB), Community, Profile) is implemented, with a central Floating Action Button (FAB) for video uploads. AI Chat functionality is merged into LiveAssist screen with a segmented control toggle (Analysis | AI Chat). Safe area insets are handled by helper components.
 
 **Recent UI Polish (Dec 2024):**
 - Tab bar: Icon size 24px, label size 12px for improved visibility
@@ -29,6 +29,14 @@ The application features a modern dark theme with a blue accent (#0A84FF), respe
 - PrivacyTermsScreen: Dedicated legal screen with Privacy Policy, Terms of Service, and Community Guidelines
 - AI Disclaimer: Important notice that AI suggestions are informational only and not professional advice
 - Settings navigation: Legal section items now navigate to PrivacyTermsScreen instead of showing alerts
+
+**Navigation Consolidation (Dec 2024):**
+- Removed AI Chat tab from navigation (merged into LiveAssist with segmented control toggle)
+- Removed Toolbox tab from navigation (saved items accessible via Profile -> Saved tab)
+- LiveAssist screen now has Analysis | AI Chat mode toggle in header
+- AIChatView component extracted for reuse within LiveAssist
+- FollowerListScreen added for viewing/managing followers and following lists
+- ProfileScreen followers/following counters are now clickable and navigate to FollowerListScreen
 
 ### Technical Implementations
 The frontend is built with Expo/React Native, supporting multi-language (English, Swedish, Arabic with RTL, German, French, Spanish). The backend is an Express server with a PostgreSQL database. Development runs in a full-stack mode where `npm run dev` concurrently starts both the Express server (port 5000) and Expo frontend (port 8081). Metro is configured to proxy `/api/*` requests from the web to the backend. Mobile/Expo Go clients use direct backend URLs. Platform-specific URL handling is managed by `utils/api.ts`. The Community feed now uses real database entries only (no mock/sample data fallback).

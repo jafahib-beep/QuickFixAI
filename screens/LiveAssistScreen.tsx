@@ -926,6 +926,33 @@ const styles = StyleSheet.create({
   headerTitle: {
     ...Typography.h3,
   },
+  modeToggle: {
+    flexDirection: "row",
+    padding: 4,
+    borderRadius: BorderRadius.lg,
+    marginTop: Spacing.md,
+  },
+  modeToggleButton: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: Spacing.xs,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    borderRadius: BorderRadius.md,
+  },
+  modeToggleButtonActive: {
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  modeToggleText: {
+    ...Typography.small,
+    fontWeight: "600",
+  },
   content: {
     flex: 1,
   },

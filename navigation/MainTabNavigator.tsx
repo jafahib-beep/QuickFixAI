@@ -7,10 +7,8 @@ import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
 import HomeStackNavigator from "./HomeStackNavigator";
-import SearchStackNavigator from "./SearchStackNavigator";
 import LiveAssistStackNavigator from "./LiveAssistStackNavigator";
 import CommunityStackNavigator from "./CommunityStackNavigator";
-import ToolboxStackNavigator from "./ToolboxStackNavigator";
 import ProfileStackNavigator from "./ProfileStackNavigator";
 import { useTheme } from "@/hooks/useTheme";
 import { useNotifications } from "@/contexts/NotificationsContext";
@@ -22,11 +20,9 @@ const TAB_LABEL_SIZE = 12;
 
 export type MainTabParamList = {
   HomeTab: undefined;
-  SearchTab: undefined;
   LiveAssistTab: undefined;
   UploadTab: undefined;
   CommunityTab: undefined;
-  ToolboxTab: undefined;
   ProfileTab: undefined;
 };
 
@@ -125,16 +121,6 @@ export default function MainTabNavigator() {
         }}
       />
       <Tab.Screen
-        name="SearchTab"
-        component={SearchStackNavigator}
-        options={{
-          title: "AI Chat",
-          tabBarIcon: ({ color, focused }) => (
-            <Feather name="message-circle" size={TAB_ICON_SIZE} color={color} />
-          ),
-        }}
-      />
-      <Tab.Screen
         name="LiveAssistTab"
         component={LiveAssistStackNavigator}
         options={{
@@ -165,16 +151,6 @@ export default function MainTabNavigator() {
           title: "Community",
           tabBarIcon: ({ color, focused }) => (
             <Feather name="users" size={TAB_ICON_SIZE} color={color} />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="ToolboxTab"
-        component={ToolboxStackNavigator}
-        options={{
-          title: "Toolbox",
-          tabBarIcon: ({ color, focused }) => (
-            <Feather name="bookmark" size={TAB_ICON_SIZE} color={color} />
           ),
         }}
       />
