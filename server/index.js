@@ -43,6 +43,8 @@ const aiRoutes = require("./routes/ai");
 const communityRoutes = require("./routes/community");
 const reportsRoutes = require("./routes/reports");
 const { router: blockRoutes } = require("./routes/block");
+const subscriptionRoutes = require("./routes/subscriptions");
+const { WebhookHandlers } = require("./webhookHandlers");
 
 const app = express();
 const PORT = process.env.PORT || process.env.BACKEND_PORT || 5000;
@@ -70,6 +72,37 @@ app.use((req, res, next) => {
   }
   next();
 });
+
+// Stripe webhook route MUST be registered BEFORE express.json()
+// Stripe requires raw Buffer for signature verification
+app.post(
+  '/api/stripe/webhook/:uuid',
+  express.raw({ type: 'application/json' }),
+  async (req, res) => {
+    const signature = req.headers['stripe-signature'];
+
+    if (!signature) {
+      return res.status(400).json({ error: 'Missing stripe-signature' });
+    }
+
+    try {
+      const sig = Array.isArray(signature) ? signature[0] : signature;
+
+      if (!Buffer.isBuffer(req.body)) {
+        console.error('[Stripe Webhook] req.body is not a Buffer');
+        return res.status(500).json({ error: 'Webhook processing error' });
+      }
+
+      const { uuid } = req.params;
+      await WebhookHandlers.processWebhook(req.body, sig, uuid);
+
+      res.status(200).json({ received: true });
+    } catch (error) {
+      console.error('[Stripe Webhook] Error:', error.message);
+      res.status(400).json({ error: 'Webhook processing error' });
+    }
+  }
+);
 
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
@@ -100,6 +133,7 @@ app.use("/api/ai", aiRoutes);
 app.use("/api/community", communityRoutes);
 app.use("/api/reports", reportsRoutes);
 app.use("/api", blockRoutes);
+app.use("/api/subscriptions", subscriptionRoutes);
 
 app.get("/api/categories", (req, res) => {
   res.json([
@@ -122,10 +156,52 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: "Internal server error" });
 });
 
+async function initStripe() {
+  const databaseUrl = process.env.DATABASE_URL;
+
+  if (!databaseUrl) {
+    console.log('[Stripe] DATABASE_URL not set, skipping Stripe initialization');
+    return;
+  }
+
+  try {
+    console.log('[Stripe] Initializing Stripe schema...');
+    const { runMigrations } = await import('stripe-replit-sync');
+    await runMigrations({ 
+      databaseUrl,
+      schema: 'stripe'
+    });
+    console.log('[Stripe] Schema ready');
+
+    const { getStripeSync } = require('./stripeClient');
+    const stripeSync = await getStripeSync();
+
+    console.log('[Stripe] Setting up managed webhook...');
+    const webhookBaseUrl = `https://${process.env.REPLIT_DOMAINS?.split(',')[0]}`;
+    const { webhook, uuid } = await stripeSync.findOrCreateManagedWebhook(
+      `${webhookBaseUrl}/api/stripe/webhook`,
+      {
+        enabled_events: ['*'],
+        description: 'QuickFix managed webhook for subscription sync',
+      }
+    );
+    console.log(`[Stripe] Webhook configured: ${webhook.url} (UUID: ${uuid})`);
+
+    console.log('[Stripe] Syncing existing data...');
+    stripeSync.syncBackfill()
+      .then(() => console.log('[Stripe] Data sync complete'))
+      .catch((err) => console.error('[Stripe] Sync error:', err));
+  } catch (error) {
+    console.error('[Stripe] Initialization error:', error.message);
+  }
+}
+
 async function startServer() {
   try {
     await initializeDatabase();
     console.log("Database initialized");
+
+    await initStripe();
 
     app.listen(PORT, "0.0.0.0", () => {
       console.log(`Server running on http://0.0.0.0:${PORT}`);
