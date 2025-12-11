@@ -1,0 +1,201 @@
+Context: This is a bugfix and rollout task. We have already paid for this work before and it failed. Do not explore. Do not change unrelated files. Follow the checklist below exactly. Produce patches and logs for review before any commit to main.
+
+1) Goal — deliverables (must be provided before merge)
+
+/tmp/subscription-fixes-diff.patch (complete patch)
+
+/tmp/liveassist-session-fix.patch (complete patch)
+
+/tmp/liveassist-analysis-fix.patch (complete patch)
+
+Last 200 lines of server logs (plain text file)
+
+README snippet documenting LiveAssist API contracts and subscription webhooks
+
+A short runbook with exact test steps and expected results
+
+Do not push to main. Provide patches (diffs) and run them on staging only after Jafar confirms.
+
+2) Fix #1 — Subscription activation (STRIPE)
+
+Acceptance criteria
+
+After a successful Stripe payment, GET /api/users/me must return:
+
+{
+  "subscription_status": "paid",
+  "subscription_expiry": "<ISO datetime>",
+  "image_counter": 0
+}
+
+
+Frontend must show Premium (not Upgrade) as soon as user is redirected back from Stripe.
+
+Award +250 XP once on first premium activation (add xp_event).
+
+Tasks
+
+Implement a Stripe webhook route (/api/webhooks/stripe or /api/stripe/webhook) using express.raw({type:"application/json"}). Verify STRIPE_WEBHOOK_SECRET.
+
+Handle events: checkout.session.completed and invoice.payment_succeeded. For each event:
+
+Resolve userId from session.metadata.userId or session.client_reference_id.
+
+Update user record:
+
+subscription_status = "paid"
+
+subscription_expiry = <compute: now + plan_period> (use session/price or default 1 month)
+
+image_counter = 0
+
+Insert one xp_event {userId, amount:250, reason:"first_premium", ts} only if no previous premium xp_event exists.
+
+Emit websocket message subscription.updated to connected client(s) for that user.
+
+Log every webhook receipt and result to server logs with clear correlation id (session.id).
+
+Implement idempotency: if webhook replays, do not duplicate xp_event or reset expiry incorrectly.
+
+Test steps (agent must run and provide evidence)
+
+Use Stripe Dashboard → Webhooks → “Send test webhook” with checkout.session.completed and attach metadata.userId = a real test user id. Provide webhook delivery logs screenshot/text.
+
+After test, run curl -H "Authorization: Bearer <user-token>" GET https://<host>/api/users/me and paste response into the log output.
+
+Evidence: show subscription_status: "paid" and image_counter: 0.
+
+3) Fix #2 — Client refresh after stripe redirect
+
+Acceptance criteria
+
+When the user is redirected back from Stripe with ?subscription=success (or equivalent), client must immediately call GET /api/users/me and update AuthContext so UI shows Premium without manual refresh.
+
+Tasks
+
+Add client-side detection (global top-level logic or AuthContext mount):
+
+On app mount or route entry, if url.searchParams.get("subscription") === "success" then:
+
+await GET /api/users/me → update AuthContext and localStorage
+
+Remove the query param (history.replaceState) to avoid loops
+
+Also accept and handle websocket subscription.updated to update UI in realtime.
+
+Test steps
+
+After webhook simulation, open app in browser and show network log that /api/users/me was requested and UI shows Premium. Paste network HAR or screenshots.
+
+4) Fix #3 — LiveAssist session persistence (chat disappears)
+
+Acceptance criteria
+
+Switching views (LiveAssist ↔ QuickFix AI) must not clear messages.
+
+Each user must persist one active liveassist_session and messages must be retrievable by sessionId.
+
+On mount, component should fetch /api/liveassist/sessions/:sessionId/messages and render them in order.
+
+DB schema (required)
+
+liveassist_sessions:
+
+id (uuid), userId, createdAt, lastActiveAt
+
+liveassist_messages:
+
+id (uuid), sessionId, sender, type (text|image|analysis), content, meta (json), createdAt, status (pending|done)
+
+Tasks
+
+When creating a session, persist sessionId in DB and return to client.
+
+Client: persist sessionId in both AuthContext and localStorage and reuse it on mount. Do not create a new session if one exists.
+
+On LiveAssist mount:
+
+If sessionId exists → fetch GET /api/liveassist/sessions/:sessionId/messages
+
+If not → POST /api/liveassist/sessions to create and store returned sessionId
+
+Ensure UI never calls setMessages([]) on navigation except when explicitly starting new session.
+
+Test steps
+
+Start a LiveAssist session, send 2 messages and an image. Navigate away and back. Provide network logs showing GET /api/liveassist/sessions/:sessionId/messages returned the messages and UI screenshot with messages preserved.
+
+5) Fix #4 — Image analysis workflow (image treated as chat)
+
+Acceptance criteria
+
+Image uploads must trigger analysis, not be a plain chat text.
+
+Final message must have type: "analysis" with meta:
+
+{
+  "text": "<analysis text>",
+  "steps": ["step1", "step2"],
+  "youtube_links": ["..."],
+  "images_to_show": ["..."],
+  "safety_warnings": ["..."]
+}
+
+
+UI must show an AnalysisCard with steps displayed as checkboxes that persist to DB on toggle.
+
+Tasks
+
+On image upload:
+
+POST /api/liveassist/upload with sessionId. Server saves liveassist_message with type:"image", status:"pending", meta:{imageUrl} and returns messageId.
+
+Enqueue background worker job (Bull/Queue) that:
+
+Runs image analysis (OpenAI Vision or internal model) → produces structured JSON result.
+
+Updates DB message id = messageId: set type:"analysis", status:"done", meta: {analysis...}.
+
+Emits websocket message.updated to session listeners.
+
+Client:
+
+Show temporary pending image message.
+
+On receiving message.updated or polling, replace pending with AnalysisCard component showing steps with checkboxes.
+
+Checkbox toggle PATCH /api/liveassist/messages/:messageId/steps/:stepIndex to save completion state server-side.
+
+Make sure image analysis output is not stored as plain chat text—store structured fields in meta.
+
+Test steps
+
+Upload a test image. Provide DB row before worker (pending) and after worker (analysis meta filled). Provide websocket logs or network traces and UI screenshot for AnalysisCard with checkboxes. Demonstrate toggling a step and verifying DB updated.
+
+6) Safety, logging, idempotency, and PR workflow (mandatory)
+
+All webhook handlers must be idempotent. Log received events and processed result with session ids.
+
+Provide last 200 lines of server logs after you apply patches and run the tests above.
+
+Do NOT commit to main. Provide patches and a single PR for review only after Jafar confirms.
+
+Include simple rollback instructions (how to revert patches).
+
+7) Immediate verification checklist to attach to your reply
+
+Provide the following exact artifacts when you are done (paste as attachments or text):
+
+/tmp/subscription-fixes-diff.patch (diff)
+
+/tmp/liveassist-session-fix.patch (diff)
+
+/tmp/liveassist-analysis-fix.patch (diff)
+
+server-last-200.log (plain text)
+
+README_liveassist_subscription.md (API contract + test steps)
+
+A short note: “I executed Stripe webhook test at <timestamp> and observed <result>. I ran client test and observed <result>.”
+
+If any of these are missing, you FAILED. Do not ask for more time — present the artifacts.

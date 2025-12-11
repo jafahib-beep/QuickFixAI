@@ -503,10 +503,12 @@ class ApiClient {
       console.log("[API] LiveAssist error:", error?.message || error);
       
       // Check for daily limit error and re-throw with response data attached
-      if (error?.message?.includes("daily_limit_reached") || error?.message?.includes("daily limit")) {
-        const customError: any = new Error("daily_limit_reached");
+      if (error?.message?.includes("limit_exceeded") || error?.message?.includes("IMAGE_DAY_LIMIT") || error?.message?.includes("daily limit")) {
+        const customError: any = new Error("IMAGE_DAY_LIMIT");
+        customError.code = "IMAGE_DAY_LIMIT";
         customError.response = {
-          error: "daily_limit_reached",
+          error: "limit_exceeded",
+          code: "IMAGE_DAY_LIMIT",
           imagesUsed: 2,
           limit: 2,
           upgradeRequired: true,

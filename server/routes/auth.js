@@ -135,7 +135,8 @@ router.get('/me', authMiddleware, async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT id, email, display_name, bio, avatar_url, expertise_categories, 
-              followers_count, following_count, xp, level, created_at
+              followers_count, following_count, xp, level, created_at,
+              subscription_plan, subscription_status, paid_until, trial_ends_at
        FROM users WHERE id = $1`,
       [req.userId]
     );
@@ -147,6 +148,27 @@ router.get('/me', authMiddleware, async (req, res) => {
     const user = result.rows[0];
     const xp = user.xp || 0;
     const level = user.level || 1;
+    
+    // Calculate effective subscription status
+    const now = new Date();
+    let subscriptionStatus = 'free';
+    let subscriptionExpiry = null;
+    
+    if (user.subscription_plan === 'paid' && user.paid_until && new Date(user.paid_until) > now) {
+      subscriptionStatus = 'paid';
+      subscriptionExpiry = user.paid_until;
+    } else if (user.subscription_plan === 'trial' && user.trial_ends_at && new Date(user.trial_ends_at) > now) {
+      subscriptionStatus = 'trial';
+      subscriptionExpiry = user.trial_ends_at;
+    }
+    
+    // Get today's image usage
+    const today = new Date().toISOString().split('T')[0];
+    const usageResult = await pool.query(
+      `SELECT images_sent FROM liveassist_usage WHERE user_id = $1 AND usage_date = $2`,
+      [req.userId, today]
+    );
+    const imageCounter = usageResult.rows.length > 0 ? usageResult.rows[0].images_sent : 0;
     
     res.json({
       id: user.id,
@@ -161,7 +183,10 @@ router.get('/me', authMiddleware, async (req, res) => {
       level,
       nextLevelXp: getNextLevelXp(level),
       currentLevelXp: getCurrentLevelXp(level),
-      createdAt: user.created_at
+      createdAt: user.created_at,
+      subscription_status: subscriptionStatus,
+      subscription_expiry: subscriptionExpiry,
+      image_counter: imageCounter
     });
   } catch (error) {
     console.error('Get user error:', error);

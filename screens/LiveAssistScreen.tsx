@@ -158,8 +158,8 @@ export default function LiveAssistScreen() {
     } catch (err: any) {
       console.log("[LiveAssistScreen] Error:", err?.message || err);
       
-      // Check if it's a daily limit error
-      if (err?.response?.error === "daily_limit_reached" || err?.message?.includes("daily_limit")) {
+      // Check if it's a daily limit error (IMAGE_DAY_LIMIT)
+      if (err?.code === "IMAGE_DAY_LIMIT" || err?.response?.code === "IMAGE_DAY_LIMIT" || err?.message?.includes("IMAGE_DAY_LIMIT") || err?.message?.includes("limit_exceeded")) {
         const errorData = err?.response || {};
         setLimitInfo({
           imagesUsed: errorData.imagesUsed || usage?.imagesUsedToday || 2,

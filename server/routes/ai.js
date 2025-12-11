@@ -455,7 +455,8 @@ router.post("/liveassist/session/:sessionId/message", optionalAuth, async (req, 
       if (!limitCheck.allowed) {
         console.log(`[LiveAssist Session] User ${req.userId} hit daily image limit`);
         return res.status(403).json({
-          error: "daily_limit_reached",
+          error: "limit_exceeded",
+          code: "IMAGE_DAY_LIMIT",
           message: limitCheck.message,
           imagesUsed: limitCheck.imagesUsed,
           limit: limitCheck.limit,
@@ -710,7 +711,8 @@ router.post("/liveassist", optionalAuth, async (req, res) => {
       if (!limitCheck.allowed) {
         console.log(`[LiveAssist] User ${req.userId} hit daily image limit`);
         return res.status(403).json({
-          error: "daily_limit_reached",
+          error: "limit_exceeded",
+          code: "IMAGE_DAY_LIMIT",
           message: limitCheck.message,
           imagesUsed: limitCheck.imagesUsed,
           limit: limitCheck.limit,
