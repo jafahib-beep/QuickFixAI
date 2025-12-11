@@ -87,18 +87,33 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          console.log('[WebSocket] Received:', data.type);
+          console.log('[WebSocket] ====== MESSAGE RECEIVED ======');
+          console.log('[WebSocket] Type:', data.type);
+          console.log('[WebSocket] Payload:', JSON.stringify(data));
 
           // Handle auth success - resubscribe to session if we had one
-          if (data.type === 'auth.success' && currentSessionRef.current) {
-            console.log('[WebSocket] Auth success, resubscribing to session:', currentSessionRef.current);
-            ws.send(JSON.stringify({ type: 'subscribe.session', sessionId: currentSessionRef.current }));
+          if (data.type === 'auth.success') {
+            console.log('[WebSocket] Authentication successful');
+            if (currentSessionRef.current) {
+              console.log('[WebSocket] Resubscribing to session:', currentSessionRef.current);
+              ws.send(JSON.stringify({ type: 'subscribe.session', sessionId: currentSessionRef.current }));
+            }
+          }
+          
+          // Log subscription.updated events specially
+          if (data.type === 'subscription.updated') {
+            console.log('[WebSocket] *** SUBSCRIPTION.UPDATED EVENT ***');
+            console.log('[WebSocket] subscription_status:', data.subscription_status);
+            console.log('[WebSocket] subscription_expiry:', data.subscription_expiry);
           }
 
           // Dispatch to handlers
           const handlers = handlersRef.current.get(data.type);
-          if (handlers) {
+          if (handlers && handlers.size > 0) {
+            console.log('[WebSocket] Dispatching to', handlers.size, 'handlers for', data.type);
             handlers.forEach((handler) => handler(data));
+          } else {
+            console.log('[WebSocket] No handlers registered for:', data.type);
           }
         } catch (err) {
           console.log('[WebSocket] Failed to parse message:', err);

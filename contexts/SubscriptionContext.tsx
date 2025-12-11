@@ -45,52 +45,49 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Fix 2: Listen for WebSocket subscription.updated events
+  // Listen for WebSocket subscription.updated events
   useEffect(() => {
     const unsubscribe = onMessage('subscription.updated', async (data: any) => {
-      console.log('[Subscription] Received WebSocket subscription.updated:', data);
+      console.log('[SubscriptionContext] ====== WEBSOCKET subscription.updated RECEIVED ======');
+      console.log('[SubscriptionContext] Raw data:', JSON.stringify(data));
+      console.log('[SubscriptionContext] subscription_status:', data.subscription_status);
+      console.log('[SubscriptionContext] subscription_expiry:', data.subscription_expiry);
       
       // Immediately update subscription state
       if (data.subscription_status === 'paid') {
-        setSubscription(prev => prev ? {
-          ...prev,
-          plan: 'paid',
-          status: 'active',
-          isActive: true,
-          isPremium: true,
-          paidUntil: data.subscription_expiry || prev.paidUntil,
-        } : {
-          plan: 'paid',
-          status: 'active',
-          isActive: true,
-          isPremium: true,
-          trialEndsAt: null,
-          paidUntil: data.subscription_expiry || null,
+        console.log('[SubscriptionContext] Updating to PAID state');
+        setSubscription(prev => {
+          const newState = {
+            plan: 'paid' as const,
+            status: 'active',
+            isActive: true,
+            isPremium: true,
+            trialEndsAt: prev?.trialEndsAt || null,
+            paidUntil: data.subscription_expiry || prev?.paidUntil || null,
+          };
+          console.log('[SubscriptionContext] New subscription state:', JSON.stringify(newState));
+          return newState;
         });
         
         // Reset usage on new subscription
-        setUsage(prev => prev ? {
-          ...prev,
+        setUsage(prev => ({
           imagesUsedToday: 0,
           dailyImageLimit: null,
           canUploadVideo: true,
-        } : {
-          imagesUsedToday: 0,
-          dailyImageLimit: null,
-          canUploadVideo: true,
-        });
+        }));
+        console.log('[SubscriptionContext] Reset usage state');
         
-        // Refresh user to get updated subscription_status
-        await refreshUser();
+        // Refresh user to get updated subscription_status from server
+        console.log('[SubscriptionContext] Calling refreshUser()...');
+        try {
+          await refreshUser();
+          console.log('[SubscriptionContext] refreshUser() completed successfully');
+        } catch (err) {
+          console.log('[SubscriptionContext] refreshUser() error:', err);
+        }
       } else if (data.subscription_status === 'free') {
-        setSubscription(prev => prev ? {
-          ...prev,
-          plan: 'free',
-          status: 'inactive',
-          isActive: false,
-          isPremium: false,
-          paidUntil: null,
-        } : {
+        console.log('[SubscriptionContext] Updating to FREE state');
+        setSubscription({
           plan: 'free',
           status: 'inactive',
           isActive: false,
@@ -101,6 +98,7 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
         
         await refreshUser();
       }
+      console.log('[SubscriptionContext] ====== WEBSOCKET PROCESSING COMPLETE ======');
     });
     
     return () => {

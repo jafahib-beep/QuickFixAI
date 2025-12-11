@@ -192,19 +192,24 @@ class WebSocketManager {
   emitToUser(userId, event) {
     const sockets = this.userSockets.get(userId);
     if (!sockets || sockets.size === 0) {
-      console.log('[WebSocket] No active sockets for user:', userId);
-      return;
+      console.log(`[WebSocket] EMIT ${event.type}: No active sockets for user ${userId}`);
+      return 0;
     }
     
     const message = JSON.stringify(event);
+    const socketIds = [];
     let sent = 0;
-    sockets.forEach((ws) => {
+    sockets.forEach((ws, index) => {
       if (ws.readyState === WebSocket.OPEN) {
         ws.send(message);
+        socketIds.push(`ws-${userId.substring(0, 8)}-${index}`);
         sent++;
       }
     });
-    console.log(`[WebSocket] Emitted ${event.type} to user ${userId} (${sent} sockets)`);
+    console.log(`[WebSocket] EMIT ${event.type} to user ${userId}`);
+    console.log(`[WebSocket] Socket IDs: [${socketIds.join(', ')}]`);
+    console.log(`[WebSocket] Payload: ${message}`);
+    return sent;
   }
 
   /**

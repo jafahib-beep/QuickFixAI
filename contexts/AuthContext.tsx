@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from "react";
+import React, { createContext, useContext, useState, useEffect, useRef, ReactNode, useCallback } from "react";
 import { Platform } from "react-native";
 import * as Linking from "expo-linking";
 import { api, User } from "@/utils/api";
