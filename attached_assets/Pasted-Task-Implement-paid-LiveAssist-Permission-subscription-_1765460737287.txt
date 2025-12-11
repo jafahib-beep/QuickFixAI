@@ -1,0 +1,140 @@
+Task: Implement paid "LiveAssist Permission" subscription (SEK 39/month) with 5-day free trial, usage limits, badge and XP grant.
+
+Goal
+Add a subscription-based permission called LiveAssist Permission with a trial flow and server-enforced usage limits for unpaid users. Stage changes and produce diffs — DO NOT commit or push until Jafar approves after manual testing.
+
+Pricing & trial
+
+Price: 39 SEK / month.
+
+Free trial: 5 days from enablement. Users may cancel anytime during trial.
+
+When trial ends, if user has not paid, downgrade to free limits automatically.
+
+Entitlements (Paid / Premium)
+
+Unlimited image uploads (no per-day limit).
+
+Video upload allowed.
+
+Full LiveAssist chat (no artificial restrictions).
+
+Premium badge shown on user profile and next to username in community posts.
+
+Grant +250 XP immediately when user completes first paid purchase (one-time per purchase).
+
+Free / Non-paying user rules
+
+Can send max 2 images per day in LiveAssist.
+
+Cannot upload video.
+
+Chat is limited: allow short/text messages and receive fewer AI steps or truncated responses (implementable via backend prompt/flag plan: "free").
+
+Show clear UI messaging when limit reached ("You reached free limit — upgrade to Premium").
+
+Backend work (high level)
+
+Add subscription model & fields in DB (e.g. subscriptions table or augment users):
+
+fields: userId, plan ("free"/"trial"/"paid"), trial_started_at, paid_until (datetime), provider_subscription_id, status.
+
+Add API endpoints:
+
+POST /api/subscriptions/create-checkout -> returns payment URL/session (Stripe Checkout preferred) or details to start payment.
+
+POST /api/subscriptions/webhook -> handle provider webhooks (payment success, subscription cancelled, recurring invoice paid, trial ending).
+
+GET /api/subscriptions/status -> returns user subscription status and usage quota.
+
+POST /api/subscriptions/cancel -> cancel subscription and set status.
+
+Implement server-side usage enforcement:
+
+When LiveAssist message endpoint receives a user request, check subscription status and usage counters (images sent today). Enforce limits and return structured error when over limit.
+
+Provide endpoints to decrement/record daily image count and mark video uploads blocked for free users.
+
+Add flags to AI prompt (e.g. plan: "free"|"paid") so AI responses can be adjusted (shorter/truncated for free).
+
+Add admin/dev config variables:
+
+PRICE_SEK = 39
+
+TRIAL_DAYS = 5
+
+Payment provider secret keys stored in environment variables.
+
+Produce a staged diff /tmp/liveassist-subscription-diff.patch. Do NOT commit.
+
+Frontend work (high level)
+
+UI: Add purchase flow in LiveAssist screen:
+
+New button "Enable LiveAssist Permission" (or "Upgrade to Premium") near LiveAssist input.
+
+Show trial info: "5-day free trial — then 39 SEK/month".
+
+If clicked, call POST /api/subscriptions/create-checkout and open returned checkout URL.
+
+After successful purchase (webhook + status polling), update UI:
+
+Show Premium badge on profile and username.
+
+Show toast: "Premium activated — +250 XP awarded".
+
+Enforcement UI:
+
+When free user exceeds daily image limit: show modal with upgrade CTA and option to continue with limited text-only chat.
+
+Disable video upload button for free users (show tooltip: "Video upload requires Premium").
+
+Show subscription status in Profile → Settings with ability to cancel subscription (call /api/subscriptions/cancel) and show trial end date / next billing date.
+
+Award XP: call /api/users/grant-xp or return XP grant from webhook handling; frontend should refresh user profile stats after purchase.
+
+Keep all changes staged; produce a staged diff /tmp/liveassist-subscription-ui-diff.patch. Do NOT commit.
+
+Edge cases & requirements
+
+Respect trial cancellation: if user cancels during trial, they do not get charged; subscription stays until end of trial (or can be immediate cancel - clarify in provider settings).
+
+If webhook fails, ensure idempotency and safe retry.
+
+Provide clear server logs for subscription events.
+
+Support rollback / .bak files for any invasive replacements.
+
+Testing plan
+
+Create a test user; call create-checkout; simulate successful payment (or use test mode of payment provider).
+
+Confirm webhook marks user paid and paid_until set.
+
+Verify UI shows Premium badge and grants +250 XP.
+
+Verify free user can send 2 images; 3rd attempt returns limit error with upgrade CTA.
+
+Verify free user cannot upload video; UI prevents upload with clear message.
+
+Verify trial flow: enable trial, use features for 5 days simulated, then simulate trial expiry -> user relegated to free limits.
+
+Verify cancellation endpoint sets status and UI updates.
+
+Agent must produce staged diffs for backend and frontend and provide short README snippet describing how server constructs subscription events and which provider/mode to use.
+
+Deliverables
+
+Staged diffs: /tmp/liveassist-subscription-diff.patch and /tmp/liveassist-subscription-ui-diff.patch.
+
+Short README paragraph describing payment provider selection (Stripe recommended), webhook endpoints, and env variables to set.
+
+A small test plan and sample API calls to create session, send message (with image), and subscription test steps.
+
+Important
+
+Stage only. Wait for Jafar’s approval before committing.
+
+Keep changes minimal and isolated to subscription logic, billing, and enforcement. Do not touch unrelated features.
+
+Thank you — stage the changes and paste the diffs here for review.
