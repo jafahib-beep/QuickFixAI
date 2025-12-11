@@ -32,7 +32,9 @@
 
 const express = require("express");
 const path = require("path");
+const http = require("http");
 const { initializeDatabase } = require("./db");
+const { wsManager } = require("./services/websocket");
 
 const authRoutes = require("./routes/auth");
 const videoRoutes = require("./routes/videos");
@@ -47,6 +49,7 @@ const subscriptionRoutes = require("./routes/subscriptions");
 const { WebhookHandlers } = require("./webhookHandlers");
 
 const app = express();
+const server = http.createServer(app);
 const PORT = process.env.PORT || process.env.BACKEND_PORT || 5000;
 
 // 🔍 Logga alla requests som kommer in till backend
@@ -203,7 +206,10 @@ async function startServer() {
 
     await initStripe();
 
-    app.listen(PORT, "0.0.0.0", () => {
+    // Initialize WebSocket on HTTP server
+    wsManager.initialize(server);
+
+    server.listen(PORT, "0.0.0.0", () => {
       console.log(`Server running on http://0.0.0.0:${PORT}`);
     });
   } catch (error) {

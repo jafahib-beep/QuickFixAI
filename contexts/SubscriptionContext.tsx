@@ -3,6 +3,7 @@ import { Platform, Alert } from "react-native";
 import * as Linking from "expo-linking";
 import { api } from "../utils/api";
 import { useAuth } from "./AuthContext";
+import { useWebSocket } from "./WebSocketContext";
 
 export interface SubscriptionState {
   plan: "free" | "trial" | "paid";
@@ -36,12 +37,76 @@ interface SubscriptionContextType {
 const SubscriptionContext = createContext<SubscriptionContextType | undefined>(undefined);
 
 export function SubscriptionProvider({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
+  const { onMessage } = useWebSocket();
   const [subscription, setSubscription] = useState<SubscriptionState | null>(null);
   const [usage, setUsage] = useState<UsageState | null>(null);
   const [config, setConfig] = useState<{ priceSek: number; trialDays: number } | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Fix 2: Listen for WebSocket subscription.updated events
+  useEffect(() => {
+    const unsubscribe = onMessage('subscription.updated', async (data: any) => {
+      console.log('[Subscription] Received WebSocket subscription.updated:', data);
+      
+      // Immediately update subscription state
+      if (data.subscription_status === 'paid') {
+        setSubscription(prev => prev ? {
+          ...prev,
+          plan: 'paid',
+          status: 'active',
+          isActive: true,
+          isPremium: true,
+          paidUntil: data.subscription_expiry || prev.paidUntil,
+        } : {
+          plan: 'paid',
+          status: 'active',
+          isActive: true,
+          isPremium: true,
+          trialEndsAt: null,
+          paidUntil: data.subscription_expiry || null,
+        });
+        
+        // Reset usage on new subscription
+        setUsage(prev => prev ? {
+          ...prev,
+          imagesUsedToday: 0,
+          dailyImageLimit: null,
+          canUploadVideo: true,
+        } : {
+          imagesUsedToday: 0,
+          dailyImageLimit: null,
+          canUploadVideo: true,
+        });
+        
+        // Refresh user to get updated subscription_status
+        await refreshUser();
+      } else if (data.subscription_status === 'free') {
+        setSubscription(prev => prev ? {
+          ...prev,
+          plan: 'free',
+          status: 'inactive',
+          isActive: false,
+          isPremium: false,
+          paidUntil: null,
+        } : {
+          plan: 'free',
+          status: 'inactive',
+          isActive: false,
+          isPremium: false,
+          trialEndsAt: null,
+          paidUntil: null,
+        });
+        
+        await refreshUser();
+      }
+    });
+    
+    return () => {
+      unsubscribe();
+    };
+  }, [onMessage, refreshUser]);
 
   const refreshSubscription = useCallback(async () => {
     if (!user) {

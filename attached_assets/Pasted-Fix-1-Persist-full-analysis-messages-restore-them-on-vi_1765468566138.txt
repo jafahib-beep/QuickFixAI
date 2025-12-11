@@ -1,0 +1,193 @@
+Fix 1 — Persist full analysis messages + restore them on view mount
+
+Acceptance criteria
+
+Analysis messages must be stored in DB as structured meta including:
+
+text
+
+steps[] (each step object: { text: "...", done: false })
+
+youtube_links[]
+
+images_to_show[]
+
+safety_warnings[]
+
+When navigating away and back, the LiveAssist view must render the full conversation including AnalysisCard UI and checkbox states exactly as before.
+
+Toggling a step updates DB server-side and is immediately broadcast to all clients in that session via websocket message.updated.
+
+Tasks
+
+Server: ensure image analysis writes a message to liveassist_messages with:
+
+{
+  "id": "...",
+  "sessionId": "...",
+  "sender": "assistant",
+  "type": "analysis",
+  "content": "",
+  "meta": {
+    "text": "...",
+    "steps": [{ "text": "Step 1", "done": false }, ...],
+    "youtube_links": [...],
+    "images_to_show": [...],
+    "safety_warnings": [...]
+  },
+  "createdAt": "...",
+  "status": "done"
+}
+
+
+Server: implement PATCH /api/liveassist/messages/:messageId/steps/:stepIndex that toggles meta.steps[stepIndex].done, persists the change to DB, returns the updated message, and emits websocket message.updated to session listeners.
+
+Client: LiveAssist must render AnalysisCard from message.meta. On step toggle, call the PATCH endpoint (with credentials), update local state optimistically, and rely on websocket message.updated to confirm.
+
+Client: when mounting LiveAssist and fetching /api/liveassist/sessions/:id/messages, render full meta (do not strip or convert analysis into plain text).
+
+Remove any code that transforms analysis messages into plain text or discards meta.
+
+Deliverable
+
+Updated server endpoint(s) and client LiveAssist changes.
+
+Patch file: /tmp/liveassist-session-fix.patch (or equivalent patch naming).
+
+Evidence: DB row for a sample message (before & after toggle), websocket logs showing message.updated, screenshot showing a persisted checked step after navigation.
+
+Fix 2 — Ensure client subscription status & premium badge reliably update after payment
+
+Acceptance criteria
+
+After a successful Stripe checkout and webhook processing, GET /api/users/me must return:
+
+{ "subscription_status": "paid", "subscription_expiry": "<ISO>", "image_counter": 0 }
+
+
+Client UI (settings + topbar) must switch to show Premium badge immediately—no manual refresh required.
+
+If the redirect flow cannot preserve auth credentials, implement a secure server redirect (sets httpOnly session cookie or issues a one-time token) so the client can call GET /api/users/me authenticated on redirect.
+
+Tasks
+
+Verify webhook updates the DB and emits websocket subscription.updated with { subscription_status, subscription_expiry } to the correct userId and to all active sockets for that user.
+
+Client: AuthContext must:
+
+Subscribe to websocket events and update user context on subscription.updated to set Premium badge immediately.
+
+On mount detect ?subscription=success and immediately call GET /api/users/me with credentials and update context. If auth token is not preserved by redirect, implement secure server redirect that sets an httpOnly session cookie (or includes a one-time secure token) before redirect to client.
+
+UI: settings and nav/topbar must reflect subscription_status === "paid" (Premium badge).
+
+Deliverable
+
+Patch file: /tmp/subscription-fixes-diff.patch
+
+If server redirect/token change required: include server change patch and description.
+
+Evidence: network trace showing GET /api/users/me returning "subscription_status":"paid", screenshot of UI showing Premium badge, server log lines showing subscription.updated websocket emission.
+
+Evidence required for both fixes (ALL must be provided)
+
+DB: liveassist_messages.findOne({ id: "<exampleMessageId>" }) showing full meta with steps.
+
+HTTP: PATCH /api/liveassist/messages/:id/steps/:index request + response showing done: true.
+
+Websocket logs: message.updated and subscription.updated emissions (with timestamps and session/user ids).
+
+Screenshot: LiveAssist UI after navigation showing an AnalysisCard with a step marked done.
+
+Screenshot: Settings/UI showing Premium badge after payment, plus network trace of GET /api/users/me returning "subscription_status":"paid".
+
+server-last-200.log showing webhook processing and websocket emit log lines.
+
+Patch files saved in /tmp/ (exact names provided) and a staging branch/PR for review. Do NOT push to main.
+
+If any artifact is missing or incomplete → TASK = FAILED. Provide only the artifacts above for verification.
+
+Minimal reference code (use if needed)
+
+Server: toggle step endpoint (Node/Express + Mongo pseudo)
+
+// PATCH /api/liveassist/messages/:messageId/steps/:stepIndex
+app.patch("/api/liveassist/messages/:messageId/steps/:stepIndex", auth, async (req, res) => {
+  const { messageId, stepIndex } = req.params;
+  const db = getDb();
+  const msg = await db.collection("liveassist_messages").findOne({ id: messageId });
+  if (!msg) return res.status(404).send({ error: "not_found" });
+  const steps = msg.meta?.steps || [];
+  if (!steps[stepIndex]) return res.status(400).send({ error: "invalid_step" });
+
+  // toggle
+  steps[stepIndex].done = !steps[stepIndex].done;
+
+  await db.collection("liveassist_messages").updateOne({ id: messageId }, { $set: { "meta.steps": steps } });
+
+  const updated = await db.collection("liveassist_messages").findOne({ id: messageId });
+  // emit to session subscribers
+  emitToSession(msg.sessionId, { type: "message.updated", message: updated });
+  res.json(updated);
+});
+
+
+Client: AnalysisCard toggle (React pseudocode)
+
+function AnalysisCard({ message }) {
+  const [steps, setSteps] = useState(message.meta.steps || []);
+
+  async function toggle(i) {
+    const newSteps = steps.map((s, idx) => idx === i ? { ...s, done: !s.done } : s);
+    setSteps(newSteps); // optimistic
+    try {
+      const res = await fetch(`/api/liveassist/messages/${message.id}/steps/${i}`, { method: "PATCH", credentials: "include" });
+      const updated = await res.json();
+      setSteps(updated.meta.steps);
+    } catch (err) {
+      // rollback or refetch
+    }
+  }
+
+  return (
+    <div>
+      <div>{message.meta.text}</div>
+      <ul>{steps.map((s, i) => (
+        <li key={i}>
+          <input type="checkbox" checked={s.done} onChange={() => toggle(i)} /> {s.text}
+        </li>
+      ))}</ul>
+    </div>
+  );
+}
+
+
+Client: AuthContext websocket & redirect refresh
+
+useEffect(() => {
+  ws.on("subscription.updated", (payload) => {
+    setUser(prev => ({ ...prev, subscription_status: payload.subscription_status, subscription_expiry: payload.subscription_expiry }));
+  });
+
+  const url = new URL(window.location.href);
+  if (url.searchParams.get("subscription") === "success") {
+    (async () => {
+      const res = await fetch("/api/users/me", { credentials: "include" });
+      if (res.ok) setUser(await res.json());
+      url.searchParams.delete("subscription");
+      window.history.replaceState({}, "", url.toString());
+    })();
+  }
+}, []);
+
+Tests the agent must run & return evidence for
+
+Create test session, upload image → wait for analysis. Provide messageId and DB output (meta present).
+
+Toggle a step (PATCH) → show response JSON and DB row showing done:true.
+
+Navigate away and back → screenshot showing AnalysisCard + checked step still present.
+
+Execute Stripe checkout (test) → network trace /api/users/me returning "subscription_status":"paid" and screenshot of Premium UI badge.
+
+Paste server-last-200.log containing webhook & websocket emits.

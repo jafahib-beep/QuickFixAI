@@ -18,6 +18,7 @@ import * as ImagePicker from "expo-image-picker";
 import { ThemedText } from "@/components/ThemedText";
 import { Spacing, BorderRadius, Typography } from "@/constants/theme";
 import { useTheme } from "@/hooks/useTheme";
+import { useWebSocket } from "@/contexts/WebSocketContext";
 import {
   api,
   LiveAssistSessionMessage,
@@ -49,6 +50,7 @@ export default function LiveAssistThread({
   onError,
 }: LiveAssistThreadProps) {
   const { theme, isDark } = useTheme();
+  const { subscribeToSession, unsubscribeFromSession, onMessage } = useWebSocket();
   const [messages, setMessages] = useState<ThreadMessage[]>([]);
   const [inputText, setInputText] = useState("");
   const [pendingImages, setPendingImages] = useState<string[]>([]);
@@ -58,6 +60,57 @@ export default function LiveAssistThread({
   const [expandedSteps, setExpandedSteps] = useState<Set<string>>(new Set());
   const flatListRef = useRef<FlatList>(null);
   const messagesLoadedRef = useRef(false);
+
+  // Fix 2: Subscribe to WebSocket session and handle message.updated events
+  useEffect(() => {
+    if (!sessionId) return;
+    
+    // Subscribe to session for real-time updates
+    subscribeToSession(sessionId);
+    console.log('[LiveAssistThread] Subscribed to WebSocket session:', sessionId);
+    
+    // Listen for message.updated events (step toggles from other devices/tabs)
+    const unsubscribe = onMessage('message.updated', (data: any) => {
+      console.log('[LiveAssistThread] Received message.updated:', data.messageId);
+      
+      // Update the message in local state
+      if (data.messageId && data.meta?.steps) {
+        setMessages(prev => prev.map(msg => {
+          if (msg.id === data.messageId) {
+            // Update steps with done states from WebSocket
+            const updatedSteps = data.meta.steps;
+            // Also update completedSteps set
+            updatedSteps.forEach((step: any, idx: number) => {
+              const stepKey = `${msg.id}-step-${idx}`;
+              if (step.done) {
+                setCompletedSteps(prevSteps => new Set([...prevSteps, stepKey]));
+              } else {
+                setCompletedSteps(prevSteps => {
+                  const newSteps = new Set(prevSteps);
+                  newSteps.delete(stepKey);
+                  return newSteps;
+                });
+              }
+            });
+            return {
+              ...msg,
+              steps: updatedSteps,
+              text: data.meta.text || msg.text,
+              youtube_links: data.meta.youtube_links || msg.youtube_links,
+              safety_warnings: data.meta.safety_warnings || msg.safety_warnings,
+            };
+          }
+          return msg;
+        }));
+      }
+    });
+    
+    return () => {
+      unsubscribe();
+      unsubscribeFromSession();
+      console.log('[LiveAssistThread] Unsubscribed from WebSocket session:', sessionId);
+    };
+  }, [sessionId, subscribeToSession, unsubscribeFromSession, onMessage]);
 
   // Fix A: Load existing messages from server on mount
   useEffect(() => {
@@ -70,16 +123,29 @@ export default function LiveAssistThread({
         console.log("[LiveAssistThread] Loading messages for session:", sessionId);
         const result = await api.getLiveAssistSessionMessages(sessionId);
         if (result.messages && result.messages.length > 0) {
-          const loadedMessages: ThreadMessage[] = result.messages.map((m, index) => ({
-            id: `loaded-${index}-${Date.now()}`,
-            role: m.role as "user" | "assistant",
-            text: m.text || "",
-            imageUrls: m.imageUrls || [],
-            steps: m.analysisResult?.steps,
-            youtube_links: m.analysisResult?.youtube_links,
-            safety_warnings: m.analysisResult?.safety_warnings,
-            timestamp: m.createdAt ? new Date(m.createdAt).getTime() : Date.now(),
-          }));
+          const loadedMessages: ThreadMessage[] = result.messages.map((m, index) => {
+            // Fix 1: Preserve actual DB message ID and step done states from meta
+            const meta = m.analysisResult || {};
+            const steps = meta.steps || [];
+            // Restore done states from meta.steps
+            steps.forEach((step: any, idx: number) => {
+              if (step.done) {
+                const stepKey = `${m.id || `loaded-${index}`}-step-${idx}`;
+                setCompletedSteps(prev => new Set([...prev, stepKey]));
+              }
+            });
+            
+            return {
+              id: m.id || `loaded-${index}-${Date.now()}`,
+              role: m.role as "user" | "assistant",
+              text: m.text || meta.text || "",
+              imageUrls: m.imageUrls || [],
+              steps: steps,
+              youtube_links: meta.youtube_links || [],
+              safety_warnings: meta.safety_warnings || [],
+              timestamp: m.createdAt ? new Date(m.createdAt).getTime() : Date.now(),
+            };
+          });
           setMessages(loadedMessages);
           console.log("[LiveAssistThread] Loaded", loadedMessages.length, "messages from history");
         }
@@ -92,10 +158,12 @@ export default function LiveAssistThread({
     loadMessages();
   }, [sessionId]);
 
-  const toggleStepComplete = async (stepId: string) => {
+  // Fix 1: Toggle step with PATCH endpoint for persistent messages
+  const toggleStepComplete = async (stepId: string, messageId?: string, stepIndex?: number) => {
     const newCompleted = new Set(completedSteps);
     const isCompleted = newCompleted.has(stepId);
     
+    // Optimistic update
     if (isCompleted) {
       newCompleted.delete(stepId);
     } else {
@@ -104,9 +172,41 @@ export default function LiveAssistThread({
     setCompletedSteps(newCompleted);
 
     try {
-      await api.updateLiveAssistStepProgress(sessionId, stepId, !isCompleted);
+      // If we have a messageId and stepIndex, use the new PATCH endpoint for DB persistence
+      if (messageId && typeof stepIndex === 'number' && !messageId.startsWith('temp-')) {
+        const result = await api.toggleMessageStep(messageId, stepIndex);
+        console.log("[LiveAssistThread] Step toggled via PATCH:", result);
+        // Update local message steps with the response
+        if (result.meta?.steps) {
+          const updatedSteps: LiveAssistSessionStep[] = result.meta.steps.map((s, idx) => ({
+            id: s.id || `step-${idx}`,
+            text: s.text,
+            detail: s.detail || "",
+            tools: s.tools || [],
+            done: s.done,
+          }));
+          setMessages(prev => prev.map(m => 
+            m.id === messageId 
+              ? { ...m, steps: updatedSteps }
+              : m
+          ));
+        }
+      } else {
+        // Fallback to legacy endpoint for in-memory sessions
+        await api.updateLiveAssistStepProgress(sessionId, stepId, !isCompleted);
+      }
     } catch (e) {
       console.log("[LiveAssistThread] Failed to update step progress:", e);
+      // Rollback on failure
+      if (isCompleted) {
+        setCompletedSteps(prev => new Set([...prev, stepId]));
+      } else {
+        setCompletedSteps(prev => {
+          const next = new Set(prev);
+          next.delete(stepId);
+          return next;
+        });
+      }
     }
   };
 
@@ -223,13 +323,16 @@ export default function LiveAssistThread({
     );
   };
 
-  const renderStep = (step: LiveAssistSessionStep, index: number) => {
-    const isCompleted = completedSteps.has(step.id);
+  // Fix 1: Updated renderStep to include messageId for DB persistence
+  const renderStep = (step: LiveAssistSessionStep, index: number, messageId: string) => {
+    // Use messageId-stepIndex as key for completedSteps to track across messages
+    const stepKey = `${messageId}-step-${index}`;
+    const isCompleted = step.done === true || completedSteps.has(stepKey) || completedSteps.has(step.id);
     const isExpanded = expandedSteps.has(step.id);
 
     return (
       <View
-        key={step.id}
+        key={step.id || `step-${index}`}
         style={[
           styles.stepCard,
           { backgroundColor: isDark ? "#1A1A1A" : "#F5F5F5" },
@@ -237,7 +340,7 @@ export default function LiveAssistThread({
       >
         <Pressable
           style={styles.stepHeader}
-          onPress={() => toggleStepComplete(step.id)}
+          onPress={() => toggleStepComplete(stepKey, messageId, index)}
         >
           <View
             style={[
@@ -407,8 +510,8 @@ export default function LiveAssistThread({
               <ThemedText style={[styles.stepsTitle, { color: theme.text }]}>
                 Steps to Fix:
               </ThemedText>
-              {item.steps.map((step, i) => renderStep(step, i))}
-              {item.steps.every((s) => completedSteps.has(s.id)) ? (
+              {item.steps.map((step, i) => renderStep(step, i, item.id))}
+              {item.steps.every((s, i) => s.done === true || completedSteps.has(`${item.id}-step-${i}`) || completedSteps.has(s.id)) ? (
                 <View style={[styles.allDoneBadge, { backgroundColor: theme.success + "20" }]}>
                   <Feather name="check-circle" size={16} color={theme.success} />
                   <ThemedText style={[styles.allDoneText, { color: theme.success }]}>

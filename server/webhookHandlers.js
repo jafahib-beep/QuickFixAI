@@ -1,6 +1,7 @@
 const { getStripeSync, getUncachableStripeClient } = require('./stripeClient');
 const { pool } = require('./db');
 const { activatePaidSubscription, downgradeToFree, getUserByStripeCustomerId } = require('./services/subscription');
+const { wsManager } = require('./services/websocket');
 
 class WebhookHandlers {
   // Fix B: Ensure webhook_events table exists for idempotency
@@ -108,6 +109,13 @@ class WebhookHandlers {
             const periodEnd = new Date(subscription.current_period_end * 1000);
             await activatePaidSubscription(userId, subscription.id, periodEnd);
             console.log(`[Webhook] Activated subscription for user ${userId}`);
+            
+            // Fix 2: Emit subscription.updated via WebSocket
+            wsManager.emitSubscriptionUpdated(userId, {
+              subscription_status: 'paid',
+              subscription_expiry: periodEnd.toISOString()
+            });
+            console.log(`[Webhook] Emitted subscription.updated to user ${userId}`);
           }
         }
         break;
@@ -128,6 +136,13 @@ class WebhookHandlers {
           const periodEnd = new Date(subscription.current_period_end * 1000);
           await activatePaidSubscription(user.id, subscription.id, periodEnd);
           console.log(`[Webhook] Updated subscription for user ${user.id}, valid until ${periodEnd.toISOString()}`);
+          
+          // Fix 2: Emit subscription.updated via WebSocket
+          wsManager.emitSubscriptionUpdated(user.id, {
+            subscription_status: 'paid',
+            subscription_expiry: periodEnd.toISOString()
+          });
+          console.log(`[Webhook] Emitted subscription.updated to user ${user.id}`);
         }
         break;
       }
@@ -140,6 +155,13 @@ class WebhookHandlers {
         if (user) {
           await downgradeToFree(user.id);
           console.log(`[Webhook] Downgraded user ${user.id} to free plan`);
+          
+          // Fix 2: Emit subscription.updated via WebSocket
+          wsManager.emitSubscriptionUpdated(user.id, {
+            subscription_status: 'free',
+            subscription_expiry: null
+          });
+          console.log(`[Webhook] Emitted subscription.updated (free) to user ${user.id}`);
         }
         break;
       }
@@ -159,6 +181,13 @@ class WebhookHandlers {
             // Fix B: Use activatePaidSubscription to reset image_counter on renewal
             await activatePaidSubscription(user.id, subscription.id, periodEnd);
             console.log(`[Webhook] Renewed subscription for user ${user.id} until ${periodEnd.toISOString()}`);
+            
+            // Fix 2: Emit subscription.updated via WebSocket
+            wsManager.emitSubscriptionUpdated(user.id, {
+              subscription_status: 'paid',
+              subscription_expiry: periodEnd.toISOString()
+            });
+            console.log(`[Webhook] Emitted subscription.updated to user ${user.id}`);
           }
         }
         break;

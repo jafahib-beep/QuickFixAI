@@ -543,10 +543,10 @@ class ApiClient {
     });
   }
 
-  // Fix A: Get messages for existing session
-  async getLiveAssistSessionMessages(sessionId: string): Promise<{ messages: Array<{ role: string; text?: string; imageUrls?: string[]; analysisResult?: any; createdAt?: string }> }> {
+  // Fix A: Get messages for existing session (includes id for step persistence)
+  async getLiveAssistSessionMessages(sessionId: string): Promise<{ messages: Array<{ id?: string; role: string; text?: string; imageUrls?: string[]; analysisResult?: any; createdAt?: string }> }> {
     console.log("[API] getLiveAssistSessionMessages called:", sessionId);
-    return this.request<{ messages: Array<{ role: string; text?: string; imageUrls?: string[]; analysisResult?: any; createdAt?: string }> }>(
+    return this.request<{ messages: Array<{ id?: string; role: string; text?: string; imageUrls?: string[]; analysisResult?: any; createdAt?: string }> }>(
       `/ai/liveassist/session/${sessionId}/messages`,
       {
         method: "GET",
@@ -588,6 +588,36 @@ class ApiClient {
       {
         method: "PATCH",
         body: { completed },
+        requireAuth: true,
+      }
+    );
+  }
+
+  // Fix 1: Toggle step done state for a persisted message
+  async toggleMessageStep(
+    messageId: string,
+    stepIndex: number
+  ): Promise<{
+    id: string;
+    sessionId: string;
+    sender: string;
+    type: string;
+    content: string;
+    meta: {
+      text?: string;
+      steps?: Array<{ id?: string; text: string; detail?: string; tools?: string[]; done?: boolean }>;
+      youtube_links?: Array<{ title: string; url: string }>;
+      images_to_show?: string[];
+      safety_warnings?: string[];
+    };
+    createdAt: string;
+    status: string;
+  }> {
+    console.log("[API] toggleMessageStep called:", { messageId, stepIndex });
+    return this.request(
+      `/ai/liveassist/messages/${messageId}/steps/${stepIndex}`,
+      {
+        method: "PATCH",
         requireAuth: true,
       }
     );
@@ -1030,6 +1060,7 @@ export interface LiveAssistSessionStep {
   text: string;
   detail: string;
   tools: string[];
+  done?: boolean;
 }
 
 export interface LiveAssistYouTubeLink {

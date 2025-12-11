@@ -9,6 +9,7 @@ const {
   getUserSubscription,
   SUBSCRIPTION_CONFIG 
 } = require("../services/subscription");
+const { wsManager } = require("../services/websocket");
 
 const router = express.Router();
 const crypto = require("crypto");
@@ -668,7 +669,7 @@ router.post("/liveassist/session/:sessionId/message", optionalAuth, async (req, 
 });
 
 /**
- * Update step progress in a session (optional)
+ * Update step progress in a session (optional - legacy)
  */
 router.patch("/liveassist/session/:sessionId/steps/:stepId", optionalAuth, async (req, res) => {
   try {
@@ -685,6 +686,76 @@ router.patch("/liveassist/session/:sessionId/steps/:stepId", optionalAuth, async
   } catch (error) {
     console.error("Step progress update error:", error);
     res.status(500).json({ error: "Failed to update step progress" });
+  }
+});
+
+/**
+ * Fix 1: Toggle step done state in a persisted message
+ * PATCH /api/liveassist/messages/:messageId/steps/:stepIndex
+ * Toggles meta.steps[stepIndex].done, persists to DB, emits websocket message.updated
+ */
+router.patch("/liveassist/messages/:messageId/steps/:stepIndex", optionalAuth, async (req, res) => {
+  try {
+    const { messageId, stepIndex } = req.params;
+    const idx = parseInt(stepIndex, 10);
+    
+    if (isNaN(idx) || idx < 0) {
+      return res.status(400).json({ error: "Invalid step index" });
+    }
+    
+    // Fetch message from database
+    const msgResult = await pool.query(
+      `SELECT id, session_id, role, text, image_urls, analysis_result, created_at 
+       FROM liveassist_messages 
+       WHERE id = $1`,
+      [messageId]
+    );
+    
+    if (msgResult.rows.length === 0) {
+      return res.status(404).json({ error: "Message not found" });
+    }
+    
+    const msg = msgResult.rows[0];
+    const meta = msg.analysis_result || {};
+    const steps = meta.steps || [];
+    
+    if (idx >= steps.length) {
+      return res.status(400).json({ error: "Invalid step index - out of range" });
+    }
+    
+    // Toggle done state
+    steps[idx].done = !steps[idx].done;
+    meta.steps = steps;
+    
+    // Persist to database
+    await pool.query(
+      `UPDATE liveassist_messages 
+       SET analysis_result = $1 
+       WHERE id = $2`,
+      [JSON.stringify(meta), messageId]
+    );
+    
+    // Prepare updated message for response
+    const updatedMessage = {
+      id: msg.id,
+      sessionId: msg.session_id,
+      sender: msg.role === 'assistant' ? 'assistant' : 'user',
+      type: 'analysis',
+      content: msg.text || '',
+      meta: meta,
+      createdAt: msg.created_at,
+      status: 'done'
+    };
+    
+    // Emit websocket message.updated to session subscribers
+    wsManager.emitMessageUpdated(msg.session_id, updatedMessage);
+    
+    console.log(`[LiveAssist] Step ${idx} toggled to done=${steps[idx].done} for message ${messageId}`);
+    
+    res.json(updatedMessage);
+  } catch (error) {
+    console.error("Toggle step error:", error);
+    res.status(500).json({ error: "Failed to toggle step" });
   }
 });
 
