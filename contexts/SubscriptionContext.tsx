@@ -24,9 +24,10 @@ interface SubscriptionContextType {
   loading: boolean;
   error: string | null;
   refreshSubscription: () => Promise<void>;
+  refreshStatus: () => Promise<void>;
   startTrial: () => Promise<{ success: boolean; error?: string }>;
   createCheckout: () => Promise<{ url?: string; error?: string }>;
-  cancelSubscription: () => Promise<{ success: boolean; error?: string }>;
+  cancelSubscription: () => Promise<{ success: boolean; message?: string; error?: string }>;
   checkImageLimit: () => Promise<{ allowed: boolean; remaining?: number; message?: string }>;
 }
 
@@ -118,6 +119,7 @@ export function SubscriptionProvider({ children }: { children: React.ReactNode }
         loading,
         error,
         refreshSubscription,
+        refreshStatus: refreshSubscription,
         startTrial,
         createCheckout,
         cancelSubscription,
