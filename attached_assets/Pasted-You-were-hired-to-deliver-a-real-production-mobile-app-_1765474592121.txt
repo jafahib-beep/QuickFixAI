@@ -1,0 +1,78 @@
+You were hired to deliver a real production mobile app (not ExpoGo dev preview). Build production binaries for Android (AAB) and iOS (TestFlight/.ipa) using Expo / EAS (or full React Native native build if you prefer), migrate backend to Railway (staging first), and verify end-to-end flows. Do not push anything to production/main. Provide all required artifacts in a single reply. Partial replies are not acceptable.
+
+TOPLINE REQUIREMENTS
+	1.	Build production mobile apps:
+	•	Android: AAB (preferred) and APK for internal testing.
+	•	iOS: TestFlight build (.ipa) and TestFlight invite.
+	•	Use Expo EAS builds unless you state a justified reason not to.
+	2.	Backend migration:
+	•	Move the server and API from Replit to Railway staging environment.
+	•	Ensure TLS (HTTPS) and WebSocket endpoint (wss://) are reachable from external devices.
+	3.	End-to-end verification in the built app (not in ExpoGo):
+	•	Login/auth persists.
+	•	Stripe checkout works inside the app and the app shows subscription_status: "paid" immediately after redirect (via WS or polling fallback).
+	•	LiveAssist image analysis works and AnalysisCards (meta + steps) persist after navigation.
+	•	Image-limit behavior: free user can send 2 images; 3rd attempt returns { code: "IMAGE_DAY_LIMIT" } and shows upgrade modal.
+
+MUST HAVES — deliver all of the following in ONE reply (no partials)
+
+A. Deployment & Migration proof (Railway staging):
+	•	Railway project name / staging URL.
+	•	List of ENV names (STRIPE_*, DATABASE_URL, JWT_SECRET, STRIPE_WEBHOOK_SECRET, etc.) you set in Railway (do not paste secrets).
+	•	curl -i https://<staging-host>/healthz output (must return 200).
+	•	DB migration proof (if DB moved): commands used and db.users.findOne({_id: "<testUserId>"}) showing subscription_status: "paid" and image_counter: 0.
+
+B. WebSocket or fallback proof:
+	•	From a remote machine/device run wscat -c "wss://<staging-host>/ws?token=<test-token>" and paste the output or server log showing 101 Switching Protocols for a remote IP.
+	•	If WS cannot be made reliable everywhere, paste /tmp/subscription-polling-fallback.patch showing client polling implementation and show network logs proving polling updates the subscription status within 5s.
+
+C. Stripe / webhook proof:
+	•	Stripe Dashboard test webhook delivery JSON and server log lines showing the webhook processed and DB updated (show "Processed stripe webhook" and the subscription_status:"paid" update).
+	•	Network HAR or screenshot from the built app showing GET /api/users/me after Stripe redirect returning "subscription_status":"paid".
+
+D. App builds & testing artifacts:
+	•	Expo EAS build links for Android and iOS (downloadable).
+	•	Build logs from EAS (full log outputs).
+	•	TestFlight invite link or instructions to join TestFlight and Android internal test link or APK/AAB download link.
+	•	Screenshots / HAR traces from the built app (not ExpoGo) proving:
+	•	After Stripe payment, app shows Premium badge and subscription_status:"paid".
+	•	LiveAssist analysis card with steps displayed and a step toggled and persisted after navigation.
+	•	Image-limit modal on 3rd upload attempt with backend response { code: "IMAGE_DAY_LIMIT" }.
+
+E. Patch files and code changes:
+	•	All patch files created (put full text in the reply):
+/tmp/subscription-fixes-diff.patch
+/tmp/liveassist-session-fix.patch
+/tmp/liveassist-analysis-fix.patch
+/tmp/subscription-polling-fallback.patch (if implemented)
+	•	A short README snippet describing the webhook contract and LiveAssist API endpoints (paste content).
+
+F. Logs & DB:
+	•	server-last-200.log (plain text, last 200 lines) showing webhook processing and websocket/message emits.
+	•	db.users.findOne({_id: "<testUserId>"}) result.
+	•	db.xp_events.find({userId: "<testUserId>"}) result showing first_premium.
+
+G. Rollback & deploy plan:
+	•	Exact steps to rollback staging or production to prior commit (commit sha or Railway UI steps).
+	•	Exact commands you ran to deploy staging and how you will deploy production once Jafar approves.
+
+H. One single staging PR:
+	•	Create a staging branch and a PR (link) that contains the server & client changes. Do not merge. Provide the PR link.
+
+TESTING CHECKLIST (execute these and paste output):
+	1.	curl -i https://<staging-host>/healthz → 200
+	2.	wscat -c "wss://<staging-host>/ws?token=<test-token>" from remote → connected or server log 101.
+	3.	Stripe Dashboard → send checkout.session.completed → server logs show processed and DB updated.
+	4.	In the built Android & iOS apps (TestFlight / internal test):
+	•	Perform Stripe test payment → app redirects back → app fetches /api/users/me and shows "subscription_status":"paid" within 5 seconds (paste HAR).
+	•	Start LiveAssist: upload image → get analysis card with steps → toggle a step → navigate away & back → step is still checked (paste screenshot).
+	•	As free user: upload 2 images ok, 3rd attempt yields 403/JSON { code: "IMAGE_DAY_LIMIT" } and UI shows upgrade modal (paste screenshot + response).
+
+IMPORTANT RULES
+	•	Deliver all artifacts in one reply. No partial deliveries. No merging to main until Jafar approves.
+	•	If you cannot create production builds (AAB/ipa) for any reason, explain exactly why and provide temporary artifacts so Jafar can test (but this is unacceptable unless unavoidable).
+	•	Do NOT charge Jafar for further rounds until these proofs are delivered and approved.
+	•	Failure to deliver all requested items = task FAILED.
+
+TIMELINE
+	•	Post ACK with the staging branch name immediately. Start work. Deliver the full set of artifacts in one reply when done.
