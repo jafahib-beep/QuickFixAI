@@ -14,6 +14,7 @@ import { XpProvider } from "@/contexts/XpContext";
 import { VideosProvider } from "@/contexts/VideosContext";
 import { CommunityProvider } from "@/contexts/CommunityContext";
 import { NotificationsProvider } from "@/contexts/NotificationsContext";
+import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
 import { useTheme } from "@/hooks/useTheme";
 import i18n, { initializeI18n } from "@/utils/i18n";
 
@@ -40,18 +41,20 @@ function AppContent() {
   return (
     <I18nextProvider i18n={i18n}>
       <AuthProvider>
-        <XpProvider>
-          <NotificationsProvider>
-            <VideosProvider>
-              <CommunityProvider>
-                <NavigationContainer>
-                  <RootNavigator />
-                </NavigationContainer>
-                <StatusBar style="auto" />
-              </CommunityProvider>
-            </VideosProvider>
-          </NotificationsProvider>
-        </XpProvider>
+        <SubscriptionProvider>
+          <XpProvider>
+            <NotificationsProvider>
+              <VideosProvider>
+                <CommunityProvider>
+                  <NavigationContainer>
+                    <RootNavigator />
+                  </NavigationContainer>
+                  <StatusBar style="auto" />
+                </CommunityProvider>
+              </VideosProvider>
+            </NotificationsProvider>
+          </XpProvider>
+        </SubscriptionProvider>
       </AuthProvider>
     </I18nextProvider>
   );

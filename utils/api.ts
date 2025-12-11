@@ -699,6 +699,86 @@ class ApiClient {
       requireAuth: true,
     });
   }
+
+  async getSubscriptionStatus() {
+    return this.request<{
+      subscription: {
+        plan: "free" | "trial" | "paid";
+        status: string;
+        isActive: boolean;
+        isPremium: boolean;
+        trialEndsAt: string | null;
+        paidUntil: string | null;
+      };
+      usage: {
+        imagesUsedToday: number;
+        dailyImageLimit: number | null;
+        canUploadVideo: boolean;
+      };
+      config: {
+        priceSek: number;
+        trialDays: number;
+      };
+    }>("/subscriptions/status", {
+      requireAuth: true,
+    });
+  }
+
+  async checkImageLimit() {
+    return this.request<{
+      allowed: boolean;
+      isPremium: boolean;
+      imagesUsed: number;
+      limit: number;
+      remaining?: number;
+      message?: string;
+    }>("/subscriptions/check-image-limit", {
+      requireAuth: true,
+    });
+  }
+
+  async startTrial() {
+    return this.request<{
+      success: boolean;
+      trialStartedAt: string;
+      trialEndsAt: string;
+      message: string;
+    }>("/subscriptions/start-trial", {
+      method: "POST",
+      requireAuth: true,
+    });
+  }
+
+  async createCheckoutSession() {
+    return this.request<{
+      url: string;
+      sessionId: string;
+    }>("/subscriptions/create-checkout", {
+      method: "POST",
+      requireAuth: true,
+    });
+  }
+
+  async cancelSubscription() {
+    return this.request<{
+      success: boolean;
+      message: string;
+      accessUntil?: string;
+    }>("/subscriptions/cancel", {
+      method: "POST",
+      requireAuth: true,
+    });
+  }
+
+  async reactivateSubscription() {
+    return this.request<{
+      success: boolean;
+      message: string;
+    }>("/subscriptions/reactivate", {
+      method: "POST",
+      requireAuth: true,
+    });
+  }
 }
 
 export interface User {
