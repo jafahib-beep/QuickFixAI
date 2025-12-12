@@ -14,8 +14,7 @@ function getApiBaseUrl(): string {
   // The local backend runs on port 5000 and has all the AI endpoints
 
   if (Platform.OS === "web") {
-    // Web: Use relative URL which Metro proxies to the backend
-    return "/api";
+    return "https://quickfix-backend-real-one-production.up.railway.app/api";
   }
 
   // Native (Expo Go): Use the Replit hostname for API calls
@@ -553,9 +552,7 @@ class ApiClient {
   }
 
   // Fix A: Get messages for existing session (includes id for step persistence)
-  async getLiveAssistSessionMessages(
-    sessionId: string,
-  ): Promise<{
+  async getLiveAssistSessionMessages(sessionId: string): Promise<{
     messages: Array<{
       id?: string;
       role: string;
