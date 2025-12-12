@@ -65,13 +65,13 @@ The frontend is built with Expo/React Native, supporting multi-language (English
     - **Pricing**: 39 SEK/month with 5-day free trial
     - **Free tier limits**: 2 image analyses per day, no video upload for AI
     - **Premium benefits**: Unlimited image analyses, video upload support, full AI responses
-    - **Backend**: `server/services/subscription.js` for usage tracking and limit enforcement
+    - **Backend**: `backend/subscription.js` for usage tracking and limit enforcement
     - **Routes**: `/api/subscriptions/*` for status, checkout, trial, cancel, reactivate
     - **Stripe integration**: `stripe-replit-sync` for webhook handling and data sync
     - **Frontend**: `SubscriptionContext` for state management, `UpgradeModal` for upsell
     - **Settings integration**: Subscription section in SettingsScreen with plan status and cancel option
     - **Image usage tracking**: `image_usage` table with daily reset, enforced in AI routes
-    - **Seed script**: `server/seed-products.js` to create Stripe product and price
+    - **Seed script**: `backend/seed-products.js` to create Stripe product and price
 - **XP System**: Full gamification with 5 levels, real-time notifications, and duplicate prevention. Users earn XP for:
     - Daily login: +10 XP (once per day, tracked in xp_daily_login table)
     - Community post creation: +20 XP per post
@@ -83,7 +83,7 @@ The frontend is built with Expo/React Native, supporting multi-language (English
     - Video watches: +3 XP per video (5-minute cooldown per video to prevent farming)
     - Level thresholds: L1 (0-99 XP), L2 (100-249 XP), L3 (250-499 XP), L4 (500-999 XP), L5 (1000+ XP)
     - **Frontend components**: XpToast (green pill notification showing "+X XP Reason"), LevelUpModal (celebration modal on level-up)
-    - **Backend service**: server/services/xp.js with duplicate prevention and XP helpers
+    - **Backend service**: backend/services/xp.js with duplicate prevention and XP helpers
     - **API responses include XP data**: xpAwarded, totalXp, level, leveledUp fields in relevant endpoints
 
 ### System Design Choices

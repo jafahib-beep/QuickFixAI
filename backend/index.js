@@ -3,7 +3,7 @@
  * =======================
  *
  * HOW TO RUN:
- *   node server/index.js
+ *   node backend/index.js
  *
  * The server runs on port 3001 by default (configurable via BACKEND_PORT env var).
  * It connects to the PostgreSQL database using DATABASE_URL environment variable.
