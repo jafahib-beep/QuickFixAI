@@ -5,20 +5,25 @@ import Constants from "expo-constants";
 const BACKEND_PORT = 5000;
 
 function getApiBaseUrl(): string {
+  // Production: Use Railway backend
+  if (process.env.NODE_ENV === "production") {
+    return "https://quickfix-backend-real-one-production.up.railway.app";
+  }
+
   // Use local Replit backend for development
   // The local backend runs on port 5000 and has all the AI endpoints
-  
+
   if (Platform.OS === "web") {
     // Web: Use relative URL which Metro proxies to the backend
     return "/api";
   }
-  
+
   // Native (Expo Go): Use the Replit hostname for API calls
   const expoHost = Constants.expoConfig?.hostUri?.split(":")[0];
   if (expoHost) {
     return `http://${expoHost}:${BACKEND_PORT}/api`;
   }
-  
+
   // Fallback to localhost
   return `http://localhost:${BACKEND_PORT}/api`;
 }
@@ -501,9 +506,13 @@ class ApiClient {
       throw new Error(response?.error || "No analysis received");
     } catch (error: any) {
       console.log("[API] LiveAssist error:", error?.message || error);
-      
+
       // Check for daily limit error and re-throw with response data attached
-      if (error?.message?.includes("limit_exceeded") || error?.message?.includes("IMAGE_DAY_LIMIT") || error?.message?.includes("daily limit")) {
+      if (
+        error?.message?.includes("limit_exceeded") ||
+        error?.message?.includes("IMAGE_DAY_LIMIT") ||
+        error?.message?.includes("daily limit")
+      ) {
         const customError: any = new Error("IMAGE_DAY_LIMIT");
         customError.code = "IMAGE_DAY_LIMIT";
         customError.response = {
@@ -544,20 +553,37 @@ class ApiClient {
   }
 
   // Fix A: Get messages for existing session (includes id for step persistence)
-  async getLiveAssistSessionMessages(sessionId: string): Promise<{ messages: Array<{ id?: string; role: string; text?: string; imageUrls?: string[]; analysisResult?: any; createdAt?: string }> }> {
+  async getLiveAssistSessionMessages(
+    sessionId: string,
+  ): Promise<{
+    messages: Array<{
+      id?: string;
+      role: string;
+      text?: string;
+      imageUrls?: string[];
+      analysisResult?: any;
+      createdAt?: string;
+    }>;
+  }> {
     console.log("[API] getLiveAssistSessionMessages called:", sessionId);
-    return this.request<{ messages: Array<{ id?: string; role: string; text?: string; imageUrls?: string[]; analysisResult?: any; createdAt?: string }> }>(
-      `/ai/liveassist/session/${sessionId}/messages`,
-      {
-        method: "GET",
-        requireAuth: true,
-      }
-    );
+    return this.request<{
+      messages: Array<{
+        id?: string;
+        role: string;
+        text?: string;
+        imageUrls?: string[];
+        analysisResult?: any;
+        createdAt?: string;
+      }>;
+    }>(`/ai/liveassist/session/${sessionId}/messages`, {
+      method: "GET",
+      requireAuth: true,
+    });
   }
 
   async sendLiveAssistMessage(
     sessionId: string,
-    data: { text?: string; images?: string[]; language?: string }
+    data: { text?: string; images?: string[]; language?: string },
   ): Promise<LiveAssistSessionMessage> {
     console.log("[API] sendLiveAssistMessage called:", {
       sessionId,
@@ -574,14 +600,14 @@ class ApiClient {
           language: data.language || "en",
         },
         requireAuth: true,
-      }
+      },
     );
   }
 
   async updateLiveAssistStepProgress(
     sessionId: string,
     stepId: string,
-    completed: boolean
+    completed: boolean,
   ): Promise<{ success: boolean }> {
     return this.request<{ success: boolean }>(
       `/ai/liveassist/session/${sessionId}/steps/${stepId}`,
@@ -589,14 +615,14 @@ class ApiClient {
         method: "PATCH",
         body: { completed },
         requireAuth: true,
-      }
+      },
     );
   }
 
   // Fix 1: Toggle step done state for a persisted message
   async toggleMessageStep(
     messageId: string,
-    stepIndex: number
+    stepIndex: number,
   ): Promise<{
     id: string;
     sessionId: string;
@@ -605,7 +631,13 @@ class ApiClient {
     content: string;
     meta: {
       text?: string;
-      steps?: Array<{ id?: string; text: string; detail?: string; tools?: string[]; done?: boolean }>;
+      steps?: Array<{
+        id?: string;
+        text: string;
+        detail?: string;
+        tools?: string[];
+        done?: boolean;
+      }>;
       youtube_links?: Array<{ title: string; url: string }>;
       images_to_show?: string[];
       safety_warnings?: string[];
@@ -619,7 +651,7 @@ class ApiClient {
       {
         method: "PATCH",
         requireAuth: true,
-      }
+      },
     );
   }
 
@@ -635,7 +667,7 @@ class ApiClient {
         // Native platform - replace /api with /api/health
         healthUrl = API_BASE_URL.replace(/\/api$/, "") + "/api/health";
       }
-      
+
       console.log("[API] Health check URL:", healthUrl);
       const response = await fetch(healthUrl, {
         method: "GET",
