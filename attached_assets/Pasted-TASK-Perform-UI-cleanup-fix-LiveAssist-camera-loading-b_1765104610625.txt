@@ -46,7 +46,7 @@ Goal: Make AI Chat functional using the mock response until the final AI backend
 Steps:
 
 1. Verify /api/ai/chat is implemented and exported correctly.
-2. Ensure aiRoutes is properly imported and registered in server/index.js.
+2. Ensure aiRoutes is properly imported and registered in backend/index.js.
 3. Disable or remove all checkAIServiceHealth code on both frontend and backend.
 4. Fix API_BASE_URL so the mobile app calls the correct backend (no localhost).
 5. Add logs in backend to confirm chat requests are received.

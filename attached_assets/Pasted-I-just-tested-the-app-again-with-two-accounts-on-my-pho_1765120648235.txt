@@ -31,13 +31,13 @@ Try to create a new post from the “Ask the community” flow.
 
 Watch the server console for any errors when sending the request.
 
-Check the backend route that creates posts, for example in server/routes/community.js (or whatever file handles POST /api/community):
+Check the backend route that creates posts, for example in backend/routes/community.js (or whatever file handles POST /api/community):
 
 Make sure the route still matches what the frontend sends.
 
 Check that the expected body fields (title, description, category, status, userId, etc.) match the frontend.
 
-Make sure express.json() and URL-encoded parsing are correctly set up in server/index.js so the body is parsed.
+Make sure express.json() and URL-encoded parsing are correctly set up in backend/index.js so the body is parsed.
 
 Fix whatever is causing the POST to fail:
 

@@ -46,8 +46,8 @@ If anything is missing → the task is FAILED.
 END ORDER
 
 2) PATCH-FILER (kopiera och ge agenten att applicera som nya filer/patchar)
-A — Server: Stripe webhook (lägg i server/routes/stripeWebhook.js)
-// server/routes/stripeWebhook.js
+A — Server: Stripe webhook (lägg i backend/routes/stripeWebhook.js)
+// backend/routes/stripeWebhook.js
 import express from "express";
 import Stripe from "stripe";
 import { ObjectId } from "mongodb";
@@ -138,8 +138,8 @@ sendWsToUser(userId, payload) är en helper — implementera/anställ motsvarand
 
 Spara webhook id i webhook_events för idempotency.
 
-B — Server: LiveAssist sessions endpoints (lägg i server/routes/liveassist.js)
-// server/routes/liveassist.js
+B — Server: LiveAssist sessions endpoints (lägg i backend/routes/liveassist.js)
+// backend/routes/liveassist.js
 import express from "express";
 import { v4 as uuidv4 } from "uuid";
 import { getDb } from "../lib/utils";
@@ -255,7 +255,7 @@ useEffect(() => {
 Notis: If the app uses token authentication in localStorage, ensure Stripe redirect preserves token (use cookie-based auth to simplify).
 
 E — Server: Image limit response (update your image upload handler)
-// server/routes/imageUpload.js  (inside upload endpoint)
+// backend/routes/imageUpload.js  (inside upload endpoint)
 const user = await db.collection("users").findOne({ _id: req.user._id });
 if (user.subscription_status !== "paid" && user.image_counter >= 2) {
   return res.status(403).json({ error: "limit_exceeded", code: "IMAGE_DAY_LIMIT", message: "Daily image limit reached. Upgrade to send more images." });

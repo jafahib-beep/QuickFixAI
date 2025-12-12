@@ -103,7 +103,7 @@ function App(){
 }
 
 
-Lägg till backend-middleware (i src/index.ts eller server/index.ts före routes):
+Lägg till backend-middleware (i src/index.ts eller backend/index.ts före routes):
 
 app.use((req, res, next) => {
   const headerAuth = req.headers.authorization || req.headers['x-auth-token'];

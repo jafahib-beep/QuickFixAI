@@ -25,8 +25,8 @@ A) AI Chat – reconnect to backend and make it behave like a real troubleshooti
      - `answer` – the main assistant reply text.
      - optionally `rawResponse` – the full data if needed.
 
-2. In the backend route `server/routes/ai.js` for `/chat`:
-   - Make sure it uses OpenAI (via `server/services/openai.js` or similar) to call a chat model, like `gpt-4o-mini` or `gpt-4.1`.
+2. In the backend route `backend/routes/ai.js` for `/chat`:
+   - Make sure it uses OpenAI (via `backend/services/openai.js` or similar) to call a chat model, like `gpt-4o-mini` or `gpt-4.1`.
    - The system prompt should make QuickFix AI act as a friendly but precise DIY technician assistant. It should:
      - Read the user’s full context (conversation history).
      - Ask follow-up questions when needed.
@@ -64,7 +64,7 @@ B) LiveAssist – real image analysis + better steps
      - `language`
      - optionally the last user text message if needed as additional context.
 
-2. In the backend route `server/routes/ai.js` for `/liveassist`:
+2. In the backend route `backend/routes/ai.js` for `/liveassist`:
    - Use OpenAI Vision (e.g. gpt-4o mini with image input) to analyze the image.
    - Use a structured system prompt that instructs the model to return:
      - `summary`: 1–2 sentences describing what is visible.

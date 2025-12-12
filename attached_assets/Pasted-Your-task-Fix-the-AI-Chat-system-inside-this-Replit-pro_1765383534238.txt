@@ -17,22 +17,22 @@ CURRENT PROBLEMS:
    - “Offline – Tryck för att försöka igen”
    These messages appear even though the Railway backend is online.
 
-3. The local internal backend files under /server/routes/ai.ts contain outdated or incorrect logic for the chat endpoint.
+3. The local internal backend files under /backend/routes/ai.ts contain outdated or incorrect logic for the chat endpoint.
 
 ----------------------------------
 WHAT YOU MUST FIX:
 ----------------------------------
 
 ### 1) Backend routing
-Inside /server/routes/ai.ts:
+Inside /backend/routes/ai.ts:
 - Ensure that POST /api/ai/chat exists.
 - Ensure it accepts a JSON body with: { messages: [ { role, content } ] }
 - Ensure it also supports: { prompt: "text" } for single-message chat.
-- Make the endpoint forward the request to the function askAI() in /server/services/openai.ts.
+- Make the endpoint forward the request to the function askAI() in /backend/services/openai.ts.
 - Make sure the returned JSON matches what the frontend expects.
 
 ### 2) OpenAI service
-Inside /server/services/openai.ts:
+Inside /backend/services/openai.ts:
 - Make sure askAI(), analyzeImage(), and liveAssistOnImage() all use the existing OPENAI_API_KEY correctly.
 - Ensure askAI() can accept either:
   A) messages array
