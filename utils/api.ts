@@ -13,10 +13,6 @@ function getApiBaseUrl(): string {
   // Use local Replit backend for development
   // The local backend runs on port 5000 and has all the AI endpoints
 
-  if (Platform.OS === "web") {
-    return "https://quickfix-backend-real-one-production.up.railway.app/api";
-  }
-
   // Native (Expo Go): Use the Replit hostname for API calls
   const expoHost = Constants.expoConfig?.hostUri?.split(":")[0];
   if (expoHost) {
