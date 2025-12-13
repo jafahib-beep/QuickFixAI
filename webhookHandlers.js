@@ -1,7 +1,7 @@
 const { getStripeSync, getUncachableStripeClient } = require('./stripeClient');
 const { pool } = require('./db');
 const { activatePaidSubscription, downgradeToFree, getUserByStripeCustomerId, getUserSubscription } = require('./backend/subscription');
-const { wsManager } = require('./services/websocket');
+const { wsManager } = require('./backend/websocket');
 
 class WebhookHandlers {
   // Ensure webhook_events table exists for idempotency and auditing
