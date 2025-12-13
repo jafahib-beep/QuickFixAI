@@ -29,7 +29,7 @@ const aiRoutes = require("./routes/ai.js");
 const communityRoutes = require("./routes/community");
 const reportsRoutes = require("./routes/reports");
 const { router: blockRoutes } = require("./routes/block");
-const subscriptionRoutes = require("./routes/subscriptions.js");
+const subscriptionRoutes = require("./routes/subscriptions");
 
 // ✅ Railway / local compatible PORT
 const PORT = process.env.BACKEND_PORT || process.env.PORT || 3001;
