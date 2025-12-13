@@ -1,17 +1,17 @@
 {
   "name": "my-app",
-  "main": "backend/index.js",
+  "main": "index.js",
   "version": "1.0.0",
   "scripts": {
     "dev": "node start-dev.js",
-    "start": "npx expo start",
+    "start": "node index.js",
     "android": "npx expo start --android",
     "ios": "npx expo start --ios",
     "web": "npx expo start --web",
     "lint": "npx expo lint",
     "check:format": "prettier --check \"**/*.{js,ts,tsx,css,json}\"",
     "format": "prettier --write \"**/*.{js,ts,tsx,css,json}\"",
-    "backend": "node backend/index.js",
+    "backend": "node index.js",
     "expo": "EXPO_PACKAGER_PROXY_URL=https://$REPLIT_DEV_DOMAIN REACT_NATIVE_PACKAGER_HOSTNAME=$REPLIT_DEV_DOMAIN npx expo start"
   },
   "dependencies": {
@@ -43,7 +43,7 @@
     "expo-video": "^3.0.14",
     "expo-video-thumbnails": "^10.0.7",
     "expo-web-browser": "~15.0.9",
-    "express": "^5.2.1",
+    "express": "^4.18.2",
     "http-proxy-middleware": "^3.0.5",
     "i18next": "^25.7.1",
     "jsonwebtoken": "^9.0.2",
