@@ -68,8 +68,11 @@ process.on("exit", () => {
 });
 
 // (här fortsätter din originalkod)
-const server = http.createServer(app);
-const PORT = process.env.PORT || process.env.BACKEND_PORT || 5000;
+const PORT = process.env.PORT || 8080;
+
+app.listen(PORT, () => {
+  console.log("🚀 Backend running on port", PORT);
+});
 
 // 🔍 Logga alla requests som kommer in till backend
 app.use((req, res, next) => {
