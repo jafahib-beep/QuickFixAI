@@ -166,19 +166,25 @@ export default function ProfileScreen() {
         ) : null}
 
         <View style={styles.statsRow}>
-          <View style={styles.stat}>
+          <Pressable
+            style={({ pressed }) => [styles.stat, { opacity: pressed ? 0.7 : 1 }]}
+            onPress={() => user?.id && navigation.navigate("FollowerList", { userId: user.id, type: "followers", userName: user.displayName })}
+          >
             <ThemedText type="h3" style={{ fontWeight: '700' }}>{user?.followersCount || 0}</ThemedText>
             <ThemedText type="small" style={{ color: theme.textSecondary }}>
               {t("profile.followers")}
             </ThemedText>
-          </View>
+          </Pressable>
           <View style={[styles.statDivider, { backgroundColor: theme.border }]} />
-          <View style={styles.stat}>
+          <Pressable
+            style={({ pressed }) => [styles.stat, { opacity: pressed ? 0.7 : 1 }]}
+            onPress={() => user?.id && navigation.navigate("FollowerList", { userId: user.id, type: "following", userName: user.displayName })}
+          >
             <ThemedText type="h3" style={{ fontWeight: '700' }}>{user?.followingCount || 0}</ThemedText>
             <ThemedText type="small" style={{ color: theme.textSecondary }}>
               {t("profile.following")}
             </ThemedText>
-          </View>
+          </Pressable>
           <View style={[styles.statDivider, { backgroundColor: theme.border }]} />
           <View style={styles.stat}>
             <ThemedText type="h3" style={{ fontWeight: '700' }}>{userVideos.length}</ThemedText>

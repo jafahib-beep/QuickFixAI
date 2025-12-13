@@ -5,20 +5,21 @@ import Constants from "expo-constants";
 const BACKEND_PORT = 5000;
 
 function getApiBaseUrl(): string {
-  if (Platform.OS === "web" && typeof window !== "undefined") {
-    return "/api";
+  // Production: Use Railway backend
+  if (process.env.NODE_ENV === "production") {
+    return "https://quickfix-backend-real-one-production.up.railway.app";
   }
 
-  const replitDevDomain = Constants.expoConfig?.extra?.REPLIT_DEV_DOMAIN;
-  if (replitDevDomain) {
-    if (replitDevDomain.includes(".riker.replit.dev")) {
-      const parts = replitDevDomain.split(".riker.replit.dev")[0];
-      return `https://${parts}-${BACKEND_PORT}.riker.replit.dev/api`;
-    }
-    const parts = replitDevDomain.split(".replit.dev")[0];
-    return `https://${parts}-${BACKEND_PORT}.replit.dev/api`;
+  // Use local Replit backend for development
+  // The local backend runs on port 5000 and has all the AI endpoints
+
+  // Native (Expo Go): Use the Replit hostname for API calls
+  const expoHost = Constants.expoConfig?.hostUri?.split(":")[0];
+  if (expoHost) {
+    return `http://${expoHost}:${BACKEND_PORT}/api`;
   }
 
+  // Fallback to localhost
   return `http://localhost:${BACKEND_PORT}/api`;
 }
 
@@ -27,7 +28,7 @@ const API_BASE_URL = getApiBaseUrl();
 console.log("[API] FULL API URL:", API_BASE_URL);
 
 interface ApiOptions {
-  method?: "GET" | "POST" | "PUT" | "DELETE";
+  method?: "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
   body?: any;
   requireAuth?: boolean;
 }
@@ -113,18 +114,15 @@ class ApiClient {
   }
 
   async login(email: string, password: string) {
-    const result = await this.request<{ 
-      user: User; 
-      token: string; 
+    const result = await this.request<{
+      user: User;
+      token: string;
       xpAwarded?: number;
       leveledUp?: boolean;
-    }>(
-      "/auth/login",
-      {
-        method: "POST",
-        body: { email, password },
-      },
-    );
+    }>("/auth/login", {
+      method: "POST",
+      body: { email, password },
+    });
     await this.setToken(result.token);
     return result;
   }
@@ -418,7 +416,10 @@ class ApiClient {
     });
 
     try {
-      const response = await this.request<{ answer: string; rawResponse?: unknown }>("/ai/chat", {
+      const response = await this.request<{
+        answer: string;
+        rawResponse?: unknown;
+      }>("/ai/chat", {
         method: "POST",
         body: {
           messages: data.messages,
@@ -429,29 +430,24 @@ class ApiClient {
       });
 
       if (response && response.answer) {
-        return { answer: response.answer, rawResponse: response.rawResponse, success: true };
+        return {
+          answer: response.answer,
+          rawResponse: response.rawResponse,
+          success: true,
+        };
       }
 
       throw new Error("No answer received from AI");
     } catch (error: any) {
-      console.log("[API] Chat error:", error?.message || error);
-      
-      const errorMessage = error?.message?.includes("API key")
-        ? "AI service is not configured. Please try again later."
-        : error?.message?.includes("network")
-          ? "Unable to reach the AI service. Please check your connection."
-          : "AI service is temporarily unavailable. Please try again.";
-      
-      return {
-        answer: errorMessage,
-        rawResponse: { error: true, message: error?.message },
-        success: false,
-      };
+      console.error("[API] Chat error:", error?.message || error);
+      throw error;
     }
   }
 
-
-  async liveAssist(imageBase64: string, language: string = "en"): Promise<LiveAssistResponse> {
+  async liveAssist(
+    imageBase64: string,
+    language: string = "en",
+  ): Promise<LiveAssistResponse> {
     console.log("[API] liveAssist called with:", {
       hasImage: !!imageBase64,
       imageLength: imageBase64?.length || 0,
@@ -475,6 +471,9 @@ class ApiClient {
           rawResponse?: string;
         };
         error?: string;
+        imagesUsed?: number;
+        limit?: number;
+        upgradeRequired?: boolean;
       }>("/ai/liveassist", {
         method: "POST",
         body: { imageBase64, language },
@@ -502,7 +501,25 @@ class ApiClient {
       throw new Error(response?.error || "No analysis received");
     } catch (error: any) {
       console.log("[API] LiveAssist error:", error?.message || error);
-      
+
+      // Check for daily limit error and re-throw with response data attached
+      if (
+        error?.message?.includes("limit_exceeded") ||
+        error?.message?.includes("IMAGE_DAY_LIMIT") ||
+        error?.message?.includes("daily limit")
+      ) {
+        const customError: any = new Error("IMAGE_DAY_LIMIT");
+        customError.code = "IMAGE_DAY_LIMIT";
+        customError.response = {
+          error: "limit_exceeded",
+          code: "IMAGE_DAY_LIMIT",
+          imagesUsed: 2,
+          limit: 2,
+          upgradeRequired: true,
+        };
+        throw customError;
+      }
+
       return {
         success: false,
         analysis: {
@@ -510,24 +527,148 @@ class ApiClient {
           possibleIssue: "",
           safetyNote: "",
           steps: [],
-          rawResponse: JSON.stringify({ 
-            error: true, 
-            message: error?.message || "Failed to analyze image. Please try again." 
+          rawResponse: JSON.stringify({
+            error: true,
+            message:
+              error?.message || "Failed to analyze image. Please try again.",
           }),
         },
       };
     }
   }
 
+  // LiveAssist Session API - MVP Conversation Thread
+  async createLiveAssistSession(): Promise<{ sessionId: string }> {
+    console.log("[API] createLiveAssistSession called");
+    return this.request<{ sessionId: string }>("/ai/liveassist/session", {
+      method: "POST",
+      body: {},
+      requireAuth: true,
+    });
+  }
+
+  // Fix A: Get messages for existing session (includes id for step persistence)
+  async getLiveAssistSessionMessages(sessionId: string): Promise<{
+    messages: Array<{
+      id?: string;
+      role: string;
+      text?: string;
+      imageUrls?: string[];
+      analysisResult?: any;
+      createdAt?: string;
+    }>;
+  }> {
+    console.log("[API] getLiveAssistSessionMessages called:", sessionId);
+    return this.request<{
+      messages: Array<{
+        id?: string;
+        role: string;
+        text?: string;
+        imageUrls?: string[];
+        analysisResult?: any;
+        createdAt?: string;
+      }>;
+    }>(`/ai/liveassist/session/${sessionId}/messages`, {
+      method: "GET",
+      requireAuth: true,
+    });
+  }
+
+  async sendLiveAssistMessage(
+    sessionId: string,
+    data: { text?: string; images?: string[]; language?: string },
+  ): Promise<LiveAssistSessionMessage> {
+    console.log("[API] sendLiveAssistMessage called:", {
+      sessionId,
+      hasText: !!data.text,
+      imageCount: data.images?.length || 0,
+    });
+    return this.request<LiveAssistSessionMessage>(
+      `/ai/liveassist/session/${sessionId}/message`,
+      {
+        method: "POST",
+        body: {
+          text: data.text || "",
+          images: data.images || [],
+          language: data.language || "en",
+        },
+        requireAuth: true,
+      },
+    );
+  }
+
+  async updateLiveAssistStepProgress(
+    sessionId: string,
+    stepId: string,
+    completed: boolean,
+  ): Promise<{ success: boolean }> {
+    return this.request<{ success: boolean }>(
+      `/ai/liveassist/session/${sessionId}/steps/${stepId}`,
+      {
+        method: "PATCH",
+        body: { completed },
+        requireAuth: true,
+      },
+    );
+  }
+
+  // Fix 1: Toggle step done state for a persisted message
+  async toggleMessageStep(
+    messageId: string,
+    stepIndex: number,
+  ): Promise<{
+    id: string;
+    sessionId: string;
+    sender: string;
+    type: string;
+    content: string;
+    meta: {
+      text?: string;
+      steps?: Array<{
+        id?: string;
+        text: string;
+        detail?: string;
+        tools?: string[];
+        done?: boolean;
+      }>;
+      youtube_links?: Array<{ title: string; url: string }>;
+      images_to_show?: string[];
+      safety_warnings?: string[];
+    };
+    createdAt: string;
+    status: string;
+  }> {
+    console.log("[API] toggleMessageStep called:", { messageId, stepIndex });
+    return this.request(
+      `/ai/liveassist/messages/${messageId}/steps/${stepIndex}`,
+      {
+        method: "PATCH",
+        requireAuth: true,
+      },
+    );
+  }
+
   async checkAIServiceHealth(): Promise<boolean> {
     console.log("[API] checkAIServiceHealth called");
     try {
-      const healthUrl = API_BASE_URL.replace("/api", "") + "/health";
+      // Construct health URL based on current API_BASE_URL
+      let healthUrl: string;
+      if (API_BASE_URL === "/api") {
+        // Web platform - use relative URL
+        healthUrl = "/api/health";
+      } else {
+        // Native platform - replace /api with /api/health
+        healthUrl = API_BASE_URL.replace(/\/api$/, "") + "/api/health";
+      }
+
+      console.log("[API] Health check URL:", healthUrl);
       const response = await fetch(healthUrl, {
         method: "GET",
         headers: { "Content-Type": "application/json" },
       });
-      return response.ok;
+      const isHealthy = response.ok;
+      console.log("[API] Health check result:", isHealthy);
+      return isHealthy;
     } catch (error) {
       console.log("[API] Health check failed:", error);
       return false;
@@ -642,6 +783,86 @@ class ApiClient {
       requireAuth: true,
     });
   }
+
+  async getSubscriptionStatus() {
+    return this.request<{
+      subscription: {
+        plan: "free" | "trial" | "paid";
+        status: string;
+        isActive: boolean;
+        isPremium: boolean;
+        trialEndsAt: string | null;
+        paidUntil: string | null;
+      };
+      usage: {
+        imagesUsedToday: number;
+        dailyImageLimit: number | null;
+        canUploadVideo: boolean;
+      };
+      config: {
+        priceSek: number;
+        trialDays: number;
+      };
+    }>("/subscriptions/status", {
+      requireAuth: true,
+    });
+  }
+
+  async checkImageLimit() {
+    return this.request<{
+      allowed: boolean;
+      isPremium: boolean;
+      imagesUsed: number;
+      limit: number;
+      remaining?: number;
+      message?: string;
+    }>("/subscriptions/check-image-limit", {
+      requireAuth: true,
+    });
+  }
+
+  async startTrial() {
+    return this.request<{
+      success: boolean;
+      trialStartedAt: string;
+      trialEndsAt: string;
+      message: string;
+    }>("/subscriptions/start-trial", {
+      method: "POST",
+      requireAuth: true,
+    });
+  }
+
+  async createCheckoutSession() {
+    return this.request<{
+      url: string;
+      sessionId: string;
+    }>("/subscriptions/create-checkout", {
+      method: "POST",
+      requireAuth: true,
+    });
+  }
+
+  async cancelSubscription() {
+    return this.request<{
+      success: boolean;
+      message: string;
+      accessUntil?: string;
+    }>("/subscriptions/cancel", {
+      method: "POST",
+      requireAuth: true,
+    });
+  }
+
+  async reactivateSubscription() {
+    return this.request<{
+      success: boolean;
+      message: string;
+    }>("/subscriptions/reactivate", {
+      method: "POST",
+      requireAuth: true,
+    });
+  }
 }
 
 export interface User {
@@ -658,6 +879,9 @@ export interface User {
   nextLevelXp: number;
   currentLevelXp: number;
   createdAt?: string;
+  subscription_status?: string;
+  subscription_expiry?: string;
+  image_counter?: number;
 }
 
 export interface UserProfile extends User {
@@ -856,6 +1080,29 @@ export interface LiveAssistResponse {
     rawResponse: string;
   };
   error?: string;
+}
+
+// LiveAssist Session types for MVP conversation thread
+export interface LiveAssistSessionStep {
+  id: string;
+  text: string;
+  detail: string;
+  tools: string[];
+  done?: boolean;
+}
+
+export interface LiveAssistYouTubeLink {
+  title: string;
+  url: string;
+}
+
+export interface LiveAssistSessionMessage {
+  text: string;
+  steps: LiveAssistSessionStep[];
+  youtube_links: LiveAssistYouTubeLink[];
+  images_to_show: string[];
+  safety_warnings: string[];
+  structured: boolean;
 }
 
 export const api = new ApiClient();

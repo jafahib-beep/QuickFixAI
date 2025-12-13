@@ -1,0 +1,290 @@
+You were paid to fix production bugs. Do NOT explore. Do NOT change unrelated files. Apply only the patches and behavior below and provide the required evidence. Do NOT commit to main — provide patch files and a staging branch/PR for review.
+
+Fix A — LiveAssist session persistence
+
+Persist liveassistSessionId to localStorage and AuthContext.
+
+On LiveAssist mount: if sessionId exists → GET /api/liveassist/sessions/:sessionId/messages, else → POST /api/liveassist/sessions and store returned sessionId.
+
+Remove any setMessages([]) on navigation.
+Deliverable: /tmp/liveassist-session-fix.patch + screenshot of localStorage and Network /messages fetch.
+
+Fix B — Stripe webhook & client refresh
+
+Implement idempotent Stripe webhook at /api/webhooks/stripe handling checkout.session.completed and invoice.payment_succeeded. Use session.metadata.userId or client_reference_id to identify user.
+
+Update DB: subscription_status="paid", subscription_expiry=now+plan_period, image_counter=0.
+
+Insert single xp_event {userId, amount:250, reason:"first_premium", ts} only once.
+
+Emit websocket subscription.updated to user.
+
+Client must detect ?subscription=success and call GET /api/users/me (credentials included) and update AuthContext immediately.
+Deliverable: /tmp/subscription-fixes-diff.patch + server-last-200.log + Network screenshot showing /api/users/me called after redirect and response JSON showing "subscription_status":"paid".
+
+Fix C — Image limit modal
+
+If image_counter >= 2 and user is free → backend returns { error:"limit_exceeded", code:"IMAGE_DAY_LIMIT" } and frontend must show upgrade modal BEFORE third upload.
+Deliverable: /tmp/image-limit-modal-fix.patch + screenshot of modal.
+
+Mandatory artifacts (all):
+
+/tmp/liveassist-session-fix.patch
+
+/tmp/subscription-fixes-diff.patch
+
+/tmp/image-limit-modal-fix.patch
+
+server-last-200.log (last 200 lines)
+
+Screenshot: localStorage liveassistSessionId + Network /messages fetch + Network /api/users/me after redirect.
+
+DB output (mongo find) showing user doc with subscription_status:"paid" and xp_event inserted.
+
+If anything is missing → the task is FAILED.
+
+END ORDER
+
+2) PATCH-FILER (kopiera och ge agenten att applicera som nya filer/patchar)
+A — Server: Stripe webhook (lägg i backend/routes/stripeWebhook.js)
+// backend/routes/stripeWebhook.js
+import express from "express";
+import Stripe from "stripe";
+import { ObjectId } from "mongodb";
+import { getDb, sendWsToUser } from "../lib/utils"; // adjust paths as your repo
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: "2022-11-15" });
+const router = express.Router();
+
+// use raw body in main server for this route
+router.post("/webhook", express.raw({ type: "application/json" }), async (req, res) => {
+  const sig = req.headers["stripe-signature"];
+  let event;
+  try {
+    event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
+  } catch (err) {
+    console.error("Stripe webhook signature failed:", err.message);
+    return res.status(400).send(`Invalid signature: ${err.message}`);
+  }
+
+  const db = getDb();
+  const evtId = event.id;
+
+  try {
+    if (event.type === "checkout.session.completed" || event.type === "invoice.payment_succeeded") {
+      const session = event.data.object;
+      const userId = session.metadata?.userId || session.client_reference_id;
+      console.log("Received Stripe event", event.type, "session.id=", session.id, "userId=", userId);
+
+      if (!userId) {
+        console.warn("No userId for session", session.id);
+      } else {
+        // Idempotency: check webhook processed
+        const already = await db.collection("webhook_events").findOne({ eventId: evtId });
+        if (already) {
+          console.log("Webhook already processed:", evtId);
+        } else {
+          const expiryDate = new Date();
+          expiryDate.setMonth(expiryDate.getMonth() + 1); // default 1 month; adjust by plan if available
+
+          // Update user atomically
+          await db.collection("users").updateOne(
+            { _id: userId },
+            {
+              $set: {
+                subscription_status: "paid",
+                subscription_expiry: expiryDate.toISOString(),
+                image_counter: 0
+              }
+            },
+            { upsert: false }
+          );
+
+          // Insert xp event only if not already there
+          const xpExists = await db.collection("xp_events").findOne({ userId, reason: "first_premium" });
+          if (!xpExists) {
+            await db.collection("xp_events").insertOne({ userId, amount: 250, reason: "first_premium", ts: new Date() });
+          }
+
+          // mark webhook processed
+          await db.collection("webhook_events").insertOne({ eventId: evtId, type: event.type, sessionId: session.id, processedAt: new Date() });
+
+          // emit websocket
+          try {
+            sendWsToUser(userId, { type: "subscription.updated", subscription_status: "paid", subscription_expiry: expiryDate.toISOString() });
+          } catch (wsErr) {
+            console.warn("Websocket emit failed", wsErr);
+          }
+
+          console.log("Processed stripe webhook", evtId, "for user", userId);
+        }
+      }
+    }
+    res.status(200).send({ received: true });
+  } catch (err) {
+    console.error("Error processing webhook", err);
+    res.status(500).send({ error: "processing_error" });
+  }
+});
+
+export default router;
+
+
+NOTISER för agenten:
+
+Se till att server använder express.raw for this route (do not parse JSON globally for webhook).
+
+sendWsToUser(userId, payload) är en helper — implementera/anställ motsvarande i repo (Socket.io eller annan).
+
+Spara webhook id i webhook_events för idempotency.
+
+B — Server: LiveAssist sessions endpoints (lägg i backend/routes/liveassist.js)
+// backend/routes/liveassist.js
+import express from "express";
+import { v4 as uuidv4 } from "uuid";
+import { getDb } from "../lib/utils";
+const router = express.Router();
+
+// Create session
+router.post("/sessions", async (req, res) => {
+  const userId = req.user && req.user._id;
+  if (!userId) return res.status(401).send({ error: "unauthenticated" });
+
+  const sessionId = uuidv4();
+  const db = getDb();
+  await db.collection("liveassist_sessions").insertOne({ id: sessionId, userId, createdAt: new Date(), lastActiveAt: new Date() });
+  res.json({ sessionId });
+});
+
+// Get messages by session
+router.get("/sessions/:sessionId/messages", async (req, res) => {
+  const sessionId = req.params.sessionId;
+  const db = getDb();
+  const messages = await db.collection("liveassist_messages").find({ sessionId }).sort({ createdAt: 1 }).toArray();
+  res.json(messages);
+});
+
+export default router;
+
+C — Client: LiveAssist component (update src/components/LiveAssist.tsx)
+// src/components/LiveAssist.tsx  (React + TSX)
+import React, { useEffect, useState, useContext } from "react";
+import { AuthContext } from "../contexts/AuthContext";
+
+export default function LiveAssist() {
+  const auth = useContext(AuthContext);
+  const [messages, setMessages] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        let sessionId = auth.liveassistSessionId || localStorage.getItem("liveassistSessionId");
+        if (!sessionId) {
+          const res = await fetch("/api/liveassist/sessions", { method: "POST", credentials: "include" });
+          if (!res.ok) throw new Error("Failed creating session");
+          const data = await res.json();
+          sessionId = data.sessionId;
+          auth.setLiveassistSessionId?.(sessionId);
+          localStorage.setItem("liveassistSessionId", sessionId);
+        } else {
+          if (!auth.liveassistSessionId) auth.setLiveassistSessionId?.(sessionId);
+        }
+
+        // Fetch messages from server (do not clear state before fetching)
+        const msgsRes = await fetch(`/api/liveassist/sessions/${sessionId}/messages`, { credentials: "include" });
+        if (msgsRes.ok) {
+          const msgs = await msgsRes.json();
+          if (mounted) setMessages(msgs);
+        } else {
+          console.error("Failed to fetch messages", await msgsRes.text());
+        }
+      } catch (err) {
+        console.error("LiveAssist mount error", err);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    })();
+    return () => { mounted = false; };
+  }, []); // run only once on mount
+
+  // render messages + UI
+  return (
+    <div>
+      {loading ? <div>Loading...</div> : null}
+      <div id="messages">
+        {messages.map(m => <MessageItem key={m.id} m={m} />)}
+      </div>
+      {/* ...rest of UI */}
+    </div>
+  );
+}
+
+
+NOTISER för agenten:
+
+Ta bort eller ändra all kod som gör setMessages([]) vid navigation.
+
+Säkerställ AuthContext exponerar liveassistSessionId och setLiveassistSessionId.
+
+D — Client: AuthContext redirect refresh (uppdatera src/contexts/AuthContext.tsx)
+// in AuthContext top-level (run on app mount)
+useEffect(() => {
+  (async () => {
+    try {
+      const url = new URL(window.location.href);
+      if (url.searchParams.get("subscription") === "success") {
+        const res = await fetch("/api/users/me", { credentials: "include" });
+        if (res.ok) {
+          const me = await res.json();
+          setUser(me);
+        } else {
+          console.error("Failed to refresh user after stripe redirect", await res.text());
+        }
+        url.searchParams.delete("subscription");
+        window.history.replaceState({}, "", url.toString());
+      }
+    } catch (err) {
+      console.error("AuthContext redirect handler error", err);
+    }
+  })();
+}, []);
+
+
+Notis: If the app uses token authentication in localStorage, ensure Stripe redirect preserves token (use cookie-based auth to simplify).
+
+E — Server: Image limit response (update your image upload handler)
+// backend/routes/imageUpload.js  (inside upload endpoint)
+const user = await db.collection("users").findOne({ _id: req.user._id });
+if (user.subscription_status !== "paid" && user.image_counter >= 2) {
+  return res.status(403).json({ error: "limit_exceeded", code: "IMAGE_DAY_LIMIT", message: "Daily image limit reached. Upgrade to send more images." });
+}
+// otherwise proceed to accept upload and increment counter
+
+
+Frontend must catch this 403 and show upgrade modal.
+
+3) EXAKTA TESTSTEG AGENTEN MUST RUN (kräv output)
+
+Webhook test: Stripe Dashboard → Developers → Webhooks → Send test checkout.session.completed with payload including metadata.userId = <testUserId>. Paste webhook delivery JSON and server log lines showing processed event and DB update.
+
+Client redirect: After test webhook, open app with session of test user, simulate redirect URL https://app/?subscription=success (while logged in). Show Network tab with GET /api/users/me and response JSON showing subscription_status: "paid".
+
+LiveAssist persistence:
+
+Open LiveAssist, send 2 text messages + 1 image.
+
+Navigate to Home/QuickFix and back.
+
+Provide Network tab screenshot showing GET /api/liveassist/sessions/:sessionId/messages returned the messages and localStorage screenshot with liveassistSessionId present.
+
+Image limit:
+
+For free user, send 2 images (server should accept), try third → server returns 403 with IMAGE_DAY_LIMIT.
+
+Provide request/response screenshots.
+
+DB proof: db.users.findOne({_id: "<testUserId>"}) showing subscription_status: "paid" and image_counter: 0. Also db.xp_events.find({userId:"<testUserId>"}) showing one first_premium event.
+
+Logs: Paste server-last-200.log.

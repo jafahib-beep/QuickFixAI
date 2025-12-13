@@ -1,0 +1,81 @@
+Your task: Fix the AI Chat system inside this Replit project so that the app is no longer stuck in “offline mode” and the AI chat works normally.
+
+Do NOT change the existing API_BASE_URL because it already points to a working Railway backend. Do NOT change the domain, do NOT remove the /api path, and do NOT modify any environment variables unless absolutely required. Keep the current external backend URL EXACTLY as it is.
+
+Fix ONLY the internal Replit project code.
+
+----------------------------------
+CURRENT PROBLEMS:
+----------------------------------
+1. The AI chat cannot send messages. The backend endpoint /api/ai/chat returns errors like:
+   - “Messages array is required”
+   - “prompt is required”
+   - network 400 errors
+
+2. The AI Chat screen in the frontend displays:
+   - “AI kunde inte svara just nu”
+   - “Offline – Tryck för att försöka igen”
+   These messages appear even though the Railway backend is online.
+
+3. The local internal backend files under /backend/routes/ai.ts contain outdated or incorrect logic for the chat endpoint.
+
+----------------------------------
+WHAT YOU MUST FIX:
+----------------------------------
+
+### 1) Backend routing
+Inside /backend/routes/ai.ts:
+- Ensure that POST /api/ai/chat exists.
+- Ensure it accepts a JSON body with: { messages: [ { role, content } ] }
+- Ensure it also supports: { prompt: "text" } for single-message chat.
+- Make the endpoint forward the request to the function askAI() in /backend/services/openai.ts.
+- Make sure the returned JSON matches what the frontend expects.
+
+### 2) OpenAI service
+Inside /backend/services/openai.ts:
+- Make sure askAI(), analyzeImage(), and liveAssistOnImage() all use the existing OPENAI_API_KEY correctly.
+- Ensure askAI() can accept either:
+  A) messages array
+  B) prompt string
+  And converts it into a valid OpenAI chat completion request.
+
+### 3) Health check
+- Fix /api/health so it always returns 200 and JSON: { status: "ok" }
+- Make sure the frontend's AIChatService correctly calls this health check so it no longer shows “offline”.
+
+### 4) Frontend API client (/utils/api.ts)
+- DO NOT change the URL.
+- DO NOT change the domain.
+- Only ensure that the API client correctly formats requests for:
+   - POST /api/ai/chat
+   - POST /api/ai/image
+   - POST /api/ai/liveassist
+
+### 5) Testing
+After fixing the above:
+- Test the backend locally using Replit Shell:
+     curl -X POST "http://localhost:3000/api/ai/chat" \
+       -H "Content-Type: application/json" \
+       -d '{"prompt":"Test from Replit"}'
+- Test the frontend:
+     Send a text message in the AI Chat screen
+     Send an image
+     Confirm no more “Offline” or “AI kunde inte svara just nu”
+
+----------------------------------
+DO NOT TOUCH:
+----------------------------------
+❌ Do NOT modify the production Railway URL  
+❌ Do NOT rename any folders  
+❌ Do NOT remove or rewrite the entire project  
+❌ Do NOT break the existing navigation or screens  
+❌ Do NOT deploy anything new
+
+----------------------------------
+GOAL:
+----------------------------------
+Make everything work exactly as intended:
+- The app should detect backend as online.
+- AI chat should respond normally.
+- Text and images should be processed using the existing external backend.
+- No more offline errors.

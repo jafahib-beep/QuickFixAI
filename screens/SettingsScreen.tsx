@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, StyleSheet, Pressable, Switch, Alert, Platform } from "react-native";
+import { View, StyleSheet, Pressable, Switch, Alert, Platform, Linking } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useTranslation } from "react-i18next";
@@ -10,6 +10,7 @@ import { ScreenScrollView } from "@/components/ScreenScrollView";
 import { Spacing, BorderRadius } from "@/constants/theme";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSubscription } from "@/contexts/SubscriptionContext";
 import { RootStackParamList } from "@/navigation/RootNavigator";
 import { languages } from "@/utils/i18n";
 import i18n from "@/utils/i18n";
@@ -21,9 +22,11 @@ export default function SettingsScreen() {
   const { theme } = useTheme();
   const navigation = useNavigation<SettingsScreenNavigationProp>();
   const { logout } = useAuth();
+  const { subscription, usage, config, createCheckout, cancelSubscription, refreshStatus } = useSubscription();
 
   const [pushNotifications, setPushNotifications] = useState(true);
   const [emailNotifications, setEmailNotifications] = useState(true);
+  const [isSubscriptionLoading, setIsSubscriptionLoading] = useState(false);
 
   React.useLayoutEffect(() => {
     navigation.setOptions({
@@ -83,6 +86,88 @@ export default function SettingsScreen() {
         },
       ]);
     }
+  };
+
+  const handleSubscribe = async () => {
+    setIsSubscriptionLoading(true);
+    try {
+      const result = await createCheckout();
+      if (result.url) {
+        if (Platform.OS === "web") {
+          window.open(result.url, "_blank");
+        } else {
+          await Linking.openURL(result.url);
+        }
+      } else {
+        Alert.alert("Error", result.error || "Failed to open checkout");
+      }
+    } catch (err: any) {
+      Alert.alert("Error", err.message);
+    } finally {
+      setIsSubscriptionLoading(false);
+      await refreshStatus();
+    }
+  };
+
+  const handleCancelSubscription = async () => {
+    const confirmCancel = () => {
+      setIsSubscriptionLoading(true);
+      cancelSubscription()
+        .then((result) => {
+          if (result.success) {
+            Alert.alert("Subscription Cancelled", result.message || "Your subscription has been cancelled.");
+          } else {
+            Alert.alert("Error", result.error || "Failed to cancel subscription");
+          }
+        })
+        .catch((err: any) => {
+          Alert.alert("Error", err.message);
+        })
+        .finally(() => {
+          setIsSubscriptionLoading(false);
+          refreshStatus();
+        });
+    };
+
+    if (Platform.OS === "web") {
+      if (window.confirm("Are you sure you want to cancel your subscription?")) {
+        confirmCancel();
+      }
+    } else {
+      Alert.alert(
+        "Cancel Subscription",
+        "Are you sure you want to cancel? You will keep access until the end of your billing period.",
+        [
+          { text: "Keep Subscription", style: "cancel" },
+          { text: "Cancel Subscription", style: "destructive", onPress: confirmCancel },
+        ]
+      );
+    }
+  };
+
+  const getSubscriptionStatus = () => {
+    if (!subscription) return "Free";
+    if (subscription.plan === "paid" && subscription.isActive) return "Premium";
+    if (subscription.plan === "trial" && subscription.isActive) return "Trial";
+    if (subscription.status === "canceled") return "Cancelled";
+    return "Free";
+  };
+
+  const getSubscriptionDetails = () => {
+    if (!subscription) return null;
+    if (subscription.plan === "trial" && subscription.trialEndsAt) {
+      const endDate = new Date(subscription.trialEndsAt);
+      return `Trial ends ${endDate.toLocaleDateString()}`;
+    }
+    if (subscription.plan === "paid" && subscription.paidUntil) {
+      const renewDate = new Date(subscription.paidUntil);
+      return `Renews ${renewDate.toLocaleDateString()}`;
+    }
+    if (subscription.status === "canceled" && subscription.paidUntil) {
+      const accessUntil = new Date(subscription.paidUntil);
+      return `Access until ${accessUntil.toLocaleDateString()}`;
+    }
+    return null;
   };
 
   const renderSettingRow = (
@@ -201,6 +286,78 @@ export default function SettingsScreen() {
 
       <View style={styles.section}>
         <ThemedText type="caption" style={[styles.sectionTitle, { color: theme.textSecondary }]}>
+          SUBSCRIPTION
+        </ThemedText>
+        <View style={[styles.sectionContent, { backgroundColor: theme.cardBackground }]}>
+          <View style={styles.subscriptionCard}>
+            <View style={styles.subscriptionHeader}>
+              <View style={[styles.planBadge, { 
+                backgroundColor: subscription?.isPremium ? `${theme.success}20` : theme.backgroundTertiary 
+              }]}>
+                <Feather 
+                  name={subscription?.isPremium ? "zap" : "user"} 
+                  size={16} 
+                  color={subscription?.isPremium ? theme.success : theme.textSecondary} 
+                />
+                <ThemedText 
+                  type="caption" 
+                  style={{ 
+                    color: subscription?.isPremium ? theme.success : theme.textSecondary,
+                    fontWeight: "600",
+                    marginLeft: Spacing.xs
+                  }}
+                >
+                  {getSubscriptionStatus()}
+                </ThemedText>
+              </View>
+            </View>
+            
+            {getSubscriptionDetails() ? (
+              <ThemedText type="small" style={{ color: theme.textSecondary, marginTop: Spacing.sm }}>
+                {getSubscriptionDetails()}
+              </ThemedText>
+            ) : null}
+
+            {usage ? (
+              <View style={[styles.usageInfo, { backgroundColor: theme.backgroundSecondary }]}>
+                <Feather name="image" size={14} color={theme.textSecondary} />
+                <ThemedText type="small" style={{ color: theme.textSecondary, marginLeft: Spacing.xs }}>
+                  {subscription?.isPremium 
+                    ? "Unlimited image analyses"
+                    : `${usage.imagesUsedToday}/${usage.dailyImageLimit || 2} images used today`
+                  }
+                </ThemedText>
+              </View>
+            ) : null}
+
+            {!subscription?.isPremium ? (
+              <Pressable
+                style={[styles.upgradeButton, { backgroundColor: theme.link }]}
+                onPress={handleSubscribe}
+                disabled={isSubscriptionLoading}
+              >
+                <Feather name="zap" size={16} color="#FFFFFF" />
+                <ThemedText type="body" style={{ color: "#FFFFFF", fontWeight: "600", marginLeft: Spacing.sm }}>
+                  {config?.priceSek ? `Upgrade - ${config.priceSek} SEK/month` : "Upgrade to Premium"}
+                </ThemedText>
+              </Pressable>
+            ) : subscription?.status !== "canceled" ? (
+              <Pressable
+                style={[styles.cancelButton, { borderColor: theme.error }]}
+                onPress={handleCancelSubscription}
+                disabled={isSubscriptionLoading}
+              >
+                <ThemedText type="body" style={{ color: theme.error }}>
+                  Cancel Subscription
+                </ThemedText>
+              </Pressable>
+            ) : null}
+          </View>
+        </View>
+      </View>
+
+      <View style={styles.section}>
+        <ThemedText type="caption" style={[styles.sectionTitle, { color: theme.textSecondary }]}>
           {t("settings.legal", { defaultValue: "LEGAL" }).toUpperCase()}
         </ThemedText>
         <View style={[styles.sectionContent, { backgroundColor: theme.cardBackground }]}>
@@ -308,5 +465,45 @@ const styles = StyleSheet.create({
   },
   logoutText: {
     fontWeight: "600",
+  },
+  subscriptionCard: {
+    padding: Spacing.lg,
+  },
+  subscriptionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  planBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.full,
+  },
+  usageInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: Spacing.md,
+    borderRadius: BorderRadius.sm,
+    marginTop: Spacing.md,
+  },
+  upgradeButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.md,
+    marginTop: Spacing.lg,
+  },
+  cancelButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.md,
+    marginTop: Spacing.lg,
+    borderWidth: 1,
+    backgroundColor: "transparent",
   },
 });

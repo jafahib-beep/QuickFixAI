@@ -1,0 +1,63 @@
+You have already delivered partial fixes. This remaining broken behaviour is unacceptable and must be fixed immediately and completely. No more partials. Do NOT commit to main. Provide patches and evidence in /tmp/ and a staging branch/PR.
+
+Problem: After successful Stripe payment and webhook processing the client still shows Free/Trial for some users. XP can be awarded but subscription status is not reliably shown or propagated.
+
+Fix & Acceptance (do this EXACTLY):
+
+Verify webhook mapping
+
+Confirm every incoming Stripe event uses session.metadata.userId OR client_reference_id to map to the correct internal user _id. If metadata is missing, fail loudly and log the session id + payload.
+
+Add test-case: reproduce checkout.session.completed in Stripe dashboard with metadata.userId=<testUserId> and paste the raw webhook payload and server processing log lines.
+
+Server: idempotent update + auditing
+
+When processing webhook, update user atomically:
+subscription_status: "paid", subscription_expiry, image_counter:0.
+
+Save webhook event into webhook_events (eventId, sessionId, processedAt).
+
+Log the DB update with correlation: session.id, userId, eventId, and resulting DB document (masked sens.). Paste these log lines.
+
+Ensure websocket broadcast is correct
+
+Emit subscription.updated to all sockets for that user with payload:
+{ type: "subscription.updated", userId, subscription_status:"paid", subscription_expiry:"<ISO>" }
+
+In server logs show the emit with socket ids.
+
+Client: AuthContext must react to websocket OR redirect
+
+On subscription.updated websocket event, immediately update local user context and UI (badge + settings). Provide client code snippet showing this handler and a recorded browser console showing event received and setUser called.
+
+On redirect flow: if token/cookie is not preserved by Stripe redirect, implement secure redirect: server should set an httpOnly session cookie (or one-time token) and then redirect to https://app/?subscription=success. Client must then call /api/users/me with credentials and update UI. Provide the small server patch if you implement this.
+
+Cross-account test
+
+Run end-to-end with two accounts (A and B). For each:
+
+Start as user A, complete Stripe test checkout (metadata.userId = A). Show /api/users/me BEFORE and AFTER webhook (network trace) — after must show "subscription_status":"paid".
+
+Repeat for user B. Paste network traces and DB outputs for both users.
+
+Evidence required (ALL items below must be provided in the agent reply)
+
+/tmp/subscription-fixes-diff.patch (full diff)
+
+/tmp/liveassist-session-fix.patch (if changed)
+
+server-last-200.log (last 200 lines) containing webhook receipt, DB update, websocket emit lines for the tested session(s).
+
+Raw Stripe webhook payload pasted for test checkout.session.completed with metadata.userId used.
+
+curl or network HAR showing GET /api/users/me BEFORE and AFTER (shows "subscription_status":"paid") for the tested user.
+
+Websocket console logs showing subscription.updated received by client and that client called setUser(...).
+
+DB output db.users.findOne({_id:"<testUserId>"}) showing updated fields.
+
+Short runbook of exactly how you tested (commands, Stripe steps, timestamps).
+
+If any of the above is missing or incomplete this round → TASK = FAILED and I will demand a full redo.
+
+Time: This is urgent. Provide the artifacts in this order: patch files, logs, webhook payload, network traces, websocket logs, DB output. Do NOT push to main; open a staging branch/PR and paste its name.

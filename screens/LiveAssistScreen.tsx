@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import {
   View,
   StyleSheet,
@@ -15,12 +15,19 @@ import { useTranslation } from "react-i18next";
 import { Feather } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
+import LiveAssistThread from "@/components/LiveAssistThread";
+import AIChatView from "@/components/AIChatView";
+import { UpgradeModal } from "@/components/UpgradeModal";
 import { Spacing, BorderRadius, Typography } from "@/constants/theme";
 import { useTheme } from "@/hooks/useTheme";
+import { useSubscription } from "@/contexts/SubscriptionContext";
 import { api, LiveAssistResponse, LiveAssistOverlay, RiskSeverity, RiskEntry, RiskOverlay, SparePart, SparePartPriority } from "@/utils/api";
+
+type LiveAssistMode = "analysis" | "chat";
 
 interface AnalysisResult {
   summary: string;
@@ -41,7 +48,11 @@ export default function LiveAssistScreen() {
   const { theme, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const tabBarHeight = useBottomTabBarHeight();
+  const { usage, refreshSubscription } = useSubscription();
   const language = i18n.language;
+
+  // Mode toggle: Analysis vs AI Chat
+  const [activeMode, setActiveMode] = useState<LiveAssistMode>("analysis");
 
   const [isLoading, setIsLoading] = useState(false);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
@@ -49,6 +60,36 @@ export default function LiveAssistScreen() {
   const [error, setError] = useState<string | null>(null);
   const [imageDimensions, setImageDimensions] = useState<{ width: number; height: number } | null>(null);
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
+  
+  // Upgrade modal state
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [limitInfo, setLimitInfo] = useState<{ imagesUsed: number; limit: number }>({ imagesUsed: 0, limit: 2 });
+  
+  // Conversation thread state
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [isThreadMode, setIsThreadMode] = useState(false);
+  const [isCreatingSession, setIsCreatingSession] = useState(false);
+  const sessionLoadedRef = useRef(false);
+
+  // Fix A: Load sessionId from AsyncStorage on mount
+  useEffect(() => {
+    if (sessionLoadedRef.current) return;
+    sessionLoadedRef.current = true;
+    
+    const loadSession = async () => {
+      try {
+        const storedSessionId = await AsyncStorage.getItem("liveassistSessionId");
+        if (storedSessionId) {
+          console.log("[LiveAssistScreen] Loaded session from storage:", storedSessionId);
+          setSessionId(storedSessionId);
+          setIsThreadMode(true);
+        }
+      } catch (err) {
+        console.log("[LiveAssistScreen] Failed to load session from storage:", err);
+      }
+    };
+    loadSession();
+  }, []);
 
   const toggleStepComplete = (stepIndex: number) => {
     setCompletedSteps((prev) => {
@@ -62,7 +103,32 @@ export default function LiveAssistScreen() {
     });
   };
 
+  // Fix C: Check image limit BEFORE capturing/selecting image
+  const checkLimitBeforeImage = async (): Promise<boolean> => {
+    try {
+      const limitCheck = await api.checkImageLimit();
+      if (!limitCheck.allowed) {
+        console.log("[LiveAssistScreen] Image limit reached before capture");
+        setLimitInfo({
+          imagesUsed: limitCheck.imagesUsed || 2,
+          limit: limitCheck.limit || 2,
+        });
+        setShowUpgradeModal(true);
+        return false;
+      }
+      return true;
+    } catch (err: any) {
+      console.log("[LiveAssistScreen] Failed to check limit:", err?.message);
+      // Allow if check fails (will be caught on server side)
+      return true;
+    }
+  };
+
   const handleTakePhoto = async () => {
+    // Fix C: Check limit BEFORE capturing
+    const allowed = await checkLimitBeforeImage();
+    if (!allowed) return;
+
     const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
     if (!permissionResult.granted) {
       Alert.alert(t("chat.permissionRequired"), t("chat.cameraPermission"));
@@ -86,6 +152,10 @@ export default function LiveAssistScreen() {
   };
 
   const handlePickImage = async () => {
+    // Fix C: Check limit BEFORE picking
+    const allowed = await checkLimitBeforeImage();
+    if (!allowed) return;
+
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permissionResult.granted) {
       Alert.alert(t("chat.permissionRequired"), t("chat.photoLibraryPermission"));
@@ -131,23 +201,67 @@ export default function LiveAssistScreen() {
           spareParts: response.analysis.spareParts || [],
           rawResponse: response.analysis.rawResponse,
         });
+        // Refresh subscription status to get updated usage count
+        refreshSubscription();
       } else {
         setError("AI_UNAVAILABLE");
       }
     } catch (err: any) {
       console.log("[LiveAssistScreen] Error:", err?.message || err);
+      
+      // Check if it's a daily limit error (IMAGE_DAY_LIMIT)
+      if (err?.code === "IMAGE_DAY_LIMIT" || err?.response?.code === "IMAGE_DAY_LIMIT" || err?.message?.includes("IMAGE_DAY_LIMIT") || err?.message?.includes("limit_exceeded")) {
+        const errorData = err?.response || {};
+        setLimitInfo({
+          imagesUsed: errorData.imagesUsed || usage?.imagesUsedToday || 2,
+          limit: errorData.limit || usage?.dailyImageLimit || 2,
+        });
+        setShowUpgradeModal(true);
+        setCapturedImage(null);
+        return;
+      }
+      
       setError("AI_UNAVAILABLE");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleReset = () => {
+  const handleReset = async () => {
     setCapturedImage(null);
     setAnalysisResult(null);
     setError(null);
     setImageDimensions(null);
     setCompletedSteps(new Set());
+    setSessionId(null);
+    setIsThreadMode(false);
+    // Fix A: Clear sessionId from AsyncStorage on reset
+    try {
+      await AsyncStorage.removeItem("liveassistSessionId");
+      console.log("[LiveAssistScreen] Cleared session from storage");
+    } catch (err) {
+      console.log("[LiveAssistScreen] Failed to clear session from storage:", err);
+    }
+  };
+
+  const handleStartConversation = async () => {
+    setIsCreatingSession(true);
+    try {
+      const result = await api.createLiveAssistSession();
+      setSessionId(result.sessionId);
+      setIsThreadMode(true);
+      // Fix A: Save sessionId to AsyncStorage
+      await AsyncStorage.setItem("liveassistSessionId", result.sessionId);
+      console.log("[LiveAssistScreen] Saved session to storage:", result.sessionId);
+    } catch (err: any) {
+      console.log("[LiveAssistScreen] Failed to create session:", err?.message);
+      Alert.alert(
+        t("common.error"),
+        "Failed to start conversation. Please try again."
+      );
+    } finally {
+      setIsCreatingSession(false);
+    }
   };
 
   const handleImageLayout = (event: LayoutChangeEvent) => {
@@ -724,22 +838,67 @@ export default function LiveAssistScreen() {
         </View>
       ) : null}
 
-      <Pressable
-        onPress={handleReset}
-        style={({ pressed }) => [
-          styles.newScanButton,
-          { 
-            backgroundColor: theme.link,
-            opacity: pressed ? 0.9 : 1,
-          },
-        ]}
-      >
-        <Feather name="refresh-cw" size={20} color="#FFFFFF" />
-        <ThemedText style={styles.newScanButtonText}>
-          {t("liveAssist.newScan")}
-        </ThemedText>
-      </Pressable>
+      <View style={styles.actionButtonsContainer}>
+        <Pressable
+          onPress={handleStartConversation}
+          disabled={isCreatingSession}
+          style={({ pressed }) => [
+            styles.continueButton,
+            { 
+              backgroundColor: theme.success,
+              opacity: pressed ? 0.9 : 1,
+            },
+          ]}
+        >
+          {isCreatingSession ? (
+            <ActivityIndicator size="small" color="#FFFFFF" />
+          ) : (
+            <>
+              <Feather name="message-circle" size={20} color="#FFFFFF" />
+              <ThemedText style={styles.continueButtonText}>
+                Continue Conversation
+              </ThemedText>
+            </>
+          )}
+        </Pressable>
+
+        <Pressable
+          onPress={handleReset}
+          style={({ pressed }) => [
+            styles.newScanButton,
+            { 
+              backgroundColor: theme.link,
+              opacity: pressed ? 0.9 : 1,
+            },
+          ]}
+        >
+          <Feather name="refresh-cw" size={20} color="#FFFFFF" />
+          <ThemedText style={styles.newScanButtonText}>
+            {t("liveAssist.newScan")}
+          </ThemedText>
+        </Pressable>
+      </View>
     </ScrollView>
+  );
+
+  const renderThreadMode = () => (
+    <View style={{ flex: 1 }}>
+      <View style={[styles.threadHeader, { backgroundColor: theme.backgroundSecondary }]}>
+        <Pressable onPress={handleReset} style={styles.backButton}>
+          <Feather name="arrow-left" size={20} color={theme.text} />
+        </Pressable>
+        <ThemedText style={[styles.threadTitle, { color: theme.text }]}>
+          Conversation
+        </ThemedText>
+      </View>
+      {sessionId ? (
+        <LiveAssistThread
+          sessionId={sessionId}
+          language={language}
+          onError={(err) => console.log("[LiveAssistScreen] Thread error:", err)}
+        />
+      ) : null}
+    </View>
   );
 
   return (
@@ -759,13 +918,62 @@ export default function LiveAssistScreen() {
             <Feather name="zap" size={20} color="#FFFFFF" />
           </View>
           <ThemedText style={[styles.headerTitle, { color: theme.text }]}>
-            {t("liveAssist.title")}
+            {activeMode === "analysis" ? t("liveAssist.title") : t("chat.title")}
           </ThemedText>
+        </View>
+
+        <View style={[styles.modeToggle, { backgroundColor: theme.backgroundSecondary }]}>
+          <Pressable
+            onPress={() => setActiveMode("analysis")}
+            style={[
+              styles.modeToggleButton,
+              activeMode === "analysis" && [styles.modeToggleButtonActive, { backgroundColor: theme.link }],
+            ]}
+          >
+            <Feather
+              name="camera"
+              size={16}
+              color={activeMode === "analysis" ? "#FFFFFF" : theme.textSecondary}
+            />
+            <ThemedText
+              style={[
+                styles.modeToggleText,
+                { color: activeMode === "analysis" ? "#FFFFFF" : theme.textSecondary },
+              ]}
+            >
+              {t("liveAssist.analysis") || "Analysis"}
+            </ThemedText>
+          </Pressable>
+          <Pressable
+            onPress={() => setActiveMode("chat")}
+            style={[
+              styles.modeToggleButton,
+              activeMode === "chat" && [styles.modeToggleButtonActive, { backgroundColor: theme.link }],
+            ]}
+          >
+            <Feather
+              name="message-circle"
+              size={16}
+              color={activeMode === "chat" ? "#FFFFFF" : theme.textSecondary}
+            />
+            <ThemedText
+              style={[
+                styles.modeToggleText,
+                { color: activeMode === "chat" ? "#FFFFFF" : theme.textSecondary },
+              ]}
+            >
+              {t("chat.title") || "AI Chat"}
+            </ThemedText>
+          </Pressable>
         </View>
       </View>
 
       <View style={styles.content}>
-        {isLoading ? (
+        {activeMode === "chat" ? (
+          <AIChatView />
+        ) : isThreadMode ? (
+          renderThreadMode()
+        ) : isLoading ? (
           renderLoadingState()
         ) : analysisResult || error ? (
           renderResultState()
@@ -773,6 +981,17 @@ export default function LiveAssistScreen() {
           renderWelcomeState()
         )}
       </View>
+
+      <UpgradeModal
+        visible={showUpgradeModal}
+        onClose={() => {
+          setShowUpgradeModal(false);
+          refreshSubscription();
+        }}
+        reason="daily_limit"
+        imagesUsed={limitInfo.imagesUsed}
+        limit={limitInfo.limit}
+      />
     </ThemedView>
   );
 }
@@ -800,6 +1019,33 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     ...Typography.h3,
+  },
+  modeToggle: {
+    flexDirection: "row",
+    padding: 4,
+    borderRadius: BorderRadius.lg,
+    marginTop: Spacing.md,
+  },
+  modeToggleButton: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: Spacing.xs,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    borderRadius: BorderRadius.md,
+  },
+  modeToggleButtonActive: {
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  modeToggleText: {
+    ...Typography.small,
+    fontWeight: "600",
   },
   content: {
     flex: 1,
@@ -1323,5 +1569,34 @@ const styles = StyleSheet.create({
   overlayLinkText: {
     ...Typography.small,
     fontWeight: "500",
+  },
+  actionButtonsContainer: {
+    gap: Spacing.md,
+  },
+  continueButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: Spacing.lg,
+    borderRadius: BorderRadius.lg,
+    gap: Spacing.sm,
+  },
+  continueButtonText: {
+    color: "#FFFFFF",
+    ...Typography.body,
+    fontWeight: "600",
+  },
+  threadHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+  },
+  backButton: {
+    padding: Spacing.sm,
+    marginRight: Spacing.sm,
+  },
+  threadTitle: {
+    ...Typography.h4,
   },
 });

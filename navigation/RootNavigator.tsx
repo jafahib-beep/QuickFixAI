@@ -20,6 +20,7 @@ import VideoLibraryScreen from "@/screens/VideoLibraryScreen";
 import UserProfileScreen from "@/screens/UserProfileScreen";
 import PrivacyTermsScreen from "@/screens/PrivacyTermsScreen";
 import NotificationsScreen from "@/screens/NotificationsScreen";
+import FollowerListScreen, { FollowerListParams } from "@/screens/FollowerListScreen";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/hooks/useTheme";
 import { getCommonScreenOptions } from "./screenOptions";
@@ -46,6 +47,7 @@ export type RootStackParamList = {
   Report: { contentType: "video" | "profile" | "comment"; contentId?: string; targetUserId?: string };
   PrivacyTerms: { type: "privacy" | "terms" | "guidelines" };
   Notifications: undefined;
+  FollowerList: FollowerListParams;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -224,6 +226,15 @@ export default function RootNavigator() {
               headerShown: true,
               title: "",
             }}
+          />
+          <Stack.Screen
+            name="FollowerList"
+            component={FollowerListScreen}
+            options={({ route }) => ({
+              ...getCommonScreenOptions({ theme, isDark, transparent: false }),
+              headerShown: true,
+              title: route.params.type === "followers" ? "Followers" : "Following",
+            })}
           />
         </>
       )}

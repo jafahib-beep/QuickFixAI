@@ -1,0 +1,171 @@
+Skapa branch och backup:
+
+git checkout -b fix/remove-demo-fallback
+zip -r ../backup_before_remove_demo.zip . -x "node_modules/*" ".git/*"
+echo "Backup created: ../backup_before_remove_demo.zip"
+
+
+Lista träffar (INSPEKTERA i editor innan ändring):
+
+grep -R --line-number --exclude-dir=node_modules "demo_" . || true
+grep -R --line-number --exclude-dir=node_modules "demo login" . || true
+grep -R --line-number --exclude-dir=node_modules "using demo" . || true
+grep -R --line-number --exclude-dir=node_modules "API unavailable" . || true
+grep -R --line-number --exclude-dir=node_modules "setItem(\"authToken\"" . || true
+grep -R --line-number --exclude-dir=node_modules "const demoUser" . || true
+
+
+Instruktion: öppna varje träff i editorn. Fortsätt bara om träffen finns i projektets egna källfiler (ej node_modules eller tredjepart).
+
+Kör säkert ersättningsskript (skapar .bak för varje fil). Scriptet söker och gör konservativa ersättningar av demo-fallbacks och skriver en guard-fil som rensar gamla demo-token vid appstart:
+
+mkdir -p scripts
+cat > scripts/remove-demo.js <<'NODE'
+const fs = require('fs');
+const path = require('path');
+const exts = ['.ts','.tsx','.js','.jsx'];
+const root = process.cwd();
+const skipDirs = ['node_modules','.git','dist','build'];
+
+function walk(dir){
+  let files = [];
+  for(const name of fs.readdirSync(dir)){
+    const p = path.join(dir, name);
+    const stat = fs.statSync(p);
+    if(stat.isDirectory()){
+      if(skipDirs.includes(name)) continue;
+      files = files.concat(walk(p));
+    } else {
+      if(exts.includes(path.extname(name))) files.push(p);
+    }
+  }
+  return files;
+}
+function backup(file){ fs.copyFileSync(file, file + '.bak'); }
+function replaceFile(file, replacer){
+  const src = fs.readFileSync(file, 'utf8');
+  const out = replacer(src);
+  if(out !== src){ backup(file); fs.writeFileSync(file, out, 'utf8'); return true; }
+  return false;
+}
+const files = walk(root);
+const changed = [];
+files.forEach(file => {
+  let changedFile = false;
+  changedFile = replaceFile(file, src => {
+    return src.replace(/await\s+AsyncStorage\.setItem\(\s*["'`]authToken["'`]\s*,\s*`demo_[^`]*`\s*\)\s*;/g,
+      match => `console.warn("[AuthContext] Demo authToken write prevented. Demo fallback disabled. // was: ${match.replace(/\n/g,' ')}");`);
+  }) || changedFile;
+  changedFile = replaceFile(file, src => {
+    return src.replace(/const\s+demoUser\s*:\s*User\s*=\s*{[\s\S]*?};\s*([\s\S]*?)setUser\([\s\S]*?\);\s*await\s+AsyncStorage\.setItem\([\s\S]*?LOCAL_USER_KEY[\s\S]*?\);\s*await\s+AsyncStorage\.setItem\([\s\S]*?authToken[\s\S]*?`\);\s*console\.log\([\s\S]*?demo login[\s\S]*?\);\s*return\s*{\s*success\s*:\s*true\s*}\s*;?/g,
+      match => `// --- Demo fallback removed ---\n// Previously created demo user block removed to avoid automatic demo login.\nconsole.warn("[AuthContext] Demo fallback removed; not creating demo user.");\nreturn { success: false, error: "API unavailable — demo fallback disabled. Please retry login." };\n`);
+  }) || changedFile;
+  changedFile = replaceFile(file, src => {
+    return src.replace(/AsyncStorage\.setItem\(\s*['"`]authToken['"`]\s*,\s*`demo_[^`]*`\s*\)\s*;/g,
+      match => `console.warn("[AuthContext] Demo authToken write prevented (simple).");`);
+  }) || changedFile;
+  if(changedFile) changed.push(file);
+});
+console.log("Changed files:", changed.length);
+changed.forEach(f => console.log(" -", f));
+const guardPath = path.join('src','demoTokenGuard.ts');
+if(!fs.existsSync(guardPath)){
+  fs.writeFileSync(guardPath, `import AsyncStorage from '@react-native-async-storage/async-storage';
+
+export async function cleanLegacyDemoToken(LOCAL_USER_KEY = 'LOCAL_USER_KEY') {
+  try {
+    const token = await AsyncStorage.getItem('authToken');
+    if (token && token.startsWith('demo_')) {
+      console.warn('Removing legacy demo token from storage.');
+      await AsyncStorage.removeItem('authToken');
+      await AsyncStorage.removeItem(LOCAL_USER_KEY);
+    }
+  } catch(e) {
+    console.warn('Failed to clean demo token:', e);
+  }
+}
+`, 'utf8');
+  console.log("Wrote src/demoTokenGuard.ts — import and call cleanLegacyDemoToken() from App start.");
+}
+NODE
+
+node scripts/remove-demo.js
+
+
+Lägg till guard-call i frontend-start (om src/App.tsx finns). Om inte, anropa cleanLegacyDemoToken() tidigt i AuthContext init.
+
+// I src/App.tsx (om finns) - importera och kalla tidigt
+import { useEffect } from 'react';
+import { cleanLegacyDemoToken } from './demoTokenGuard';
+function App(){
+  useEffect(()=>{ cleanLegacyDemoToken('LOCAL_USER_KEY'); }, []);
+  // ...
+}
+
+
+Lägg till backend-middleware (i src/index.ts eller backend/index.ts före routes):
+
+app.use((req, res, next) => {
+  const headerAuth = req.headers.authorization || req.headers['x-auth-token'];
+  const bodyAuth = req.body && req.body.authToken;
+  const auth = (headerAuth || bodyAuth || '').toString();
+  if (auth && auth.startsWith && auth.startsWith('demo_')) {
+    console.warn("Blocked request with demo token");
+    return res.status(403).json({ error: "Demo tokens are not allowed." });
+  }
+  next();
+});
+
+
+PREVIEW DIFF — STOPP och visa för Jafar (viktig säkerhets-gate)
+
+git add -A
+git status --porcelain
+git --no-pager diff --staged > /tmp/remove-demo-diff.patch
+# Visa första delen av diff:
+git --no-pager diff --staged | sed -n '1,300p'
+
+
+Instruktion: Skicka /tmp/remove-demo-diff.patch eller visa diff i Replit för Jafar. Gör ingen commit förrän Jafar godkänt.
+
+När Jafar godkänner:
+
+git commit -m "Remove automatic demo fallback & prevent demo tokens (safe changes)"
+git push origin HEAD
+
+
+Verifieringssteg Jafar gör efter ändringarna:
+
+Kontrollera att backup ../backup_before_remove_demo.zip finns.
+
+Inspektera diff (ingen ändring i node_modules).
+
+Starta dev: npm run dev och kolla loggar. Leta efter våra varningar:
+
+grep -R --line-number "Demo fallback removed" . || true
+grep -R --line-number "Demo authToken write prevented" . || true
+
+
+Rensa klientcache (i Preview eller emulator):
+
+Browser Console: localStorage.removeItem('authToken'); localStorage.removeItem('LOCAL_USER_KEY');
+
+Expo/emulator: avinstallera app eller kör await AsyncStorage.removeItem('authToken') i debug-console.
+
+Test:
+
+Försök logga in med felaktiga credentials → appen ska inte skapa demo-user.
+
+Testa LiveAssist / AI → om backend har giltig OpenAI-nyckel: fungerar; om inte: visar fel, INTE demo.
+
+Rapportera tillbaka vilka filer ändrats + eventuella console.warn-utskrifter.
+
+VIKTIGA VARNINGAR TILL AGENTEN
+
+Exkludera node_modules och tredjepart.
+
+Scriptet gör heuristiska ersättningar — INSPEKTERA diff innan commit.
+
+Skapa .bak (skriptet gör det). Återställ med mv file.bak file vid behov.
+
+Agenten får inte committa utan Jafars godkännande av diff.

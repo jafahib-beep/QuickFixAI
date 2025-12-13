@@ -1,0 +1,74 @@
+Hi — I need you to stop doing any more work that will consume paid build/minutes until you confirm next steps and I approve. This project is costing money and we must avoid extra charges.
+
+Fix list (urgent, do not commit until I approve the staged diff):
+
+1) Subscription / Stripe status not reflected in UI
+- Problem: After successful Stripe checkout test the app still shows "Free" in Profile and the app does not unlock premium features.
+- Fix: Ensure webhook processing sets users.subscription_status = "paid" with expiry date, and implement immediate client refresh on return-from-checkout.
+- Requirement: After returning with ?subscription-success the client must re-fetch /api/users/me and show:
+  - Plan: Premium
+  - Expiry date
+  - Add +250 XP to user on first activation (one-time)
+- Tests to show in logs: Stripe webhook received, DB updated (user id + subscription_status + expiry), API response for /api/users/me showing new fields.
+
+2) Blocking modal after 2 images/day for free users
+- Problem: Free users can still attempt to send >2 images without seeing the blocking upgrade modal and the upload may silently fail.
+- Fix: When server rejects an image due to free limits, return JSON { error: "limit_exceeded", code: "IMAGE_DAY_LIMIT" } and client must display a blocking modal (not silent) with clear CTA to open subscription flow. Modal must not allow further sends.
+- Tests: Show server response for the 3rd image and a screenshot/log of modal displayed. If an image is captured then modal opens and image upload is cancelled/cleared.
+
+3) LiveAssist message persistence / session separation
+- Problem: LiveAssist history disappears when switching between LiveAssist and QuickFix AI or other screens. Messages appear ephemeral.
+- Fix: LiveAssist must use the new tables liveassist_sessions and liveassist_messages; messages must be loaded from DB on open and saved server-side for all messages/images. Keep session id stable for conversation.
+- UI: Images must render as part of the assistant message with associated steps/checklist (steps[] with id, text, detail, tools). Each assistant message can show a checklist with toggleable completion — toggling must PATCH server to save step state.
+- Tests: Create a LiveAssist message with image + assistant response containing steps. Navigate away and back — the message, image and checklist state must persist.
+
+4) XP awarding on purchase
+- Problem: XP not awarded after purchase.
+- Fix: When subscription becomes active, award 250 XP once; write to DB audit log `xp_events` and return new XP in /api/users/me.
+- Tests: Show DB xp_events row and updated XP in API.
+
+5) UX: Image handling vs checklist behavior
+- Problem: Currently image messages behave like plain chat messages. They must appear with the structured assistant response (text + steps + youtube_links + images_to_show).
+- Fix: Adjust message render logic so user-uploaded image appears in the LiveAssist thread as a user message; assistant response appears as a structured message (see schema). Ensure thumbs and step UX work.
+
+6) Auto-refresh flow after Stripe checkout
+- Problem: Returning from Stripe does not reliably refresh subscription state.
+- Fix: Detect ?subscription-success parameter; client should poll backend /webhook-status or call /api/subscription/status until webhook processed (with reasonable timeout). Once processed, show a welcome toast and unlock features.
+- Tests: Demonstrate sequence: checkout -> redirect -> API shows updated status -> UI updated.
+
+7) Logging & diffs
+- Stage changes only (do not auto-commit). Put staged diffs at `/tmp/subscription-fixes-diff.patch` and `/tmp/liveassist-fixes-diff.patch`.
+- Provide the last 200 lines of server logs showing:
+  - Stripe webhook call
+  - DB update for user subscription
+  - 3rd image upload attempt and returned error
+  - liveassist session create/save logs
+- Provide a short README snippet showing how backend constructs the AI prompt for LiveAssist responses and the DB schema for liveassist tables.
+
+Acceptance criteria (before commit):
+- I can reproduce each issue fixed on my device following the test plan below.
+- Diffs available at /tmp/... for review.
+- No more paid background builds without my explicit approval.
+
+Minimal test plan for you to run locally or in preview (show results in logs/screenshots):
+A) FREE flow:
+  1. Login as test user (ask me if you need credentials).
+  2. In LiveAssist, send 2 images — both succeed.
+  3. Send 3rd image — server returns IMAGE_DAY_LIMIT and client shows blocking modal.
+  4. Capture and attach logs/screenshots.
+
+B) PURCHASE flow:
+  1. Start checkout (Stripe test), use test card 4242 4242 4242 4242.
+  2. After successful payment, client must detect redirect ?subscription-success and refresh /api/users/me.
+  3. Verify DB shows subscription_status=paid and expiry date.
+  4. Verify user received +250 XP and UI shows Premium.
+  5. Verify user can immediately send more images (no modal).
+
+C) Persistence:
+  1. Create a LiveAssist session, upload image, get assistant response with 2 steps.
+  2. Navigate away to QuickFix AI and back.
+  3. Verify same messages and step state persisted.
+
+If anything is uncertain, stop and ask me before continuing (do not keep running expensive tests). Confirm you will stage changes and provide diffs/logs — I will approve commit when I have validated.
+
+Thanks.

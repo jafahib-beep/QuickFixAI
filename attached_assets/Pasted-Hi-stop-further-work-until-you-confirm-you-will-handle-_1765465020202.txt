@@ -1,0 +1,39 @@
+Hi — stop further work until you confirm you will handle these fixes exactly as described. This is critical and must be implemented safely and staged (no commits) — I will approve commits after verification. I will also monitor costs: do not perform extra exploratory work.
+
+Priority: Critical (fix subscription + history + blocking modal + LiveAssist structured messages)
+
+Repro steps (what I tested):
+
+As a free user, send 3 images in LiveAssist in one session. The app should allow 2 and then block the 3rd with an UPGRADE modal.
+
+Complete Stripe checkout (test card 4242 4242 4242 4242) and return to the app. The app should detect success, refresh subscription status, show a "Welcome to Premium" confirmation, set subscription_status = "paid" with expiry in DB, and immediately unlock premium functions (no manual sign-out).
+
+After premium purchase, user must receive +250 XP immediately.
+
+LiveAssist message behavior: assistant replies must be structured JSON (text, steps[], youtube_links[], images_to_show[], safety_warnings[]). Messages must render as checklist items with expandable details and tool chips (not raw chat).
+
+Chat history persistence: All LiveAssist sessions and messages must persist in DB and be visible across navigation (switching between QuickFix AI and LiveAssist must not clear or hide the history). History must survive app restarts.
+
+Blocking behavior: When free user hits 2 images/day, the blocking modal must appear — not silently fail. The app must clear the partial/captured image and show a clear upgrade CTA.
+
+After Stripe webhook processing, the app should detect ?subscription-success return URL (or poll) and refresh status automatically without manual refresh.
+
+Ensure per-day image counters update correctly after purchase (free -> premium switch should immediately reset/enlarge limits).
+
+Logs: for each repro above collect backend logs (last 200 lines) and a small screenshot of frontend state showing the problem (if applicable).
+
+Deliverables (must be staged, not committed):
+
+Staged patch file(s) in /tmp (backend and frontend diffs): /tmp/fix-subscription-history-blocking-diff.patch
+
+Short test plan with exact API calls to reproduce the fixes (session creation, message POST, simulated webhook payload) and example AI JSON response used for UI rendering.
+
+Browser/console logs showing webhook processing and DB update of user's subscription_status.
+
+Short README snippet explaining how the backend builds the AI prompt and the model/settings used.
+
+Safety & money constraint:
+
+Do not continue beyond these fixes until I review logs and accept the staged diff. If anything is unclear, stop and ask — do not patch unrelated files. I am watching the account spend; do not run long exploratory tasks without approval.
+
+If you understand, reply with: ACK — will implement staged fixes and return /tmp/fix-subscription-history-blocking-diff.patch and logs for review.

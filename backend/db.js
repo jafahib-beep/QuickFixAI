@@ -202,6 +202,83 @@ const initializeDatabase = async () => {
       END $$;
     `);
     
+    // Migration: Add subscription fields to users table for LiveAssist Permission
+    await client.query(`
+      DO $$ 
+      BEGIN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'subscription_plan') THEN
+          ALTER TABLE users ADD COLUMN subscription_plan VARCHAR(20) DEFAULT 'free';
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'subscription_status') THEN
+          ALTER TABLE users ADD COLUMN subscription_status VARCHAR(20) DEFAULT 'none';
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'trial_started_at') THEN
+          ALTER TABLE users ADD COLUMN trial_started_at TIMESTAMP WITH TIME ZONE;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'trial_ends_at') THEN
+          ALTER TABLE users ADD COLUMN trial_ends_at TIMESTAMP WITH TIME ZONE;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'paid_until') THEN
+          ALTER TABLE users ADD COLUMN paid_until TIMESTAMP WITH TIME ZONE;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'stripe_customer_id') THEN
+          ALTER TABLE users ADD COLUMN stripe_customer_id TEXT;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'stripe_subscription_id') THEN
+          ALTER TABLE users ADD COLUMN stripe_subscription_id TEXT;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'premium_xp_granted') THEN
+          ALTER TABLE users ADD COLUMN premium_xp_granted BOOLEAN DEFAULT false;
+        END IF;
+      END $$;
+    `);
+    
+    // Create liveassist_usage table for tracking daily image uploads
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS liveassist_usage (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+        usage_date DATE NOT NULL,
+        images_sent INTEGER DEFAULT 0,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        UNIQUE(user_id, usage_date)
+      );
+      
+      CREATE INDEX IF NOT EXISTS idx_liveassist_usage_user ON liveassist_usage(user_id);
+      CREATE INDEX IF NOT EXISTS idx_liveassist_usage_date ON liveassist_usage(usage_date);
+    `);
+    
+    // Create liveassist_sessions table for persistent chat sessions
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS liveassist_sessions (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+        title TEXT,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      );
+      
+      CREATE INDEX IF NOT EXISTS idx_liveassist_sessions_user ON liveassist_sessions(user_id);
+    `);
+    
+    // Create liveassist_messages table for persistent chat history
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS liveassist_messages (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        session_id UUID REFERENCES liveassist_sessions(id) ON DELETE CASCADE,
+        user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+        role VARCHAR(20) NOT NULL,
+        text TEXT,
+        image_urls JSONB DEFAULT '[]'::jsonb,
+        analysis_result JSONB,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      );
+      
+      CREATE INDEX IF NOT EXISTS idx_liveassist_messages_session ON liveassist_messages(session_id);
+      CREATE INDEX IF NOT EXISTS idx_liveassist_messages_user ON liveassist_messages(user_id);
+    `);
+    
     console.log('Database initialized successfully');
   } catch (error) {
     console.error('Database initialization error:', error);

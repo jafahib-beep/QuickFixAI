@@ -3,7 +3,7 @@ const { spawn } = require('child_process');
 
 console.log('[QuickFix] Starting backend and Expo servers...');
 
-const backend = spawn('node', ['server/index.js'], {
+const backend = spawn('node', ['backend/index.js'], {
   stdio: 'inherit',
   env: { ...process.env }
 });

@@ -10,10 +10,12 @@ import { I18nextProvider } from "react-i18next";
 import RootNavigator from "@/navigation/RootNavigator";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { WebSocketProvider } from "@/contexts/WebSocketContext";
 import { XpProvider } from "@/contexts/XpContext";
 import { VideosProvider } from "@/contexts/VideosContext";
 import { CommunityProvider } from "@/contexts/CommunityContext";
 import { NotificationsProvider } from "@/contexts/NotificationsContext";
+import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
 import { useTheme } from "@/hooks/useTheme";
 import i18n, { initializeI18n } from "@/utils/i18n";
 
@@ -40,18 +42,22 @@ function AppContent() {
   return (
     <I18nextProvider i18n={i18n}>
       <AuthProvider>
-        <XpProvider>
-          <NotificationsProvider>
-            <VideosProvider>
-              <CommunityProvider>
-                <NavigationContainer>
-                  <RootNavigator />
-                </NavigationContainer>
-                <StatusBar style="auto" />
-              </CommunityProvider>
-            </VideosProvider>
-          </NotificationsProvider>
-        </XpProvider>
+        <WebSocketProvider>
+          <SubscriptionProvider>
+            <XpProvider>
+              <NotificationsProvider>
+                <VideosProvider>
+                  <CommunityProvider>
+                    <NavigationContainer>
+                      <RootNavigator />
+                    </NavigationContainer>
+                    <StatusBar style="auto" />
+                  </CommunityProvider>
+                </VideosProvider>
+              </NotificationsProvider>
+            </XpProvider>
+          </SubscriptionProvider>
+        </WebSocketProvider>
       </AuthProvider>
     </I18nextProvider>
   );

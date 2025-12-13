@@ -9,7 +9,7 @@ I prefer simple language and detailed explanations. I want iterative development
 ## System Architecture
 
 ### UI/UX Decisions
-The application features a modern dark theme with a blue accent (#0A84FF), respecting system color schemes. It draws inspiration from iOS 26 Liquid Glass UI styling, utilizing Feather icons. The design incorporates dark backgrounds (#0D0D0D for root, #1A1A1A for cards, #252525 for secondary elements), polished UI with refined shadows, modern card designs, and pill-shaped chips. A 7-tab bottom navigation (Home, AI Chat, LiveAssist, Upload (FAB), Community, Toolbox, Profile) is implemented, with a central Floating Action Button (FAB) for video uploads. Safe area insets are handled by helper components.
+The application features a modern dark theme with a blue accent (#0A84FF), respecting system color schemes. It draws inspiration from iOS 26 Liquid Glass UI styling, utilizing Feather icons. The design incorporates dark backgrounds (#0D0D0D for root, #1A1A1A for cards, #252525 for secondary elements), polished UI with refined shadows, modern card designs, and pill-shaped chips. A 5-tab bottom navigation (Home, LiveAssist, Upload (FAB), Community, Profile) is implemented, with a central Floating Action Button (FAB) for video uploads. AI Chat functionality is merged into LiveAssist screen with a segmented control toggle (Analysis | AI Chat). Safe area insets are handled by helper components.
 
 **Recent UI Polish (Dec 2024):**
 - Tab bar: Icon size 24px, label size 12px for improved visibility
@@ -29,6 +29,14 @@ The application features a modern dark theme with a blue accent (#0A84FF), respe
 - PrivacyTermsScreen: Dedicated legal screen with Privacy Policy, Terms of Service, and Community Guidelines
 - AI Disclaimer: Important notice that AI suggestions are informational only and not professional advice
 - Settings navigation: Legal section items now navigate to PrivacyTermsScreen instead of showing alerts
+
+**Navigation Consolidation (Dec 2024):**
+- Removed AI Chat tab from navigation (merged into LiveAssist with segmented control toggle)
+- Removed Toolbox tab from navigation (saved items accessible via Profile -> Saved tab)
+- LiveAssist screen now has Analysis | AI Chat mode toggle in header
+- AIChatView component extracted for reuse within LiveAssist
+- FollowerListScreen added for viewing/managing followers and following lists
+- ProfileScreen followers/following counters are now clickable and navigate to FollowerListScreen
 
 ### Technical Implementations
 The frontend is built with Expo/React Native, supporting multi-language (English, Swedish, Arabic with RTL, German, French, Spanish). The backend is an Express server with a PostgreSQL database. Development runs in a full-stack mode where `npm run dev` concurrently starts both the Express server (port 5000) and Expo frontend (port 8081). Metro is configured to proxy `/api/*` requests from the web to the backend. Mobile/Expo Go clients use direct backend URLs. Platform-specific URL handling is managed by `utils/api.ts`. The Community feed now uses real database entries only (no mock/sample data fallback).
@@ -53,6 +61,17 @@ The frontend is built with Expo/React Native, supporting multi-language (English
     - Category filtering and sorting (Trending, Newest, Most Viewed)
     - "All Videos" link from HomeScreen's Recommended section
     - YouTube badge on tutorial videos with distinct red styling
+- **Subscription System (LiveAssist Permission)**: Stripe-powered paid subscription for premium LiveAssist features:
+    - **Pricing**: 39 SEK/month with 5-day free trial
+    - **Free tier limits**: 2 image analyses per day, no video upload for AI
+    - **Premium benefits**: Unlimited image analyses, video upload support, full AI responses
+    - **Backend**: `backend/subscription.js` for usage tracking and limit enforcement
+    - **Routes**: `/api/subscriptions/*` for status, checkout, trial, cancel, reactivate
+    - **Stripe integration**: `stripe-replit-sync` for webhook handling and data sync
+    - **Frontend**: `SubscriptionContext` for state management, `UpgradeModal` for upsell
+    - **Settings integration**: Subscription section in SettingsScreen with plan status and cancel option
+    - **Image usage tracking**: `image_usage` table with daily reset, enforced in AI routes
+    - **Seed script**: `backend/seed-products.js` to create Stripe product and price
 - **XP System**: Full gamification with 5 levels, real-time notifications, and duplicate prevention. Users earn XP for:
     - Daily login: +10 XP (once per day, tracked in xp_daily_login table)
     - Community post creation: +20 XP per post
@@ -64,7 +83,7 @@ The frontend is built with Expo/React Native, supporting multi-language (English
     - Video watches: +3 XP per video (5-minute cooldown per video to prevent farming)
     - Level thresholds: L1 (0-99 XP), L2 (100-249 XP), L3 (250-499 XP), L4 (500-999 XP), L5 (1000+ XP)
     - **Frontend components**: XpToast (green pill notification showing "+X XP Reason"), LevelUpModal (celebration modal on level-up)
-    - **Backend service**: server/services/xp.js with duplicate prevention and XP helpers
+    - **Backend service**: backend/services/xp.js with duplicate prevention and XP helpers
     - **API responses include XP data**: xpAwarded, totalXp, level, leveledUp fields in relevant endpoints
 
 ### System Design Choices
@@ -73,6 +92,7 @@ The project utilizes `start-dev.js` to manage concurrent execution of frontend a
 ## External Dependencies
 - **Database**: PostgreSQL
 - **AI Services**: OpenAI API (GPT-4o-mini, GPT-4o, DALL-E 3)
+- **Payment Processing**: Stripe (subscriptions, checkout)
 - **Authentication**: JWT (for session management)
 - **Frontend Framework**: Expo/React Native
 - **Backend Framework**: Express.js
