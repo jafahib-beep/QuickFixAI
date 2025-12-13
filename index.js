@@ -20,16 +20,16 @@ const { initializeDatabase } = require("./db");
 const { WebhookHandlers } = require("./webhookHandlers");
 
 // Routes
-const authRoutes = require("./backend/routes/auth");
-const videoRoutes = require("./backend/routes/videos");
-const userRoutes = require("./routes/users");
-const toolboxRoutes = require("./backend/routes/toolbox");
-const notificationRoutes = require("./backend/routes/notifications");
-const aiRoutes = require("./backend/routes/ai.js");
-const communityRoutes = require("./backend/routes/community");
-const reportsRoutes = require("./backend/routes/reports");
-const { router: blockRoutes } = require("./backend/routes/block");
-const subscriptionRoutes = require("./backend/routes/subscriptions");
+const authRoutes = require(path.join(__dirname,"./backend/routes/auth");
+const videoRoutes = require(path.join(__dirname,"./backend/routes/videos");
+const userRoutes = require(path.join(__dirname,"./backend/routes/users");
+const toolboxRoutes = require(path.join(__dirname,"./backend/routes/toolbox");
+const notificationRoutes = require(path.join(__dirname,"./backend/routes/notifications");
+const aiRoutes = require(path.join(__dirname,"./backend/routes/ai.js");
+const communityRoutes = require(path.join(__dirname,"./backend/routes/community");
+const reportsRoutes = require(path.join(__dirname,"./backend/routes/reports");
+const { router: blockRoutes } = require(path.join(__dirname,"./backend/routes/block");
+const subscriptionRoutes = require(path.join(__dirname,"./backend/routes/subscriptions");
 
 // ✅ Railway / local compatible PORT
 const PORT = process.env.BACKEND_PORT || process.env.PORT || 3001;
