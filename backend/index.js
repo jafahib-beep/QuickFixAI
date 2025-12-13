@@ -5,37 +5,21 @@
  * HOW TO RUN:
  *   node backend/index.js
  *
- * The server runs on port 3001 by default (configurable via BACKEND_PORT env var).
- * It connects to the PostgreSQL database using DATABASE_URL environment variable.
- *
- * MAIN ENDPOINTS:
- *
- *   GET /api/health
- *     - Returns { status: "ok", timestamp: "..." } if server is running
- *     - Use this to check if the backend is available
- *
- *   POST /api/ai/chat
- *     - Main AI chat endpoint
- *     - Body: { messages: [{role, content}...], language?, imageBase64?, videoFileName? }
- *     - Uses GPT-4o for image analysis, GPT-4o-mini for text-only
- *     - Returns: { answer: "..." }
- *
- *   Other endpoints: /api/auth/*, /api/videos/*, /api/users/*, /api/toolbox/*,
- *                    /api/notifications/*, /api/community/*
- *
- * ENVIRONMENT VARIABLES:
- *   - DATABASE_URL: PostgreSQL connection string (required)
- *   - OPENAI_API_KEY: OpenAI API key for AI features (optional but required for AI)
- *   - SESSION_SECRET: JWT secret for authentication
- *   - BACKEND_PORT: Server port (default: 3001)
+ * ENV:
+ *   DATABASE_URL        (required)
+ *   OPENAI_API_KEY
+ *   SESSION_SECRET
+ *   PORT or BACKEND_PORT
  */
 
 const express = require("express");
 const path = require("path");
 const http = require("http");
-const { initializeDatabase } = require("./db");
-const { wsManager } = require("./services/websocket");
 
+const { initializeDatabase } = require("./db");
+const { WebhookHandlers } = require("./webhookHandlers");
+
+// Routes
 const authRoutes = require("./routes/auth");
 const videoRoutes = require("./routes/videos");
 const userRoutes = require("./routes/users");
@@ -46,108 +30,103 @@ const communityRoutes = require("./routes/community");
 const reportsRoutes = require("./routes/reports");
 const { router: blockRoutes } = require("./routes/block");
 const subscriptionRoutes = require("./routes/subscriptions");
-const { WebhookHandlers } = require("./webhookHandlers");
+
+// ✅ Railway / local compatible PORT
+const PORT = process.env.BACKEND_PORT || process.env.PORT || 3001;
 
 const app = express();
-// Öka body-size limit så stora payloads (bilder/base64) inte kraschar servern
-app.use(express.json({ limit: "10mb" }));
-app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
-// Logga alla mountade route-prefix för att verifiera vad som registrerats
-const originalUse = app.use.bind(app);
-const mounted = [];
-app.use = function () {
-  if (arguments[0] && typeof arguments[0] === "string") {
-    mounted.push(arguments[0]);
-  }
-  return originalUse(...arguments);
-};
-
-process.on("exit", () => {
-  console.log("[ROUTES MOUNTED]", mounted);
-});
-
-
-// 🔍 Logga alla requests som kommer in till backend
-app.use((req, res, next) => {
-  console.log("[BACKEND]", req.method, req.url);
-  next();
-});
-
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", req.headers.origin || "*");
-  res.header("Access-Control-Allow-Credentials", "true");
-  res.header(
-    "Access-Control-Allow-Methods",
-    "GET, POST, PUT, DELETE, PATCH, OPTIONS",
-  );
-  res.header(
-    "Access-Control-Allow-Headers",
-    "Content-Type, Authorization, X-Requested-With, Accept",
-  );
-
-  if (req.method === "OPTIONS") {
-    return res.sendStatus(204);
-  }
-  next();
-});
-
-// Stripe webhook route MUST be registered BEFORE express.json()
-// Stripe requires raw Buffer for signature verification
+/* --------------------------------------------------
+   STRIPE WEBHOOK (MUST BE FIRST – RAW BODY)
+-------------------------------------------------- */
 app.post(
   "/api/stripe/webhook/:uuid",
   express.raw({ type: "application/json" }),
   async (req, res) => {
     const signature = req.headers["stripe-signature"];
-
     if (!signature) {
       return res.status(400).json({ error: "Missing stripe-signature" });
     }
 
     try {
       const sig = Array.isArray(signature) ? signature[0] : signature;
+      const { uuid } = req.params;
 
       if (!Buffer.isBuffer(req.body)) {
-        console.error("[Stripe Webhook] req.body is not a Buffer");
-        return res.status(500).json({ error: "Webhook processing error" });
+        throw new Error("Webhook body is not a buffer");
       }
 
-      const { uuid } = req.params;
       await WebhookHandlers.processWebhook(req.body, sig, uuid);
-
       res.status(200).json({ received: true });
-    } catch (error) {
-      console.error("[Stripe Webhook] Error:", error.message);
-      res.status(400).json({ error: "Webhook processing error" });
+    } catch (err) {
+      console.error("[Stripe Webhook] Error:", err.message);
+      res.status(400).json({ error: "Webhook processing failed" });
     }
-  },
+  }
 );
 
+/* --------------------------------------------------
+   BODY PARSERS (AFTER WEBHOOK)
+-------------------------------------------------- */
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
-// Block demo tokens - security middleware
+/* --------------------------------------------------
+   REQUEST LOGGING
+-------------------------------------------------- */
+app.use((req, res, next) => {
+  console.log("[BACKEND]", req.method, req.url);
+  next();
+});
+
+/* --------------------------------------------------
+   CORS
+-------------------------------------------------- */
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", req.headers.origin || "*");
+  res.header("Access-Control-Allow-Credentials", "true");
+  res.header(
+    "Access-Control-Allow-Methods",
+    "GET, POST, PUT, DELETE, PATCH, OPTIONS"
+  );
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization, X-Requested-With, Accept"
+  );
+
+  if (req.method === "OPTIONS") return res.sendStatus(204);
+  next();
+});
+
+/* --------------------------------------------------
+   SECURITY – BLOCK DEMO TOKENS
+-------------------------------------------------- */
 app.use((req, res, next) => {
   const authHeader = req.headers.authorization || "";
   const token = authHeader.replace("Bearer ", "");
   if (token && token.startsWith("demo_")) {
-    console.warn("[SECURITY] Blocked request with demo token");
-    return res
-      .status(403)
-      .json({
-        error:
-          "Demo tokens are not allowed. Please log in with a real account.",
-      });
+    return res.status(403).json({
+      error: "Demo tokens are not allowed. Please log in."
+    });
   }
   next();
 });
 
+/* --------------------------------------------------
+   STATIC FILES
+-------------------------------------------------- */
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
+/* --------------------------------------------------
+   HEALTH CHECK
+-------------------------------------------------- */
 app.get("/api/health", (req, res) => {
-  res.json({ status: "ok" });
+  res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
+/* --------------------------------------------------
+   API ROUTES
+-------------------------------------------------- */
 app.use("/api/auth", authRoutes);
 app.use("/api/videos", videoRoutes);
 app.use("/api/users", userRoutes);
@@ -171,58 +150,67 @@ app.get("/api/categories", (req, res) => {
     { key: "plumbing", label: "Plumbing" },
     { key: "electrical", label: "Electrical" },
     { key: "appliances", label: "Appliances" },
-    { key: "other", label: "Other" },
+    { key: "other", label: "Other" }
   ]);
 });
 
+/* --------------------------------------------------
+   ERROR HANDLER
+-------------------------------------------------- */
 app.use((err, req, res, next) => {
   console.error("Server error:", err);
   res.status(500).json({ error: "Internal server error" });
 });
 
+/* --------------------------------------------------
+   STRIPE INIT (OPTIONAL – SAFE ON RAILWAY)
+-------------------------------------------------- */
 async function initStripe() {
-  const databaseUrl = process.env.DATABASE_URL;
-
-  if (!databaseUrl) {
-    console.log(
-      "[Stripe] DATABASE_URL not set, skipping Stripe initialization",
-    );
+  if (!process.env.DATABASE_URL) {
+    console.log("[Stripe] DATABASE_URL missing, skipping Stripe init");
     return;
   }
 
   try {
-    console.log("[Stripe] Initializing Stripe schema...");
+    const baseUrl =
+      process.env.RAILWAY_PUBLIC_DOMAIN
+        ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`
+        : process.env.REPLIT_DOMAINS
+        ? `https://${process.env.REPLIT_DOMAINS.split(",")[0]}`
+        : null;
+
+    if (!baseUrl) {
+      console.warn("[Stripe] No public domain found, skipping webhook setup");
+      return;
+    }
+
     const { runMigrations } = await import("stripe-replit-sync");
     await runMigrations({
-      databaseUrl,
-      schema: "stripe",
+      databaseUrl: process.env.DATABASE_URL,
+      schema: "stripe"
     });
-    console.log("[Stripe] Schema ready");
 
     const { getStripeSync } = require("./stripeClient");
     const stripeSync = await getStripeSync();
 
-    console.log("[Stripe] Setting up managed webhook...");
-    const webhookBaseUrl = `https://${process.env.REPLIT_DOMAINS?.split(",")[0]}`;
-    const { webhook, uuid } = await stripeSync.findOrCreateManagedWebhook(
-      `${webhookBaseUrl}/api/stripe/webhook`,
+    await stripeSync.findOrCreateManagedWebhook(
+      `${baseUrl}/api/stripe/webhook`,
       {
         enabled_events: ["*"],
-        description: "QuickFix managed webhook for subscription sync",
-      },
+        description: "QuickFix managed webhook"
+      }
     );
-    console.log(`[Stripe] Webhook configured: ${webhook.url} (UUID: ${uuid})`);
 
-    console.log("[Stripe] Syncing existing data...");
-    stripeSync
-      .syncBackfill()
-      .then(() => console.log("[Stripe] Data sync complete"))
-      .catch((err) => console.error("[Stripe] Sync error:", err));
-  } catch (error) {
-    console.error("[Stripe] Initialization error:", error.message);
+    stripeSync.syncBackfill().catch(console.error);
+    console.log("[Stripe] Ready");
+  } catch (err) {
+    console.error("[Stripe] Init error:", err.message);
   }
 }
 
+/* --------------------------------------------------
+   START SERVER
+-------------------------------------------------- */
 async function startServer() {
   try {
     await initializeDatabase();
@@ -230,12 +218,15 @@ async function startServer() {
 
     await initStripe();
 
-    // Initialize WebSocket on HTTP server
     const server = http.createServer(app);
 
-
     server.listen(PORT, "0.0.0.0", () => {
-      console.log(`Server running on http://0.0.0.0:${PORT}`);
+      console.log(`✅ Server running on port ${PORT}`);
     });
- }}
+  } catch (err) {
+    console.error("❌ Startup error:", err);
+    process.exit(1);
+  }
+}
+
 startServer();
