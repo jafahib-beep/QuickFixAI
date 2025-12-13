@@ -1,5 +1,5 @@
 const express = require('express');
-const { pool } = require('../db');
+const { pool } = require('../../db');
 const { authMiddleware, optionalAuth } = require('../middleware/auth');
 const { awardXp, awardXpDirect, XP_REWARDS, getNextLevelXp, getCurrentLevelXp } = require('../services/xp');
 const { getBlockedUserIds } = require('./block');
