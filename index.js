@@ -20,16 +20,16 @@ const { initializeDatabase } = require("./db");
 const { WebhookHandlers } = require("./webhookHandlers");
 
 // Routes
-const authRoutes = require("./routes/auth");
-const videoRoutes = require("./routes/videos");
+const authRoutes = require("./backend/routes/auth");
+const videoRoutes = require("./backend//routes/videos");
 const userRoutes = require("./routes/users");
-const toolboxRoutes = require("./routes/toolbox");
-const notificationRoutes = require("./routes/notifications");
-const aiRoutes = require("./routes/ai.js");
-const communityRoutes = require("./routes/community");
-const reportsRoutes = require("./routes/reports");
-const { router: blockRoutes } = require("./routes/block");
-const subscriptionRoutes = require("./routes/subscriptions");
+const toolboxRoutes = require("./backend//routes/toolbox");
+const notificationRoutes = require("./backend/routes/notifications");
+const aiRoutes = require("./backend/routes/ai.js");
+const communityRoutes = require("./backend/routes/community");
+const reportsRoutes = require("./backend/routes/reports");
+const { router: blockRoutes } = require("./backend/routes/block");
+const subscriptionRoutes = require("./backend/routes/subscriptions");
 
 // ✅ Railway / local compatible PORT
 const PORT = process.env.BACKEND_PORT || process.env.PORT || 3001;
