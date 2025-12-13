@@ -67,12 +67,6 @@ process.on("exit", () => {
   console.log("[ROUTES MOUNTED]", mounted);
 });
 
-// (här fortsätter din originalkod)
-const PORT = process.env.PORT || 8080;
-
-app.listen(PORT, () => {
-  console.log("🚀 Backend running on port", PORT);
-});
 
 // 🔍 Logga alla requests som kommer in till backend
 app.use((req, res, next) => {
