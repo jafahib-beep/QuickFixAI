@@ -32,7 +32,7 @@ const { router: blockRoutes } = require(path.join(__dirname,"./backend/routes/bl
 const subscriptionRoutes = require(path.join(__dirname,"./backend/subscriptions"));
 
 // ✅ Railway / local compatible PORT
-const PORT = process.env.BACKEND_PORT || process.env.PORT || 3001;
+const PORT = process.env.BACKEND_PORT || process.env.PORT || 8080;
 
 const app = express();
 
