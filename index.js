@@ -21,9 +21,9 @@ const { WebhookHandlers } = require("./webhookHandlers");
 
 // Routes
 const authRoutes = require("./backend/routes/auth");
-const videoRoutes = require("./backend//routes/videos");
+const videoRoutes = require("./backend/routes/videos");
 const userRoutes = require("./routes/users");
-const toolboxRoutes = require("./backend//routes/toolbox");
+const toolboxRoutes = require("./backend/routes/toolbox");
 const notificationRoutes = require("./backend/routes/notifications");
 const aiRoutes = require("./backend/routes/ai.js");
 const communityRoutes = require("./backend/routes/community");
