@@ -29,7 +29,7 @@ const aiRoutes = require(path.join(__dirname,"./backend/routes/ai.js"));
 const communityRoutes = require(path.join(__dirname,"./backend/routes/community"));
 const reportsRoutes = require(path.join(__dirname,"./backend/routes/reports"));
 const { router: blockRoutes } = require(path.join(__dirname,"./backend/routes/block"));
-const subscriptionRoutes = require(path.join(__dirname,"./backend/routes/subscriptions"));
+const subscriptionRoutes = require(path.join(__dirname,"./backend/subscriptions"));
 
 // ✅ Railway / local compatible PORT
 const PORT = process.env.BACKEND_PORT || process.env.PORT || 3001;
