@@ -17,7 +17,7 @@ const path = require("path");
 const http = require("http");
 
 const { initializeDatabase } = require("./db");
-const { WebhookHandlers } = require(".sever/webhookHandlers");
+const { WebhookHandlers } = require("./sever/webhookHandlers");
 
 // Routes
 const authRoutes = require("./routes/auth");
