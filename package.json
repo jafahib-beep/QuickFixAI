@@ -1,6 +1,6 @@
 {
   "name": "my-app",
-  "main": "backend/routes/index.js",
+  "main": "backend/index.js",
   "version": "1.0.0",
   "scripts": {
     "dev": "node start-dev.js",
@@ -11,7 +11,7 @@
     "lint": "npx expo lint",
     "check:format": "prettier --check \"**/*.{js,ts,tsx,css,json}\"",
     "format": "prettier --write \"**/*.{js,ts,tsx,css,json}\"",
-    "backend": "node backend/routes/index.js",
+    "backend": "node backend/index.js",
     "expo": "EXPO_PACKAGER_PROXY_URL=https://$REPLIT_DEV_DOMAIN REACT_NATIVE_PACKAGER_HOSTNAME=$REPLIT_DEV_DOMAIN npx expo start"
   },
   "dependencies": {
