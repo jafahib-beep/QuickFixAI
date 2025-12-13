@@ -190,7 +190,7 @@ async function initStripe() {
       schema: "stripe"
     });
 
-    const { getStripeSync } = require("./stripeClient");
+    const { getStripeSync } = require("./sever/stripeClient");
     const stripeSync = await getStripeSync();
 
     await stripeSync.findOrCreateManagedWebhook(
