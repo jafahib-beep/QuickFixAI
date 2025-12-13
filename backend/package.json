@@ -1,9 +1,9 @@
 {
   "name": "quickfix-backend",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "backend/routes/index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node backend/routes/index.js"
   },
   "dependencies": {
     "express": "^4.18.2",
