@@ -1,5 +1,5 @@
 /**
- * QuickFix Backend Server (Railway)
+ * QuickFix Backend Server (Railway-safe)
  */
 
 const express = require("express");
@@ -7,49 +7,24 @@ const path = require("path");
 const http = require("http");
 
 const { initializeDatabase } = require("./db");
-const { WebhookHandlers } = require("./webhookHandlers");
+const { wsManager } = require("./websocketManager");
 
-// Routes
-const authRoutes = require("./auth");
-const videoRoutes = require("./videos");
-const userRoutes = require("./users");
-const toolboxRoutes = require("./toolbox");
-const notificationRoutes = require("./notifications");
-const aiRoutes = require("./ai");
-const communityRoutes = require("./community");
-const reportsRoutes = require(".reports");
-const { router: blockRoutes } = require("./block");
+/* ---------- ROUTES ---------- */
+const authRoutes = require("./routes/auth");
+const videoRoutes = require("./routes/videos");
+const userRoutes = require("./routes/users");
+const toolboxRoutes = require("./routes/toolbox");
+const notificationRoutes = require("./routes/notifications");
+const aiRoutes = require("./routes/ai");
+const communityRoutes = require("./routes/community");
+const reportsRoutes = require("./routes/reports");
+const { router: blockRoutes } = require("./routes/block");
 const subscriptionRoutes = require("./subscriptions");
 
-// Railway PORT
+/* ---------- PORT ---------- */
 const PORT = process.env.PORT || 8080;
 
 const app = express();
-
-/* ---------- STRIPE WEBHOOK (RAW BODY FIRST) ---------- */
-app.post(
-  "/api/stripe/webhook/:uuid",
-  express.raw({ type: "application/json" }),
-  async (req, res) => {
-    try {
-      const signature = req.headers["stripe-signature"];
-      if (!signature) {
-        return res.status(400).json({ error: "Missing stripe-signature" });
-      }
-
-      await WebhookHandlers.processWebhook(
-        req.body,
-        Array.isArray(signature) ? signature[0] : signature,
-        req.params.uuid
-      );
-
-      res.json({ received: true });
-    } catch (err) {
-      console.error("[Stripe Webhook] Error:", err);
-      res.status(400).json({ error: "Webhook failed" });
-    }
-  }
-);
 
 /* ---------- BODY PARSERS ---------- */
 app.use(express.json({ limit: "50mb" }));
@@ -75,15 +50,15 @@ app.use((req, res, next) => {
   next();
 });
 
-/* ---------- STATIC ---------- */
+/* ---------- STATIC FILES ---------- */
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-/* ---------- HEALTH ---------- */
+/* ---------- HEALTH CHECK ---------- */
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok", time: new Date().toISOString() });
 });
 
-/* ---------- ROUTES ---------- */
+/* ---------- API ROUTES ---------- */
 app.use("/api/auth", authRoutes);
 app.use("/api/videos", videoRoutes);
 app.use("/api/users", userRoutes);
@@ -97,7 +72,7 @@ app.use("/api/subscriptions", subscriptionRoutes);
 
 /* ---------- ERROR HANDLER ---------- */
 app.use((err, req, res, next) => {
-  console.error("Server error:", err);
+  console.error("❌ Server error:", err);
   res.status(500).json({ error: "Internal server error" });
 });
 
@@ -105,12 +80,15 @@ app.use((err, req, res, next) => {
 async function start() {
   try {
     await initializeDatabase();
-    console.log("✅ Database ready");
+    console.log("✅ Database initialized");
   } catch (err) {
-    console.error("⚠️ DB init failed (continuing):", err.message);
+    console.error("⚠️ Database init failed (continuing):", err.message);
   }
 
   const server = http.createServer(app);
+
+  // ✅ INIT WEBSOCKET (LiveAssist)
+  wsManager.initialize(server);
 
   server.listen(PORT, "0.0.0.0", () => {
     console.log(`🚀 Backend running on port ${PORT}`);
