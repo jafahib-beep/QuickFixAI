@@ -1,4 +1,4 @@
-const { pool } = require('../db');
+const { pool } = require('./db');
 
 // XP amounts for different actions
 const XP_REWARDS = {
