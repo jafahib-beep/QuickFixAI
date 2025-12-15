@@ -10,15 +10,15 @@ const { initializeDatabase } = require("./db");
 const { WebhookHandlers } = require("./webhookHandlers");
 
 // Routes
-const authRoutes = require("./routes/auth");
-const videoRoutes = require("./routes/videos");
-const userRoutes = require("./routes/users");
-const toolboxRoutes = require("./routes/toolbox");
-const notificationRoutes = require("./routes/notifications");
-const aiRoutes = require("./routes/ai");
-const communityRoutes = require("./routes/community");
-const reportsRoutes = require("./routes/reports");
-const { router: blockRoutes } = require("./routes/block");
+const authRoutes = require("./auth");
+const videoRoutes = require("./videos");
+const userRoutes = require("./users");
+const toolboxRoutes = require("./toolbox");
+const notificationRoutes = require("./notifications");
+const aiRoutes = require("./ai");
+const communityRoutes = require("./community");
+const reportsRoutes = require(".reports");
+const { router: blockRoutes } = require("./block");
 const subscriptionRoutes = require("./subscriptions");
 
 // Railway PORT
