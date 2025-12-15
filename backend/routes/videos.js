@@ -16,7 +16,7 @@ const awardXpDirect = xp.awardXpDirect;
 const XP_REWARDS = xp.XP_REWARDS;
 
 // Block helpers
-const block = require("./block");
+const block = require("../block");
 const getBlockedUserIds = block.getBlockedUserIds;
 
 const router = express.Router();
