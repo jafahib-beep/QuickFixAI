@@ -10,7 +10,7 @@ const authMiddleware = auth.authMiddleware;
 const optionalAuth = auth.optionalAuth;
 
 // XP services
-const xp = require("../services/xp");
+const xp = require("../xp");
 const awardXp = xp.awardXp;
 const awardXpDirect = xp.awardXpDirect;
 const XP_REWARDS = xp.XP_REWARDS;
