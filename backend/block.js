@@ -1,8 +1,7 @@
 const express = require("express");
 
-// ✅ Correct DB import
-const db = require("../db");
-const pool = db.pool;
+// ✅ Correct DB import (same level logic as other routes)
+const { pool } = require("../db");
 
 // ✅ Correct auth import
 const { authMiddleware } = require("./auth");
@@ -43,12 +42,17 @@ router.post("/block", authMiddleware, async (req, res) => {
     }
 
     await pool.query(
-      "UPDATE users SET blocked_user_ids = array_append(blocked_user_ids, $1), updated_at = NOW() WHERE id = $2",
+      `UPDATE users
+       SET blocked_user_ids = array_append(blocked_user_ids, $1),
+           updated_at = NOW()
+       WHERE id = $2`,
       [targetUserId, req.userId]
     );
 
     await pool.query(
-      "DELETE FROM follows WHERE (follower_id = $1 AND following_id = $2) OR (follower_id = $2 AND following_id = $1)",
+      `DELETE FROM follows
+       WHERE (follower_id = $1 AND following_id = $2)
+          OR (follower_id = $2 AND following_id = $1)`,
       [req.userId, targetUserId]
     );
 
@@ -69,28 +73,16 @@ router.post("/unblock", authMiddleware, async (req, res) => {
     }
 
     await pool.query(
-      "UPDATE users SET blocked_user_ids = array_remove(blocked_user_ids, $1), updated_at = NOW() WHERE id = $2",
+      `UPDATE users
+       SET blocked_user_ids = array_remove(blocked_user_ids, $1),
+           updated_at = NOW()
+       WHERE id = $2`,
       [targetUserId, req.userId]
     );
 
     res.json({ status: "ok" });
   } catch (error) {
     console.error("Unblock user error:", error);
-    res.status(500).json({ error: "Server error" });
-  }
-});
-
-/* ---------------- GET BLOCKED USERS ---------------- */
-router.get("/blocked", authMiddleware, async (req, res) => {
-  try {
-    const result = await pool.query(
-      "SELECT blocked_user_ids FROM users WHERE id = $1",
-      [req.userId]
-    );
-
-    res.json({ blockedUserIds: result.rows[0]?.blocked_user_ids || [] });
-  } catch (error) {
-    console.error("Get blocked users error:", error);
     res.status(500).json({ error: "Server error" });
   }
 });
@@ -132,4 +124,8 @@ async function getBlockedUserIds(userId) {
   }
 }
 
-module.exports = { router, isBlocked, getBlockedUserIds };
+module.exports = {
+  router,
+  isBlocked,
+  getBlockedUserIds
+};
