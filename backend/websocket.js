@@ -7,7 +7,7 @@
 
 const WebSocket = require('ws');
 const jwt = require('jsonwebtoken');
-const { pool } = require('./backend/db');
+const { pool } = require('./db');
 
 const JWT_SECRET = process.env.SESSION_SECRET || 'quickfix-jwt-secret-key';
 
