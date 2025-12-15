@@ -7,7 +7,7 @@ const path = require("path");
 const http = require("http");
 
 const { initializeDatabase } = require("./db");
-const { wsManager } = require("./websocketManager");
+const { wsManager } = require("./websocket");
 
 /* ---------- ROUTES ---------- */
 const authRoutes = require("./routes/auth");
