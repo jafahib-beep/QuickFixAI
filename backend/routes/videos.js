@@ -4,9 +4,10 @@ const express = require("express");
 const db = require("../db");
 const pool = db.pool;
 
-// Auth (ENDast riktig middleware)
-const auth = require("./auth");
+// ✅ AUTH – RÄTT PATH
+const auth = require("../auth");
 const authMiddleware = auth.authMiddleware;
+const optionalAuth = auth.optionalAuth;
 
 // XP services
 const xp = require("../xp");
@@ -22,7 +23,7 @@ const router = express.Router();
 /* ===========================
    GET VIDEOS (LIST)
 =========================== */
-router.get("/", async (req, res) => {
+router.get("/", optionalAuth, async (req, res) => {
   try {
     const { category, search, sort = "recent", limit = 20, offset = 0 } = req.query;
     const userId = req.userId || null;
@@ -75,7 +76,7 @@ router.get("/", async (req, res) => {
 /* ===========================
    GET FEED
 =========================== */
-router.get("/feed", async (req, res) => {
+router.get("/feed", optionalAuth, async (req, res) => {
   try {
     const userId = req.userId || null;
     const blockedUserIds = await getBlockedUserIds(userId);
@@ -84,9 +85,7 @@ router.get("/feed", async (req, res) => {
       ? "AND v.author_id != ALL($1)"
       : "";
 
-    const params = blockedUserIds.length > 0
-      ? [blockedUserIds]
-      : [];
+    const params = blockedUserIds.length > 0 ? [blockedUserIds] : [];
 
     const result = await pool.query(`
       SELECT v.*, u.display_name AS author_name, u.avatar_url AS author_avatar
