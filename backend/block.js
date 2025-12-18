@@ -1,7 +1,7 @@
 const express = require("express");
 
 // ✅ Correct DB import (same level logic as other routes)
-const { pool } = require("../db");
+const { pool } = require("./db");
 
 // ✅ Correct auth import
 const { authMiddleware } = require("./auth");
