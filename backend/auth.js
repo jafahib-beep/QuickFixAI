@@ -9,25 +9,19 @@ const JWT_SECRET =
    TOKEN HELPERS
 =========================== */
 function generateToken(userId) {
-  if (!userId) throw new Error("generateToken requires userId");
-
-  return jwt.sign(
-    { userId },
-    JWT_SECRET,
-    { expiresIn: "30d" }
-  );
+  return jwt.sign({ userId }, JWT_SECRET, { expiresIn: "30d" });
 }
 
 function verifyToken(token) {
   try {
     return jwt.verify(token, JWT_SECRET);
-  } catch (err) {
+  } catch {
     return null;
   }
 }
 
 /* ===========================
-   AUTH MIDDLEWARE (REQUIRED)
+   AUTH REQUIRED
 =========================== */
 function authMiddleware(req, res, next) {
   const header = req.headers.authorization;
@@ -48,7 +42,7 @@ function authMiddleware(req, res, next) {
 }
 
 /* ===========================
-   AUTH MIDDLEWARE (OPTIONAL)
+   AUTH OPTIONAL
 =========================== */
 function optionalAuth(req, res, next) {
   const header = req.headers.authorization;
@@ -56,7 +50,7 @@ function optionalAuth(req, res, next) {
   if (header && header.startsWith("Bearer ")) {
     const token = header.split(" ")[1];
     const decoded = verifyToken(token);
-    if (decoded && decoded.userId) {
+    if (decoded?.userId) {
       req.userId = decoded.userId;
     }
   }
@@ -64,9 +58,6 @@ function optionalAuth(req, res, next) {
   next();
 }
 
-/* ===========================
-   EXPORTS (EXPLICIT & SAFE)
-=========================== */
 module.exports = {
   generateToken,
   verifyToken,
