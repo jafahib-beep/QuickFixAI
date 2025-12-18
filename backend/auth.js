@@ -9,6 +9,10 @@ const JWT_SECRET =
    TOKEN HELPERS
 =========================== */
 function generateToken(userId) {
+  if (!userId) {
+    throw new Error("generateToken requires userId");
+  }
+
   return jwt.sign({ userId }, JWT_SECRET, { expiresIn: "30d" });
 }
 
@@ -50,7 +54,8 @@ function optionalAuth(req, res, next) {
   if (header && header.startsWith("Bearer ")) {
     const token = header.split(" ")[1];
     const decoded = verifyToken(token);
-    if (decoded?.userId) {
+
+    if (decoded && decoded.userId) {
       req.userId = decoded.userId;
     }
   }
@@ -62,5 +67,5 @@ module.exports = {
   generateToken,
   verifyToken,
   authMiddleware,
-  optionalAuth
+  optionalAuth,
 };
