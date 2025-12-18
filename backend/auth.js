@@ -1,7 +1,7 @@
 const express = require("express");
 
 // DB
-const db = require("../db");
+const db = require("./db");
 const pool = db.pool;
 
 // ✅ AUTH – RÄTT PATH (DETTA VAR BUGGEN)
