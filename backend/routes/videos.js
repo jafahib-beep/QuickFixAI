@@ -24,7 +24,7 @@ const router = express.Router();
 /* ===========================
    GET VIDEOS (LIST)
 =========================== */
-router.get("/", optionalAuth, async (req, res) => {
+router.get("/", async (req, res) => {
   try {
     const { category, search, sort = "recent", limit = 20, offset = 0 } = req.query;
 
